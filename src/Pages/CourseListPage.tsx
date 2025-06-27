@@ -124,53 +124,75 @@ const CourseListPagePath: React.FC = () => {
   const handleModalCancel = () => setModal({visible: false, type: null, mode: 'add'});
 
   return (
-    <div style={{ maxWidth: 800, margin: '0 auto', padding: 24 }}>
-      <h2>我的课程组</h2>
-      <Button type="primary" onClick={handleAddGroup} style={{ marginBottom: 16 }}>添加课程组</Button>
-      <Collapse activeKey={expanded} onChange={keys => setExpanded(Array.isArray(keys) ? keys as string[] : [])}>
-        {groups.map(group => (
-          <Collapse.Panel header={group.groupName + ` (学分: ${group.credits})`} key={group.groupID}>
-            <div style={{ marginBottom: 8 }}>
-              <Button size="small" onClick={() => handleAddCourse(group.groupID)} style={{ marginRight: 8 }}>添加课程</Button>
-              <Button size="small" onClick={() => handleEditGroup(group)} style={{ marginRight: 8 }}>编辑组</Button>
-              <Popconfirm title="确定删除该课程组？" onConfirm={() => handleDeleteGroup(group.groupID)}><Button size="small" danger>删除组</Button></Popconfirm>
-            </div>
-            <List
-              bordered
-              dataSource={courses[group.groupID] || []}
-              locale={{emptyText: '暂无课程'}}
-              renderItem={course => (
-                <List.Item actions={[
-                  <Button size="small" onClick={() => handleEditCourse(group.groupID, course)}>编辑</Button>,
-                  <Popconfirm title="确定删除该课程？" onConfirm={() => handleDeleteCourse(group.groupID, course.courseID)}><Button size="small" danger>删除</Button></Popconfirm>
-                ]}>
-                  <div>{course.location} (容量: {course.capacity})</div>
-                </List.Item>
-              )}
-            />
-          </Collapse.Panel>
-        ))}
-      </Collapse>
-      <Modal open={modal.visible} title={modal.type === 'group' ? (modal.mode === 'add' ? '添加课程组' : '编辑课程组') : (modal.mode === 'add' ? '添加课程' : '编辑课程')} onOk={handleModalOk} onCancel={handleModalCancel}>
-        <Form form={form} layout="vertical">
-          {modal.type === 'group' && <>
-            <Form.Item name="groupName" label="课程组名称" rules={[{ required: true, message: '请输入课程组名称' }]}>
-              <Input />
-            </Form.Item>
-            <Form.Item name="credits" label="学分" rules={[{ required: true, message: '请输入学分' }]}>
-              <Input type="number" />
-            </Form.Item>
-          </>}
-          {modal.type === 'course' && <>
-            <Form.Item name="location" label="上课地点" rules={[{ required: true, message: '请输入上课地点' }]}>
-              <Input />
-            </Form.Item>
-            <Form.Item name="capacity" label="容量" rules={[{ required: true, message: '请输入容量' }]}>
-              <Input type="number" />
-            </Form.Item>
-          </>}
-        </Form>
-      </Modal>
+    <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-100 to-purple-200 py-12 px-2">
+      <div className="w-full max-w-3xl bg-white rounded-3xl shadow-xl p-8 mt-8">
+        <h2 className="text-3xl font-extrabold mb-8 text-center text-purple-700 drop-shadow">我的课程组</h2>
+        <Button type="primary" onClick={handleAddGroup} style={{ marginBottom: 24, background: 'linear-gradient(90deg, #a78bfa 0%, #7c3aed 100%)', border: 'none' }}>添加课程组</Button>
+        <Collapse
+          activeKey={expanded}
+          onChange={keys => setExpanded(Array.isArray(keys) ? keys as string[] : [])}
+          className="bg-transparent"
+          expandIconPosition="end"
+          style={{ background: 'transparent' }}
+        >
+          {groups.map(group => (
+            <Collapse.Panel
+              header={<span className="font-semibold text-lg text-purple-800">{group.groupName} <span className="text-purple-400 text-base">(学分: {group.credits})</span></span>}
+              key={group.groupID}
+              className="bg-white rounded-xl shadow border border-purple-200 mb-4"
+            >
+              <div className="mb-4 flex flex-wrap gap-2">
+                <Button size="small" onClick={() => handleAddCourse(group.groupID)} style={{ background: '#c4b5fd', color: '#6d28d9', border: 'none' }}>添加课程</Button>
+                <Button size="small" onClick={() => handleEditGroup(group)} style={{ background: '#ede9fe', color: '#7c3aed', border: 'none' }}>编辑组</Button>
+                <Popconfirm title="确定删除该课程组？" onConfirm={() => handleDeleteGroup(group.groupID)}>
+                  <Button size="small" danger style={{ background: '#f3e8ff', color: '#a21caf', border: 'none' }}>删除组</Button>
+                </Popconfirm>
+              </div>
+              <List
+                bordered
+                dataSource={courses[group.groupID] || []}
+                locale={{emptyText: '暂无课程'}}
+                renderItem={course => (
+                  <List.Item
+                    className="rounded-lg border border-purple-100 my-2 bg-purple-50"
+                    actions={[
+                      <Button size="small" onClick={() => handleEditCourse(group.groupID, course)} style={{ background: '#ede9fe', color: '#7c3aed', border: 'none' }}>编辑</Button>,
+                      <Popconfirm title="确定删除该课程？" onConfirm={() => handleDeleteCourse(group.groupID, course.courseID)}>
+                        <Button size="small" danger style={{ background: '#f3e8ff', color: '#a21caf', border: 'none' }}>删除</Button>
+                      </Popconfirm>
+                    ]}
+                  >
+                    <div className="text-purple-900 font-medium">{course.location} <span className="text-purple-400">(容量: {course.capacity})</span></div>
+                  </List.Item>
+                )}
+              />
+            </Collapse.Panel>
+          ))}
+        </Collapse>
+        <Modal
+          open={modal.visible}
+          title={modal.type === 'group' ? (modal.mode === 'add' ? '添加课程组' : '编辑课程组') : (modal.mode === 'add' ? '添加课程' : '编辑课程')}
+          onOk={handleModalOk}
+          onCancel={handleModalCancel}
+          okButtonProps={{ style: { background: 'linear-gradient(90deg, #a78bfa 0%, #7c3aed 100%)', border: 'none' } }}
+          cancelButtonProps={{ style: { borderColor: '#a78bfa', color: '#7c3aed' } }}
+        >
+          <Form form={form} layout="vertical">
+            {modal.type === 'group' && <>
+              <Form.Item name="groupName" label={<span className="text-purple-700">课程组名称</span>} rules={[{ required: true, message: '请输入课程组名称' }]}>\n                <Input className="border-purple-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 rounded-xl" />
+              </Form.Item>
+              <Form.Item name="credits" label={<span className="text-purple-700">学分</span>} rules={[{ required: true, message: '请输入学分' }]}>\n                <Input type="number" className="border-purple-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 rounded-xl" />
+              </Form.Item>
+            </>}
+            {modal.type === 'course' && <>
+              <Form.Item name="location" label={<span className="text-purple-700">上课地点</span>} rules={[{ required: true, message: '请输入上课地点' }]}>\n                <Input className="border-purple-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 rounded-xl" />
+              </Form.Item>
+              <Form.Item name="capacity" label={<span className="text-purple-700">容量</span>} rules={[{ required: true, message: '请输入容量' }]}>\n                <Input type="number" className="border-purple-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 rounded-xl" />
+              </Form.Item>
+            </>}
+          </Form>
+        </Modal>
+      </div>
     </div>
   );
 };
