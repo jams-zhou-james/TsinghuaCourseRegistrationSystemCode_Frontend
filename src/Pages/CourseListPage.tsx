@@ -1,8 +1,8 @@
-// CourseListPagePath.tsx
 import React, { useEffect, useState } from 'react';
 import { CourseGroup } from 'Plugins/CourseService/Objects/CourseGroup';
 import { Course } from 'Plugins/CourseService/Objects/Course';
-import { Button, Collapse, List, Modal, Input, Form, Popconfirm, message } from 'antd';
+import { UserRole } from 'Plugins/UserService/Objects/UserRole';
+import { Button, Collapse, List, Modal, Input, Form, Popconfirm, message, Tag } from 'antd';
 
 // TODO: Replace with real API calls
 const mockFetchCourseGroups = async (): Promise<CourseGroup[]> => {
@@ -15,19 +15,34 @@ const mockFetchCourseGroups = async (): Promise<CourseGroup[]> => {
 const mockFetchCourses = async (groupID: string, teacherID: string): Promise<Course[]> => {
   if (groupID === 'g1') {
     return [
-      new Course('c1', 'g1', teacherID, 30, [], [], [], '教室A'),
+      new Course('c1', 'g1', teacherID, 30, [], ['student1', 'student2'], [], '教室A'),
       new Course('c2', 'g1', teacherID, 25, [], [], [], '教室B'),
     ];
   }
   if (groupID === 'g2') {
     return [
-      new Course('c3', 'g2', teacherID, 40, [], [], [], '教室C'),
+      new Course('c3', 'g2', teacherID, 40, [], ['student1'], [], '教室C'),
     ];
   }
   return [];
 };
 
-const teacherID = 'teacher1'; // TODO: get from global store
+const mockFetchStudentCourses = async (studentID: string): Promise<Course[]> => {
+  // 假设学生选了c1和c3
+  return [
+    new Course('c1', 'g1', 'teacher1', 30, [], ['student1', 'student2'], [], '教室A'),
+    new Course('c3', 'g2', 'teacher2', 40, [], ['student1'], [], '教室C'),
+  ];
+};
+
+const mockDropCourse = async (studentID: string, courseID: string) => {
+  // 模拟退课
+  return true;
+};
+
+// TODO: 从全局store获取
+const userID = 'student1'; // 或 'teacher1'
+const userRole: UserRole = UserRole.student; // 或 UserRole.teacher
 
 export const courseListPagePath = '/course-list';
 
@@ -35,22 +50,37 @@ const CourseListPagePath: React.FC = () => {
   const [groups, setGroups] = useState<CourseGroup[]>([]);
   const [expanded, setExpanded] = useState<string[]>([]);
   const [courses, setCourses] = useState<Record<string, Course[]>>({});
+  const [studentCourses, setStudentCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(false);
   const [modal, setModal] = useState<{visible: boolean, type: 'group'|'course'|null, mode: 'add'|'edit', groupID?: string, course?: Course, group?: CourseGroup}>({visible: false, type: null, mode: 'add'});
   const [form] = Form.useForm();
 
+  // 老师加载课程组和课程
   useEffect(() => {
-    setLoading(true);
-    mockFetchCourseGroups().then(gs => {
-      setGroups(gs.filter(g => g.authorizedTeacherIDs.includes(teacherID)));
-      setLoading(false);
-    });
+    if (userRole === UserRole.teacher) {
+      setLoading(true);
+      mockFetchCourseGroups().then(gs => {
+        setGroups(gs.filter(g => g.authorizedTeacherIDs.includes(userID)));
+        setLoading(false);
+      });
+    }
+  }, []);
+
+  // 学生加载已选课程
+  useEffect(() => {
+    if (userRole === UserRole.student) {
+      setLoading(true);
+      mockFetchStudentCourses(userID).then(cs => {
+        setStudentCourses(cs);
+        setLoading(false);
+      });
+    }
   }, []);
 
   const handleExpand = async (groupID: string) => {
     if (!expanded.includes(groupID)) {
       setLoading(true);
-      const cs = await mockFetchCourses(groupID, teacherID);
+      const cs = await mockFetchCourses(groupID, userID);
       setCourses(prev => ({...prev, [groupID]: cs}));
       setLoading(false);
       setExpanded([...expanded, groupID]);
@@ -59,7 +89,7 @@ const CourseListPagePath: React.FC = () => {
     }
   };
 
-  // Add/Edit/Delete handlers (stubs)
+  // 老师端：增删改课程组/课程
   const handleAddGroup = () => {
     setModal({visible: true, type: 'group', mode: 'add'});
     form.resetFields();
@@ -89,7 +119,7 @@ const CourseListPagePath: React.FC = () => {
     form.validateFields().then(values => {
       if (modal.type === 'group') {
         if (modal.mode === 'add') {
-          const newGroup = new CourseGroup('g'+Date.now(), values.groupName, values.credits, teacherID, [teacherID]);
+          const newGroup = new CourseGroup('g'+Date.now(), values.groupName, values.credits, userID, [userID]);
           setGroups([...groups, newGroup]);
           message.success('添加课程组成功');
         } else if (modal.mode === 'edit' && modal.group) {
@@ -102,7 +132,7 @@ const CourseListPagePath: React.FC = () => {
         }
       } else if (modal.type === 'course') {
         if (modal.mode === 'add' && modal.groupID) {
-          const newCourse = new Course('c'+Date.now(), modal.groupID, teacherID, values.capacity, [], [], [], values.location);
+          const newCourse = new Course('c'+Date.now(), modal.groupID, userID, values.capacity, [], [], [], values.location);
           setCourses(prev => ({...prev, [modal.groupID!]: [...(prev[modal.groupID!]||[]), newCourse]}));
           message.success('添加课程成功');
         } else if (modal.mode === 'edit' && modal.groupID && modal.course) {
@@ -123,6 +153,54 @@ const CourseListPagePath: React.FC = () => {
 
   const handleModalCancel = () => setModal({visible: false, type: null, mode: 'add'});
 
+  // 学生端退课
+  const handleDropCourse = async (courseID: string) => {
+    setLoading(true);
+    const ok = await mockDropCourse(userID, courseID);
+    if (ok) {
+      setStudentCourses(studentCourses.filter(c => c.courseID !== courseID));
+      message.success('已退课');
+    } else {
+      message.error('退课失败');
+    }
+    setLoading(false);
+  };
+
+  // 渲染
+  if (userRole === UserRole.student) {
+    // 学生视图
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-100 to-purple-200 py-12 px-2">
+        <div className="w-full max-w-3xl bg-white rounded-3xl shadow-xl p-8 mt-8">
+          <h2 className="text-3xl font-extrabold mb-8 text-center text-purple-700 drop-shadow">我已选的课程</h2>
+          <List
+            bordered
+            loading={loading}
+            dataSource={studentCourses}
+            locale={{emptyText: '暂无已选课程'}}
+            renderItem={course => (
+              <List.Item
+                className="rounded-lg border border-purple-100 my-2 bg-purple-50"
+                actions={[
+                  <Popconfirm title="确定要退选该课程吗？" onConfirm={() => handleDropCourse(course.courseID)}>
+                    <Button size="small" danger style={{ background: '#f3e8ff', color: '#a21caf', border: 'none' }}>退课</Button>
+                  </Popconfirm>
+                ]}
+              >
+                <div>
+                  <div className="text-purple-900 font-medium">{course.location} <span className="text-purple-400">(容量: {course.capacity})</span></div>
+                  <div className="text-purple-700 text-sm">课程ID: {course.courseID}</div>
+                  <div className="text-purple-700 text-sm">教师ID: {course.teacherID}</div>
+                </div>
+              </List.Item>
+            )}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // 老师视图
   return (
     <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-100 to-purple-200 py-12 px-2">
       <div className="w-full max-w-3xl bg-white rounded-3xl shadow-xl p-8 mt-8">
@@ -162,7 +240,11 @@ const CourseListPagePath: React.FC = () => {
                       </Popconfirm>
                     ]}
                   >
-                    <div className="text-purple-900 font-medium">{course.location} <span className="text-purple-400">(容量: {course.capacity})</span></div>
+                    <div>
+                      <div className="text-purple-900 font-medium">{course.location} <span className="text-purple-400">(容量: {course.capacity})</span></div>
+                      <div className="text-purple-700 text-sm">课程ID: {course.courseID}</div>
+                      <div className="text-purple-700 text-sm">学生数: {course.studentList.length}</div>
+                    </div>
                   </List.Item>
                 )}
               />
@@ -179,15 +261,19 @@ const CourseListPagePath: React.FC = () => {
         >
           <Form form={form} layout="vertical">
             {modal.type === 'group' && <>
-              <Form.Item name="groupName" label={<span className="text-purple-700">课程组名称</span>} rules={[{ required: true, message: '请输入课程组名称' }]}>\n                <Input className="border-purple-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 rounded-xl" />
+              <Form.Item name="groupName" label={<span className="text-purple-700">课程组名称</span>} rules={[{ required: true, message: '请输入课程组名称' }]}>
+                <Input className="border-purple-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 rounded-xl" />
               </Form.Item>
-              <Form.Item name="credits" label={<span className="text-purple-700">学分</span>} rules={[{ required: true, message: '请输入学分' }]}>\n                <Input type="number" className="border-purple-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 rounded-xl" />
+              <Form.Item name="credits" label={<span className="text-purple-700">学分</span>} rules={[{ required: true, message: '请输入学分' }]}>
+                <Input type="number" className="border-purple-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 rounded-xl" />
               </Form.Item>
             </>}
             {modal.type === 'course' && <>
-              <Form.Item name="location" label={<span className="text-purple-700">上课地点</span>} rules={[{ required: true, message: '请输入上课地点' }]}>\n                <Input className="border-purple-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 rounded-xl" />
+              <Form.Item name="location" label={<span className="text-purple-700">上课地点</span>} rules={[{ required: true, message: '请输入上课地点' }]}>
+                <Input className="border-purple-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 rounded-xl" />
               </Form.Item>
-              <Form.Item name="capacity" label={<span className="text-purple-700">容量</span>} rules={[{ required: true, message: '请输入容量' }]}>\n                <Input type="number" className="border-purple-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 rounded-xl" />
+              <Form.Item name="capacity" label={<span className="text-purple-700">容量</span>} rules={[{ required: true, message: '请输入容量' }]}>
+                <Input type="number" className="border-purple-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 rounded-xl" />
               </Form.Item>
             </>}
           </Form>
