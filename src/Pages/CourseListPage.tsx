@@ -46,7 +46,7 @@ const userRole: UserRole = UserRole.student; // 或 UserRole.teacher
 
 export const courseListPagePath = '/course-list';
 
-const CourseListPagePath: React.FC = () => {
+export const CourseListPagePath: React.FC = () => {
   const [groups, setGroups] = useState<CourseGroup[]>([]);
   const [expanded, setExpanded] = useState<string[]>([]);
   const [courses, setCourses] = useState<Record<string, Course[]>>({});
