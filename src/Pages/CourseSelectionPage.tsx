@@ -1,6 +1,7 @@
 // CourseSelectionPage.tsx
 import React, { useEffect, useState } from 'react';
 import { Input, Button, List, message, Form, Row, Col, Tag } from 'antd';
+import DefaultLayout from '../Layouts/DefaultLayout'; // 确保路径正确
 
 // 假设Course类型如下
 type Course = {
@@ -113,6 +114,7 @@ export const CourseSelectionPage: React.FC = () => {
     }
   };
 
+  const renderContent = () => {
   return (
     <div className="min-h-screen flex flex-col items-center bg-gradient-to-br from-purple-100 to-purple-200 py-12 px-2">
       <div className="w-full max-w-4xl bg-white rounded-3xl shadow-xl p-8 mt-8">
@@ -181,6 +183,14 @@ export const CourseSelectionPage: React.FC = () => {
       </div>
     </div>
   );
+ }
+    return (
+        <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-100 to-purple-200 py-12 px-2">
+        <DefaultLayout>
+            {renderContent()}
+        </DefaultLayout>
+        </div>
+    );
 };
 
 export default CourseSelectionPage;
