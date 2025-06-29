@@ -1,0 +1,51 @@
+/* Components/Sidebars/ConfigurableSidebar.css*/
+
+.custom-sider {
+  background: inherit !important; /* 改为继承配置的颜色 */
+}
+
+.custom-sider .logo-container {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 16px 0;
+}
+
+.custom-sider .logo-text {
+  font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  color: #333;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.custom-menu {
+  font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif !important;
+  border-right: none !important;
+}
+
+.custom-menu .ant-menu-item {
+  margin: 8px 0 !important;
+  padding: 0 16px !important;
+  width: calc(100% - 24px) !important;
+  margin-left: 12px !important;
+  border-radius: 8px !important;
+}
+
+.custom-menu .ant-menu-item a {
+  display: block;
+  width: 100%;
+}
+
+.custom-sider.ant-layout-sider-collapsed .custom-menu .ant-menu-item {
+  margin-left: 0 !important;
+  padding: 0 calc(50% - 12px) !important;
+}
+
+.sidebar-footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  padding: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
