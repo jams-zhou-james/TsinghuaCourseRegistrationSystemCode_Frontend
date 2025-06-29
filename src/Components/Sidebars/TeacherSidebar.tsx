@@ -19,15 +19,6 @@ const TeacherSidebar: React.FC<TeacherSidebarProps> = ({ collapsed, onCollapse }
         <Menu.Item key="1" icon={<HomeOutlined />}>
           <Link to="/my-courses">我的课程</Link>
         </Menu.Item>
-        <Menu.Item key="2" icon={<BookOutlined />}>
-          <Link to="/course-management">课程管理</Link>
-        </Menu.Item>
-        <Menu.Item key="3" icon={<UserOutlined />}>
-          <Link to="/student-management">学生管理</Link>
-        </Menu.Item>
-        <Menu.Item key="4" icon={<BookOutlined />}>
-          <Link to="/grade-management">成绩录入</Link>
-        </Menu.Item>
       </Menu>
     </Sider>
   );

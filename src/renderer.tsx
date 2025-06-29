@@ -7,6 +7,7 @@ import LoginPage, {loginPagePath} from "Pages/LoginPage";
 import CourseListPage, {courseListPagePath} from "Pages/CourseListPage";
 // import { Course } from 'Plugins/CourseService/Objects/Course';
 import {courseSelectionPagePath, CourseSelectionPage} from 'Pages/CourseSelectionPage';
+import UserManagementPage, { userManagementPagePath } from 'Pages/Admin/UserManagementPage';
 
 const Layout = () => {
     return (
@@ -17,6 +18,7 @@ const Layout = () => {
                 <Route path={loginPagePath} exact component={LoginPage} />
                 <Route path={courseListPagePath} exact component={CourseListPage} />
                 <Route path={courseSelectionPagePath} exact component = {CourseSelectionPage} />
+                <Route path={userManagementPagePath} exact component={UserManagementPage} />
                 {/* <Route path={bookPagePath} exact component={BookPage} /> */}
             </Switch>
         </HashRouter>

@@ -22,9 +22,6 @@ const StudentSidebar: React.FC<StudentSidebarProps> = ({ collapsed, onCollapse }
         <Menu.Item key="2" icon={<SolutionOutlined />}>
           <Link to="/course-selection">选课中心</Link>
         </Menu.Item>
-        <Menu.Item key="3" icon={<SolutionOutlined />}>
-          <Link to="/grades">我的成绩</Link>
-        </Menu.Item>
       </Menu>
     </Sider>
   );

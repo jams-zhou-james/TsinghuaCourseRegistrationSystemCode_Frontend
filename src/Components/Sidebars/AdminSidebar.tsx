@@ -16,14 +16,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed, onCollapse }) =>
     <Sider collapsible collapsed={collapsed} onCollapse={onCollapse}>
       <div className="logo" />
       <Menu theme="dark" defaultSelectedKeys={['1']} mode="inline">
-        <Menu.Item key="1" icon={<DashboardOutlined />}>
-          <Link to="/admin/dashboard">控制面板</Link>
-        </Menu.Item>
         <Menu.Item key="2" icon={<UserOutlined />}>
           <Link to="/admin/user-management">用户管理</Link>
-        </Menu.Item>
-        <Menu.Item key="3" icon={<UserOutlined />}>
-          <Link to="/admin/teacher-management">教师管理</Link>
         </Menu.Item>
         <Menu.Item key="4" icon={<SettingOutlined />}>
           <Link to="/admin/system-settings">系统设置</Link>
