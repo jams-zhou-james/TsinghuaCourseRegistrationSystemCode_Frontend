@@ -1,9 +1,10 @@
 // components/sidebars/TeacherSidebar.tsx
 import React from 'react';
-import { Layout, Menu } from 'antd';
+import { ConfigProvider, Layout, Menu } from 'antd';
 import { Link } from 'react-router-dom';
 import { HomeOutlined, UserOutlined, BookOutlined } from '@ant-design/icons';
 import { teacherCourseListPagePath } from 'Pages/Teacher/CourseListPage';
+import { purpleTheme } from '../../Components/Themes/Themes';
 
 const { Sider } = Layout;
 
@@ -14,6 +15,7 @@ interface TeacherSidebarProps {
 
 const TeacherSidebar: React.FC<TeacherSidebarProps> = ({ collapsed, onCollapse }) => {
   return (
+  <ConfigProvider theme={purpleTheme}>
     <Sider collapsible collapsed={collapsed} onCollapse={onCollapse}>
       <div className="logo" />
       <Menu theme="dark" defaultSelectedKeys={['1']} mode="inline">
@@ -22,6 +24,7 @@ const TeacherSidebar: React.FC<TeacherSidebarProps> = ({ collapsed, onCollapse }
         </Menu.Item>
       </Menu>
     </Sider>
+  </ConfigProvider>
   );
 };
 

@@ -1,10 +1,11 @@
 // components/sidebars/AdminSidebar.tsx
 import React from 'react';
-import { Layout, Menu } from 'antd';
+import { ConfigProvider, Layout, Menu } from 'antd';
 import { Link } from 'react-router-dom';
 import { DashboardOutlined, UserOutlined, SettingOutlined } from '@ant-design/icons';
 import { userManagementPagePath } from 'Pages/Admin/UserManagementPage';
 import { systemSettingsPagePath } from 'Pages/Admin/SystemSettingsPage';
+import { purpleTheme } from '../Themes/Themes';
 
 const { Sider } = Layout;
 
@@ -15,6 +16,7 @@ interface AdminSidebarProps {
 
 const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed, onCollapse }) => {
   return (
+  <ConfigProvider theme={purpleTheme}>
     <Sider collapsible collapsed={collapsed} onCollapse={onCollapse}>
       <div className="logo" />
       <Menu theme="dark" defaultSelectedKeys={['1']} mode="inline">
@@ -29,6 +31,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed, onCollapse }) =>
         </Menu.Item>
       </Menu>
     </Sider>
+  </ConfigProvider>
   );
 };
 
