@@ -45,3 +45,23 @@
   background: #ffd6e7 !important;
   border-top: 1px solid rgba(255, 255, 255, 0.2);
 }
+
+/* 修复选中项偏移问题 */
+.custom-menu .ant-menu-item {
+  margin: 8px 0 !important;      /* 改为0，使用padding控制间距 */
+  padding: 0 16px !important;    /* 添加水平padding */
+  width: calc(100% - 24px) !important; /* 防止溢出 */
+  margin-left: 12px !important;  /* 用margin-left替代margin */
+}
+
+/* 确保链接元素填满整个菜单项 */
+.custom-menu .ant-menu-item a {
+  display: block;
+  width: 100%;
+}
+
+/* 修复折叠状态下的问题 */
+.custom-sider.ant-layout-sider-collapsed .custom-menu .ant-menu-item {
+  margin-left: 0 !important;
+  padding: 0 calc(50% - 12px) !important; /* 居中图标 */
+}
