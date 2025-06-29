@@ -4,6 +4,7 @@ import { Layout, Menu } from 'antd';
 import { Link } from 'react-router-dom';
 import { DashboardOutlined, UserOutlined, SettingOutlined } from '@ant-design/icons';
 import { userManagementPagePath } from 'Pages/Admin/UserManagementPage';
+import { systemSettingsPagePath } from 'Pages/Admin/SystemSettingsPage';
 
 const { Sider } = Layout;
 
@@ -21,7 +22,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed, onCollapse }) =>
           <Link to={userManagementPagePath}>用户管理</Link>
         </Menu.Item>
         <Menu.Item key="4" icon={<SettingOutlined />}>
-          <Link to="/admin/system-settings">系统设置</Link>
+          <Link to={systemSettingsPagePath}>系统设置</Link>
         </Menu.Item>
         <Menu.Item key="5" icon={<SettingOutlined />}>
           <Link to="/admin/audit-logs">审计日志</Link>
