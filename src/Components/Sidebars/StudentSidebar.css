@@ -1,0 +1,47 @@
+.custom-sider {
+  background: #ffd6e7 !important;
+}
+
+.custom-sider .logo-container {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 16px 0;
+}
+
+.custom-sider .logo-text {
+  font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  color: #333;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.custom-menu {
+  font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif !important;
+  border-right: none !important;
+}
+
+.custom-menu .ant-menu-item {
+  margin: 8px 12px !important;
+  border-radius: 8px !important;
+  color: #333 !important;
+}
+
+.custom-menu .ant-menu-item-selected {
+  background: #ff85c0 !important;
+  color: white !important;
+}
+
+.custom-menu .ant-menu-item:hover {
+  background: rgba(255, 133, 192, 0.3) !important;
+}
+
+.sidebar-footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  padding: 16px;
+  background: #ffd6e7 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
