@@ -1,22 +1,28 @@
-// layouts/WithSidebarLayout.tsx
+// layouts/WithRoleBasedSidebarLayout.tsx
 import React, { useState } from 'react';
 import { Layout } from 'antd';
-import DefaultSidebar from '../Components/Sidebar';
+import { UserRole } from 'Plugins/UserService/Objects/UserRole';
+import DynamicSidebar from '../Components/Sidebars/DynamicSidebar';
 
 const { Content } = Layout;
 
-interface WithSidebarLayoutProps {
+interface WithRoleBasedSidebarLayoutProps {
   children: React.ReactNode;
+  role: UserRole;
 }
 
-const DefaultLayout: React.FC<WithSidebarLayoutProps> = ({ children }) => {
+const DefaultLayout: React.FC<WithRoleBasedSidebarLayoutProps> = ({ 
+  children, 
+  role 
+}) => {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <DefaultSidebar 
+      <DynamicSidebar 
+        role={role} 
         collapsed={collapsed} 
-        onCollapse={(value) => setCollapsed(value)} 
+        onCollapse={setCollapsed} 
       />
       <Layout>
         <Content style={{ margin: '24px 16px', padding: 24 }}>

@@ -2,6 +2,8 @@
 import React, { useEffect, useState } from 'react';
 import { Input, Button, List, message, Form, Row, Col, Tag } from 'antd';
 import DefaultLayout from '../Layouts/DefaultLayout'; // 确保路径正确
+import { UserRole } from 'Plugins/UserService/Objects/UserRole';
+// import { Course } from 'Plugins/CourseService/Objects/Course';
 
 // 假设Course类型如下
 type Course = {
@@ -15,6 +17,8 @@ type Course = {
   waitingList: string[];
   location: string;
 };
+
+const userRole: UserRole = UserRole.student;
 
 // 假设学生ID
 const userID = 'student1';
@@ -186,7 +190,7 @@ export const CourseSelectionPage: React.FC = () => {
  }
     return (
         <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-100 to-purple-200 py-12 px-2">
-        <DefaultLayout>
+        <DefaultLayout role={userRole}>
             {renderContent()}
         </DefaultLayout>
         </div>
