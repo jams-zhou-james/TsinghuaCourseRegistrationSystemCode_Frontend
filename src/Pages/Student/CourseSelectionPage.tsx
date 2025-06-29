@@ -1,7 +1,7 @@
 // CourseSelectionPage.tsx
 import React, { useEffect, useState } from 'react';
 import { Input, Button, List, message, Form, Row, Col, Tag } from 'antd';
-import DefaultLayout from '../Layouts/DefaultLayout'; // 确保路径正确
+import DefaultLayout from '../../Layouts/DefaultLayout'; // 确保路径正确
 import { UserRole } from 'Plugins/UserService/Objects/UserRole';
 // import { Course } from 'Plugins/CourseService/Objects/Course';
 

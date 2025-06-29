@@ -3,6 +3,7 @@ import React from 'react';
 import { Layout, Menu } from 'antd';
 import { Link } from 'react-router-dom';
 import { HomeOutlined, UserOutlined, BookOutlined } from '@ant-design/icons';
+import { teacherCourseListPagePath } from 'Pages/Teacher/CourseListPage';
 
 const { Sider } = Layout;
 
@@ -17,7 +18,7 @@ const TeacherSidebar: React.FC<TeacherSidebarProps> = ({ collapsed, onCollapse }
       <div className="logo" />
       <Menu theme="dark" defaultSelectedKeys={['1']} mode="inline">
         <Menu.Item key="1" icon={<HomeOutlined />}>
-          <Link to="/my-courses">我的课程</Link>
+          <Link to={teacherCourseListPagePath}>我的课程</Link>
         </Menu.Item>
       </Menu>
     </Sider>

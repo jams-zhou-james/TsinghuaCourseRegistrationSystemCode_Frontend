@@ -31,13 +31,6 @@ const DefaultLayout: React.FC<WithRoleBasedSidebarLayoutProps> = ({
       </Layout>
     </Layout>
   );
-  return (
-      <DefaultLayout role={userRole}>
-        <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-100 to-purple-200 py-12 px-2">
-          {renderContent()}
-        </div>
-      </DefaultLayout>
-    );
 };
 
 export default DefaultLayout;

@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import {useHistory} from "react-router";
 import { setUserToken } from "Globals/GlobalStore";
-import {courseListPagePath} from "Pages/CourseListPage";
+// import {courseListPagePath} from "Pages/CourseListPage";
 // import {registerPagePath} from "Pages/RegisterPage";
 import {LoginMessage} from "Plugins/UserService/APIs/LoginMessage";
 
@@ -17,14 +17,14 @@ export default function LoginPage() {
         e.preventDefault();
 
         
-        history.push(courseListPagePath); 
+        // history.push(courseListPagePath); 
         try {
             console.log("sent!")
             new LoginMessage(username, password).send(
                 (info:string)=>{
                     const token=JSON.parse(info)
                     setUserToken(token)
-                    history.push(courseListPagePath);
+                    // history.push(courseListPagePath);
                 }
             )
         } catch (err: any) {// for testing

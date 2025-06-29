@@ -3,7 +3,7 @@ import { CourseGroup } from 'Plugins/CourseService/Objects/CourseGroup';
 import { Course } from 'Plugins/CourseService/Objects/Course';
 import { UserRole } from 'Plugins/UserService/Objects/UserRole';
 import { Button, Collapse, List, Modal, Input, Form, Popconfirm, message, Tag } from 'antd';
-import DefaultLayout from '../Layouts/DefaultLayout';
+import DefaultLayout from '../../Layouts/DefaultLayout';
 
 // TODO: Replace with real API calls
 const mockFetchCourseGroups = async (): Promise<CourseGroup[]> => {
@@ -13,41 +13,14 @@ const mockFetchCourseGroups = async (): Promise<CourseGroup[]> => {
   ];
 };
 
-const mockFetchCourses = async (groupID: string, teacherID: string): Promise<Course[]> => {
-  if (groupID === 'g1') {
-    return [
-      new Course('c1', 'g1', teacherID, 30, [], ['student1', 'student2'], [], '教室A'),
-      new Course('c2', 'g1', teacherID, 25, [], [], [], '教室B'),
-    ];
-  }
-  if (groupID === 'g2') {
-    return [
-      new Course('c3', 'g2', teacherID, 40, [], ['student1'], [], '教室C'),
-    ];
-  }
-  return [];
-};
-
-const mockFetchStudentCourses = async (studentID: string): Promise<Course[]> => {
-  // 假设学生选了c1和c3
-  return [
-    new Course('c1', 'g1', 'teacher1', 30, [], ['student1', 'student2'], [], '教室A'),
-    new Course('c3', 'g2', 'teacher2', 40, [], ['student1'], [], '教室C'),
-  ];
-};
-
-const mockDropCourse = async (studentID: string, courseID: string) => {
-  // 模拟退课
-  return true;
-};
 
 // TODO: 从全局store获取
-const userID = 'student1'; // 或 'teacher1'
-const userRole: UserRole = UserRole.student; // 或 UserRole.teacher
+const userID = 'teacher1'; // 或 'teacher1'
+const userRole: UserRole = UserRole.teacher; // 或 UserRole.teacher
 
-export const courseListPagePath = '/course-list';
+export const teacherCourseListPagePath = '/course-list';
 
-export const CourseListPagePath: React.FC = () => {
+export const TeacherCourseListPage: React.FC = () => {
   const [groups, setGroups] = useState<CourseGroup[]>([]);
   const [expanded, setExpanded] = useState<string[]>([]);
   const [courses, setCourses] = useState<Record<string, Course[]>>({});
@@ -58,37 +31,14 @@ export const CourseListPagePath: React.FC = () => {
 
   // 老师加载课程组和课程
   useEffect(() => {
-    if (userRole === UserRole.teacher) {
       setLoading(true);
       mockFetchCourseGroups().then(gs => {
         setGroups(gs.filter(g => g.authorizedTeacherIDs.includes(userID)));
         setLoading(false);
       });
-    }
   }, []);
 
-  // 学生加载已选课程
-  useEffect(() => {
-    if (userRole === UserRole.student) {
-      setLoading(true);
-      mockFetchStudentCourses(userID).then(cs => {
-        setStudentCourses(cs);
-        setLoading(false);
-      });
-    }
-  }, []);
 
-  const handleExpand = async (groupID: string) => {
-    if (!expanded.includes(groupID)) {
-      setLoading(true);
-      const cs = await mockFetchCourses(groupID, userID);
-      setCourses(prev => ({...prev, [groupID]: cs}));
-      setLoading(false);
-      setExpanded([...expanded, groupID]);
-    } else {
-      setExpanded(expanded.filter(id => id !== groupID));
-    }
-  };
 
   // 老师端：增删改课程组/课程
   const handleAddGroup = () => {
@@ -154,55 +104,8 @@ export const CourseListPagePath: React.FC = () => {
 
   const handleModalCancel = () => setModal({visible: false, type: null, mode: 'add'});
 
-  // 学生端退课
-  const handleDropCourse = async (courseID: string) => {
-    setLoading(true);
-    const ok = await mockDropCourse(userID, courseID);
-    if (ok) {
-      setStudentCourses(studentCourses.filter(c => c.courseID !== courseID));
-      message.success('已退课');
-    } else {
-      message.error('退课失败');
-    }
-    setLoading(false);
-  };
-
   const renderContent = () => {
   // 渲染
-  if (userRole === UserRole.student) {
-    // 学生视图
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-100 to-purple-200 py-12 px-2">
-        <div className="w-full max-w-3xl bg-white rounded-3xl shadow-xl p-8 mt-8">
-          <h2 className="text-3xl font-extrabold mb-8 text-center text-purple-700 drop-shadow">我已选的课程</h2>
-          <List
-            bordered
-            loading={loading}
-            dataSource={studentCourses}
-            locale={{emptyText: '暂无已选课程'}}
-            renderItem={course => (
-              <List.Item
-                className="rounded-lg border border-purple-100 my-2 bg-purple-50"
-                actions={[
-                  <Popconfirm title="确定要退选该课程吗？" onConfirm={() => handleDropCourse(course.courseID)}>
-                    <Button size="small" danger style={{ background: '#f3e8ff', color: '#a21caf', border: 'none' }}>退课</Button>
-                  </Popconfirm>
-                ]}
-              >
-                <div>
-                  <div className="text-purple-900 font-medium">{course.location} <span className="text-purple-400">(容量: {course.capacity})</span></div>
-                  <div className="text-purple-700 text-sm">课程ID: {course.courseID}</div>
-                  <div className="text-purple-700 text-sm">教师ID: {course.teacherID}</div>
-                </div>
-              </List.Item>
-            )}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  // 老师视图
   return (
     <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-100 to-purple-200 py-12 px-2">
       <div className="w-full max-w-3xl bg-white rounded-3xl shadow-xl p-8 mt-8">
@@ -294,4 +197,4 @@ export const CourseListPagePath: React.FC = () => {
   );
 };
 
-export default CourseListPagePath;
+export default TeacherCourseListPage;
