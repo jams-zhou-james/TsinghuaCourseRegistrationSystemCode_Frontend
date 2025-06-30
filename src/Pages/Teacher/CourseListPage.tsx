@@ -3,7 +3,7 @@ import { CourseGroup } from 'Plugins/CourseService/Objects/CourseGroup';
 import { Course } from 'Plugins/CourseService/Objects/Course';
 import { UserRole } from 'Plugins/UserService/Objects/UserRole';
 import { Button, Collapse, List, Modal, Input, Form, Popconfirm, message, Tag } from 'antd';
-import DefaultLayout from '../../Layouts/DefaultLayout';
+import WithRoleBasedSidebarLayout from '../../Layouts/WithRoleBasedSidebarLayout';
 
 // TODO: Replace with real API calls
 const mockFetchCourseGroups = async (): Promise<CourseGroup[]> => {
@@ -189,11 +189,11 @@ export const TeacherCourseListPage: React.FC = () => {
   }
   
   return (
-    <DefaultLayout role={userRole}>
+    <WithRoleBasedSidebarLayout role={userRole}>
       <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-100 to-purple-200 py-12 px-2">
         {renderContent()}
       </div>
-    </DefaultLayout>
+    </WithRoleBasedSidebarLayout>
   );
 };
 

@@ -3,7 +3,7 @@ import { CourseGroup } from 'Plugins/CourseService/Objects/CourseGroup';
 import { Course } from 'Plugins/CourseService/Objects/Course';
 import { UserRole } from 'Plugins/UserService/Objects/UserRole';
 import { Button, Collapse, List, Modal, Input, Form, Popconfirm, message, Tag } from 'antd';
-import DefaultLayout from '../../Layouts/DefaultLayout';
+import DefaultLayout from '../../Layouts/WithRoleBasedSidebarLayout';
 
 // TODO: Replace with real API calls
 const mockFetchCourseGroups = async (): Promise<CourseGroup[]> => {

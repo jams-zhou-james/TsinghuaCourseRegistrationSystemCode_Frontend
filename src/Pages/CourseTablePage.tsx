@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import './CourseTablePage.css';
 import { UserRole } from 'Plugins/UserService/Objects/UserRole';
-import DefaultLayout from '../Layouts/DefaultLayout';
+import WithRoleBasedSidebarLayout from '../Layouts/WithRoleBasedSidebarLayout';
 
 // 定义课程类型
 interface Course {
@@ -201,11 +201,11 @@ const CourseTablePage: React.FC = () => {
   );
 }
     return (
-    <DefaultLayout role={UserRole.student}>
+    <WithRoleBasedSidebarLayout role={UserRole.student}>
       <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-100 to-purple-200 py-12 px-2">
         {renderContent()}
       </div>
-    </DefaultLayout>
+    </WithRoleBasedSidebarLayout>
   );
 };
 

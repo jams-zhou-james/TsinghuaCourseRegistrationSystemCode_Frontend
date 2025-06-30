@@ -11,7 +11,7 @@ interface WithRoleBasedSidebarLayoutProps {
   role: UserRole;
 }
 
-const DefaultLayout: React.FC<WithRoleBasedSidebarLayoutProps> = ({ 
+const WithRoleBasedSidebarLayout: React.FC<WithRoleBasedSidebarLayoutProps> = ({ 
   children, 
   role 
 }) => {
@@ -33,4 +33,4 @@ const DefaultLayout: React.FC<WithRoleBasedSidebarLayoutProps> = ({
   );
 };
 
-export default DefaultLayout;
+export default WithRoleBasedSidebarLayout;

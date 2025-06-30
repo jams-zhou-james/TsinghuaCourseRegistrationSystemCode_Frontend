@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Card, Switch, Button, Typography, Divider, message } from 'antd';
-import DefaultLayout from '../../Layouts/DefaultLayout';
+import DefaultLayout from '../../Layouts/WithRoleBasedSidebarLayout';
 import { UserRole } from '../../Plugins/UserService/Objects/UserRole';
 
 export const systemSettingsPagePath = '/admin/system-settings';

@@ -8,7 +8,7 @@ import { UpdateUserInfoMessage } from 'Plugins/UserService/APIs/UpdateUserInfoMe
 import { DeleteUserMessage } from 'Plugins/UserService/APIs/DeleteUserMessage';
 import { Token } from 'Plugins/AuthService/Objects/Token';
 import { API } from 'Plugins/CommonUtils/Send/API';
-import DefaultLayout from '../../Layouts/DefaultLayout';
+import WithRoleBasedSidebarLayout from '../../Layouts/WithRoleBasedSidebarLayout';
 
 // 假设有全局获取管理员Token的方法
 declare function getAdminToken(): Token;
@@ -185,11 +185,11 @@ const UserManagementPage: React.FC = () => {
     );
     };
     return (
-    <DefaultLayout role={userRole}>
+    <WithRoleBasedSidebarLayout role={userRole}>
       <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-100 to-purple-200 py-12 px-2">
         {renderContent()}
       </div>
-    </DefaultLayout>
+    </WithRoleBasedSidebarLayout>
   );
 };
 
