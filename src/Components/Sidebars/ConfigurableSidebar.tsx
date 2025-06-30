@@ -2,19 +2,29 @@
 import { ConfigProvider, Layout, Menu } from 'antd';
 import { Link } from 'react-router-dom';
 import React from 'react';
-import './ConfigurableSidebar.css'; // 使用原版CSS逻辑
+import './ConfigurableSidebar.css';
 
 const { Sider } = Layout;
 
 interface MenuItem {
   key: string;
-  icon: React.ReactNode; // 直接要求传入JSX元素（如<HomeOutlined />）
+  icon: React.ReactNode;
   label: string;
   path: string;
 }
 
-interface SidebarConfig {
+interface GradientConfig {
+  direction: string;
+  colors: {
+    start: string;
+    middle: string;
+    end: string;
+  };
+}
+
+export interface SidebarConfig {
   theme: {
+    gradient: GradientConfig;
     siderBg: string;
     menuItemColor: string;
     menuItemSelectedColor: string;
@@ -39,7 +49,7 @@ interface ConfigurableSidebarProps {
 const ConfigurableSidebar: React.FC<ConfigurableSidebarProps> = ({ 
   collapsed, 
   onCollapse,
-  config 
+  config
 }) => {
   return (
     <ConfigProvider
@@ -69,7 +79,14 @@ const ConfigurableSidebar: React.FC<ConfigurableSidebarProps> = ({
         collapsed={collapsed} 
         onCollapse={onCollapse}
         className="custom-sider"
-        style={{ background: config.theme.siderBg }} // 双重保障
+        style={{
+          background: `linear-gradient(
+            ${config.theme.gradient.direction}, 
+            ${config.theme.gradient.colors.start}, 
+            ${config.theme.gradient.colors.middle} 50%, 
+            ${config.theme.gradient.colors.end}
+          )`
+        }}
       >
         <div className="logo-container">
           {!collapsed && <span className="logo-text">{config.title.full}</span>}
@@ -96,3 +113,4 @@ const ConfigurableSidebar: React.FC<ConfigurableSidebarProps> = ({
 };
 
 export default ConfigurableSidebar;
+

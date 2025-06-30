@@ -3,7 +3,15 @@ import React from 'react';
 import ConfigurableSidebar from './ConfigurableSidebar';
 import { studentSidebarConfig } from './Configs/StudentConfig';
 
-const StudentSidebar = ({ collapsed, onCollapse }) => {
+interface StudentSidebarProps {
+  collapsed: boolean;
+  onCollapse: (collapsed: boolean) => void;
+}
+
+const StudentSidebar: React.FC<StudentSidebarProps> = ({ 
+  collapsed, 
+  onCollapse 
+}) => {
   return (
     <ConfigurableSidebar 
       collapsed={collapsed}
@@ -14,3 +22,4 @@ const StudentSidebar = ({ collapsed, onCollapse }) => {
 };
 
 export default StudentSidebar;
+

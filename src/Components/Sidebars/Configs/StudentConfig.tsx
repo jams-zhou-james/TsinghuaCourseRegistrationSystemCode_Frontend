@@ -1,35 +1,45 @@
-// Configs/StudentConfig.tsx
+// Components/Sidebars/Configs/StudentConfig.tsx
 import { HomeOutlined, SolutionOutlined } from '@ant-design/icons';
 import { studentCourseListPagePath } from 'Pages/Student/CourseListPage';
 import { courseSelectionPagePath } from 'Pages/Student/CourseSelectionPage';
+import { SidebarConfig } from 'Components/Sidebars/ConfigurableSidebar';
 import React from 'react';
 
-export const studentSidebarConfig = {
+export const studentSidebarConfig: SidebarConfig = {
   theme: {
-    siderBg: '#ffd6e7', // 原版粉色背景
+    gradient: {
+      direction: 'to bottom right',
+      colors: {
+        start: 'rgb(255, 222, 237)', // 半透明粉色
+        middle: 'rgb(253, 213, 230)', // 半透明浅粉色
+        end: 'rgb(254, 201, 226)' // 半透明粉色
+      }
+    },
+    siderBg: '#ffb6d8',
     menuItemColor: 'rgba(0, 0, 0, 0.85)',
     menuItemSelectedColor: '#fff',
     menuItemHoverColor: 'rgba(0, 0, 0, 0.85)',
     menuItemBg: 'transparent',
-    menuItemSelectedBg: '#ff85c0', // 原版选中粉色
-    menuItemHoverBg: 'rgba(255, 133, 192, 0.3)', // 原版悬停半透明粉
+    menuItemSelectedBg: '#ff85c0',
+    menuItemHoverBg: 'rgba(255, 214, 231, 0.6)'
   },
   title: {
     full: '学生系统',
-    collapsed: '学',
+    collapsed: '学'
   },
   menuItems: [
     {
       key: '1',
-      icon: <HomeOutlined />, // 必须传入JSX元素
+      icon: <HomeOutlined />,
       label: '我的课程',
-      path: studentCourseListPagePath,
+      path: studentCourseListPagePath
     },
     {
       key: '2',
       icon: <SolutionOutlined />,
       label: '选课中心',
-      path: courseSelectionPagePath,
-    },
-  ],
+      path: courseSelectionPagePath
+    }
+  ]
 };
+

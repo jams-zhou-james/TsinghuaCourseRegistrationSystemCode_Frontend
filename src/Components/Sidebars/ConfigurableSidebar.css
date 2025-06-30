@@ -1,8 +1,12 @@
-/* Components/Sidebars/ConfigurableSidebar.css*/
-
+/* Components/Sidebars/ConfigurableSidebar.css */
 .custom-sider {
-  background: inherit !important; /* 改为继承配置的颜色 */
+  /* background: inherit !important;  */
+  height: 100vh; 
+  position: relative;  
+  /* z-index: 1; 确保在最上层 */
+  overflow: hidden; /* 防止内容溢出 */
 }
+
 
 .custom-sider .logo-container {
   height: 64px;
@@ -10,6 +14,7 @@
   align-items: center;
   justify-content: center;
   margin: 16px 0;
+  background: transparent !important; /* 确保 logo 背景透明 */
 }
 
 .custom-sider .logo-text {
@@ -17,11 +22,13 @@
   color: #333;
   font-size: 18px;
   font-weight: 500;
+  background: transparent !important;
 }
 
 .custom-menu {
   font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif !important;
   border-right: none !important;
+  background: transparent !important; /* 菜单背景透明 */
 }
 
 .custom-menu .ant-menu-item {
@@ -30,11 +37,13 @@
   width: calc(100% - 24px) !important;
   margin-left: 12px !important;
   border-radius: 8px !important;
+  transition: all 0.3s !important; /* 添加过渡效果 */
 }
 
 .custom-menu .ant-menu-item a {
   display: block;
   width: 100%;
+  color: inherit !important; /* 继承文字颜色 */
 }
 
 .custom-sider.ant-layout-sider-collapsed .custom-menu .ant-menu-item {
@@ -48,4 +57,5 @@
   width: 100%;
   padding: 16px;
   border-top: 1px solid rgba(255, 255, 255, 0.2);
+  background: inherit !important; /* 继承渐变背景 */
 }
