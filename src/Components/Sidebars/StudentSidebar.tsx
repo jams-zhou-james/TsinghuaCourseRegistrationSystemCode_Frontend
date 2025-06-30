@@ -1,14 +1,10 @@
 // Components/Sidebars/StudentSidebar.tsx
 import React from 'react';
-import ConfigurableSidebar from './ConfigurableSidebar';
+import { ConfigurableSidebar, SidebarProps,  } from './ConfigurableSidebar';
 import { studentSidebarConfig } from './Configs/StudentConfig';
 
-interface StudentSidebarProps {
-  collapsed: boolean;
-  onCollapse: (collapsed: boolean) => void;
-}
 
-const StudentSidebar: React.FC<StudentSidebarProps> = ({ 
+const StudentSidebar: React.FC<SidebarProps> = ({ 
   collapsed, 
   onCollapse 
 }) => {

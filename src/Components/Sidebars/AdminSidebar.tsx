@@ -1,38 +1,21 @@
-// components/sidebars/AdminSidebar.tsx
+// Components/Sidebars/AdminSidebar.tsx
 import React from 'react';
-import { ConfigProvider, Layout, Menu } from 'antd';
-import { Link } from 'react-router-dom';
-import { DashboardOutlined, UserOutlined, SettingOutlined } from '@ant-design/icons';
-import { userManagementPagePath } from 'Pages/Admin/UserManagementPage';
-import { systemSettingsPagePath } from 'Pages/Admin/SystemSettingsPage';
-import { purpleTheme } from '../Themes/Themes';
+import { ConfigurableSidebar, SidebarProps,  } from './ConfigurableSidebar';
+import { adminSidebarConfig } from './Configs/AdminConfig';
 
-const { Sider } = Layout;
 
-interface AdminSidebarProps {
-  collapsed: boolean;
-  onCollapse: (collapsed: boolean) => void;
-}
-
-const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed, onCollapse }) => {
+const AdminSidebar: React.FC<SidebarProps> = ({ 
+  collapsed, 
+  onCollapse 
+}) => {
   return (
-  <ConfigProvider theme={purpleTheme}>
-    <Sider collapsible collapsed={collapsed} onCollapse={onCollapse}>
-      <div className="logo" />
-      <Menu theme="dark" defaultSelectedKeys={['1']} mode="inline">
-        <Menu.Item key="2" icon={<UserOutlined />}>
-          <Link to={userManagementPagePath}>用户管理</Link>
-        </Menu.Item>
-        <Menu.Item key="4" icon={<SettingOutlined />}>
-          <Link to={systemSettingsPagePath}>系统设置</Link>
-        </Menu.Item>
-        <Menu.Item key="5" icon={<SettingOutlined />}>
-          <Link to="/admin/audit-logs">审计日志</Link>
-        </Menu.Item>
-      </Menu>
-    </Sider>
-  </ConfigProvider>
+    <ConfigurableSidebar 
+      collapsed={collapsed}
+      onCollapse={onCollapse}
+      config={adminSidebarConfig}
+    />
   );
 };
 
 export default AdminSidebar;
+

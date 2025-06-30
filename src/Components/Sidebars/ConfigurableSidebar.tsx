@@ -46,7 +46,7 @@ interface ConfigurableSidebarProps {
   config: SidebarConfig;
 }
 
-const ConfigurableSidebar: React.FC<ConfigurableSidebarProps> = ({ 
+export const ConfigurableSidebar: React.FC<ConfigurableSidebarProps> = ({ 
   collapsed, 
   onCollapse,
   config
@@ -112,5 +112,7 @@ const ConfigurableSidebar: React.FC<ConfigurableSidebarProps> = ({
   );
 };
 
-export default ConfigurableSidebar;
-
+export interface SidebarProps {
+  collapsed: boolean;
+  onCollapse: (collapsed: boolean) => void;
+}

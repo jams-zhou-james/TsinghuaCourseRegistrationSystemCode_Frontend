@@ -16,16 +16,16 @@ export const studentSidebarConfig: SidebarConfig = {
       }
     },
     siderBg: '#ffb6d8',
-    menuItemColor: 'rgba(0, 0, 0, 0.85)',
+    menuItemColor: 'rgba(198, 26, 26, 0.85)',
     menuItemSelectedColor: '#fff',
-    menuItemHoverColor: 'rgba(0, 0, 0, 0.85)',
+    menuItemHoverColor: 'rgb(255, 255, 255)',
     menuItemBg: 'transparent',
     menuItemSelectedBg: '#ff85c0',
-    menuItemHoverBg: 'rgba(255, 214, 231, 0.6)'
+    menuItemHoverBg: 'rgba(232, 64, 134, 0.87)'
   },
   title: {
-    full: '学生系统',
-    collapsed: '学'
+    full: 'THU选课系统',
+    collapsed: 'THU'
   },
   menuItems: [
     {
