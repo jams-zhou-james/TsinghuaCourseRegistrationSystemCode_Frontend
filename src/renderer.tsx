@@ -7,6 +7,7 @@ import UserManagementPage, { userManagementPagePath } from 'Pages/Admin/UserMana
 import TeacherCourseListPage, { teacherCourseListPagePath } from 'Pages/Teacher/CourseListPage';
 import StudentCourseListPage, { studentCourseListPagePath } from 'Pages/Student/CourseListPage';
 import SystemSettingsPage, { systemSettingsPagePath } from 'Pages/Admin/SystemSettingsPage';
+import CourseTablePage, { courseTablePagePath } from 'Pages/CourseTablePage';
 
 const Layout = () => {
     return (
@@ -20,6 +21,8 @@ const Layout = () => {
                 <Route path={courseSelectionPagePath} exact component = {CourseSelectionPage} />
                 <Route path={userManagementPagePath} exact component={UserManagementPage} />
                 <Route path={systemSettingsPagePath} exact component={SystemSettingsPage} />
+                <Route path={courseTablePagePath} exact component={CourseTablePage} />
+                {/* Uncomment the line below when BookPage is implemented */}"
                 {/* <Route path={bookPagePath} exact component={BookPage} /> */}
             </Switch>
         </HashRouter>

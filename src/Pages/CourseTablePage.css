@@ -1,0 +1,87 @@
+/* 整体缩小20% */
+.course-table-container {
+  margin: 16px; /* 原20px缩小20% */
+  font-family: Arial, sans-serif;
+  transform: scale(0.8);
+  transform-origin: top left;
+}
+
+.course-table-title {
+  font-size: 1.25rem; /* 原1.5rem缩小20% */
+  margin-bottom: 16px; /* 原20px缩小20% */
+}
+
+.course-table {
+  width: 125%;
+  border-collapse: collapse;
+  margin-top: 16px; /* 原20px缩小20% */
+  table-layout: fixed;
+  font-size: 1.0rem; /* 缩小字体 */
+}
+
+.course-table th, .course-table td {
+  border: 1px solid #333;
+  padding: 6px; /* 原8px缩小25% */
+  text-align: center;
+}
+
+.course-table th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+  border-bottom: 2px solid #333;
+  padding: 8px 6px; /* 调整上下padding */
+}
+
+.time-slot {
+  background-color: #f9f9f9;
+  font-weight: bold;
+  padding: 8px 6px; /* 调整上下padding */
+}
+
+.course-cell {
+  height: 64px; /* 原80px缩小20% */
+  vertical-align: top;
+  position: relative; /* 为悬停效果做准备 */
+}
+
+.course-info {
+  padding: 4px; /* 原5px缩小20% */
+  background-color: #e6f7ff;
+  border-radius: 3px; /* 原4px缩小25% */
+  height: calc(100% - 8px); /* 确保不超出单元格 */
+  margin: 2px; /* 添加微小边距 */
+  border: 1px solid #b3e0ff;
+  overflow: hidden; /* 防止内容溢出 */
+  transition: all 0.2s ease; /* 悬停动画效果 */
+}
+
+/* 悬停效果 */
+.course-cell:hover .course-info {
+  background-color: #cceeff;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+  transform: scale(1.03);
+  z-index: 1;
+}
+
+.course-name {
+  font-weight: bold;
+  margin-bottom: 2px; /* 原3px缩小33% */
+  font-size: 0.9em; /* 缩小字体 */
+}
+
+.course-teacher, .course-location {
+  font-size: 0.72em; /* 原0.9em缩小20% */
+  color: #555;
+  line-height: 1.2; /* 调整行高 */
+}
+
+/* 加载和错误状态也相应缩小 */
+.course-table-loading, .course-table-error {
+  text-align: center;
+  padding: 16px; /* 原20px缩小20% */
+  font-size: 0.96rem; /* 原1.2rem缩小20% */
+}
+
+.course-table-error {
+  color: #f44336;
+}
