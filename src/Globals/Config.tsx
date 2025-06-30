@@ -1,9 +1,12 @@
-const fs = require('fs')
-const process = require('process')
 export const slash = navigator.platform.indexOf('Win') > -1 ? '\\' : '/'
 
 // gitlab 配置参数：
 
+const isHttps = typeof window !== 'undefined' && window.location?.protocol === 'https:'
+const isElectron =
+    typeof window !== 'undefined' &&
+    window.process?.type === 'renderer' &&
+    window.require
 
 export function getAppPath(argv: string[]): string {
     let p = argv
@@ -20,20 +23,27 @@ export function getAppPath(argv: string[]): string {
 }
 
 export function readConfig() {
-    const outcome = {} as any
-    try {
-        const p = getAppPath(process.argv)
-        const info: string = fs.readFileSync(p + '/config.json', 'utf8')
-        console.log(info)
-        const data = JSON.parse(info)
-        outcome.hubURL = data.hubURL
+    const outcome: Record<string, any> = {}
+
+    if (isElectron) {
+        try {
+            const fs = window.require('fs')
+            const process = window.require('process')
+            const p = getAppPath(process.argv)
+            const info: string = fs.readFileSync(p + '/config.json', 'utf8')
+            const data = JSON.parse(info)
+            outcome.hubURL = data.hubURL
+            outcome.protocol = isHttps ? 'https' : 'http'
+        } catch (error) {
+            alert('Electron 配置读取失败: ' + error)
+        }
+    } else {
+        // Web 默认配置（你可以改成从环境变量或 fetch 读取）
+        outcome.hubURL = 'http://localhost:8000'
         outcome.protocol = isHttps ? 'https' : 'http'
-    } catch (error) {
-        alert('alerting:' + error)
     }
+
     return outcome
 }
-
-const isHttps = window.location.protocol === 'https:'
 
 export const config = readConfig()
