@@ -1,7 +1,8 @@
 // Components/Sidebars/Configs/StudentConfig.tsx
-import { HomeOutlined, SolutionOutlined } from '@ant-design/icons';
+import { HomeOutlined, SolutionOutlined, CalendarOutlined } from '@ant-design/icons';
 import { studentCourseListPagePath } from 'Pages/Student/CourseListPage';
 import { courseSelectionPagePath } from 'Pages/Student/CourseSelectionPage';
+import { courseTablePagePath } from 'Pages/CourseTablePage';
 import { SidebarConfig } from 'Components/Sidebars/ConfigurableSidebar';
 import React from 'react';
 
@@ -39,6 +40,12 @@ export const studentSidebarConfig: SidebarConfig = {
       icon: <SolutionOutlined />,
       label: '选课中心',
       path: courseSelectionPagePath
+    },
+    {
+      key: '3',
+      icon: <CalendarOutlined />,
+      label: '课程表',
+      path: courseTablePagePath
     }
   ]
 };
