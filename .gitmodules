@@ -1,0 +1,3 @@
+[submodule "src/Plugins"]
+	path = src/Plugins
+	url = https://github.com/LittleReuben/NewTsinghuaCourseRegistrationSystem_Plugins
