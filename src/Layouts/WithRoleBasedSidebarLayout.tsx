@@ -25,7 +25,7 @@ const WithRoleBasedSidebarLayout: React.FC<WithRoleBasedSidebarLayoutProps> = ({
         onCollapse={setCollapsed} 
       />
       <Layout>
-        <Content style={{ margin: '24px 16px', padding: 24 }}>
+        <Content style={{ margin: '0px 0px', padding: 0 }}>
           {children}
         </Content>
       </Layout>

@@ -135,7 +135,6 @@ const UserManagementPage: React.FC = () => {
       <BackgroundLayout
         gradient="linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)"
         contentMaxWidth="90%"
-        contentPadding={24}
         contentStyle={{ maxWidth: 1200 }}
       >
         <div style={{ width: '100%' }}>
