@@ -1,13 +1,29 @@
 import React, { useEffect, useState } from 'react';
-import { CourseGroup } from 'Plugins/CourseService/Objects/CourseGroup';
-import { Course } from 'Plugins/CourseService/Objects/Course';
-import { UserRole } from 'Plugins/UserService/Objects/UserRole';
+// import { CourseInfo } from 'Plugins/CourseService/Objects/Course';
+import { UserRole } from 'Plugins/UserAccountService/Objects/UserRole';
 import { Button, List, Popconfirm, message, Tag, Card, Avatar, Space, Typography, Divider } from 'antd';
 import { BookOutlined, UserOutlined, EnvironmentOutlined, CloseOutlined } from '@ant-design/icons';
 import DefaultLayout from '../../Layouts/WithRoleBasedSidebarLayout';
 import BackgroundLayout from '../../Layouts/BackgroundLayout';
 
 const { Title, Text } = Typography;
+
+// WANRING: THIS IS JUST TEMPORARY! TO BE REPLACED WITH ACTUAL COURSE OBJECTS
+class Course {
+    constructor(
+        public  courseID: string,
+        public  groupID: string,
+        public  teacherID: string,
+        public  capacity: number,
+        public  schedule: string[],
+        public  studentList: string[],
+        public  waitingList: string[],
+        public  location: string
+    ) {
+        
+    }
+}
+
 
 // 类型安全的mock数据函数
 const mockFetchStudentCourses = async (studentID: string): Promise<Course[]> => {

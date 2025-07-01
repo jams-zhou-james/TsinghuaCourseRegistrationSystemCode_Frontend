@@ -1,9 +1,41 @@
 import React, { useEffect, useState } from 'react';
-import { CourseGroup } from 'Plugins/CourseService/Objects/CourseGroup';
-import { Course } from 'Plugins/CourseService/Objects/Course';
-import { UserRole } from 'Plugins/UserService/Objects/UserRole';
+// import { CourseGroup } from 'Plugins/CourseService/Objects/CourseGroup';
+// import { Course } from 'Plugins/CourseService/Objects/Course';
+import { UserRole } from 'Plugins/UserAccountService/Objects/UserRole';
 import { Button, Collapse, List, Modal, Input, Form, Popconfirm, message, Tag } from 'antd';
 import WithRoleBasedSidebarLayout from '../../Layouts/WithRoleBasedSidebarLayout';
+
+// WARNING: THIS IS JUST TEMPORARY! TO BE REPLACED WITH ACTUAL COURSE GROUP OBJECTS
+export class CourseGroup {
+    constructor(
+        public  groupID: string,
+        public  groupName: string,
+        public  credits: number,
+        public  ownerID: string,
+        public  authorizedTeacherIDs: string[]
+    ) {
+        
+    }
+}
+
+
+
+// WANRING: THIS IS JUST TEMPORARY! TO BE REPLACED WITH ACTUAL COURSE OBJECTS
+class Course {
+    constructor(
+        public  courseID: string,
+        public  groupID: string,
+        public  teacherID: string,
+        public  capacity: number,
+        public  schedule: string[],
+        public  studentList: string[],
+        public  waitingList: string[],
+        public  location: string
+    ) {
+        
+    }
+}
+
 
 // TODO: Replace with real API calls
 const mockFetchCourseGroups = async (): Promise<CourseGroup[]> => {

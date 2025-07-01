@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './CourseTablePage.css';
-import { UserRole } from 'Plugins/UserService/Objects/UserRole';
+import { UserRole } from 'Plugins/UserAccountService/Objects/UserRole';
 import WithRoleBasedSidebarLayout from '../Layouts/WithRoleBasedSidebarLayout';
 
 // 定义课程类型

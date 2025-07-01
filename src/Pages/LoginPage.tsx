@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useHistory } from 'react-router';
 import { setUserToken } from 'Globals/GlobalStore';
-import { LoginMessage } from 'Plugins/UserService/APIs/LoginMessage';
+import { UserLoginMessage } from 'Plugins/UserAuthService/APIs/UserLoginMessage';
 import { Button, Form, Input, message as antdMessage } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import BackgroundLayout from '../Layouts/BackgroundLayout';
@@ -20,7 +20,7 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      new LoginMessage(username, password).send((info: string) => {
+      new UserLoginMessage(username, password).send((info: string) => {
         const token = JSON.parse(info);
         setUserToken(token);
         setLoading(false);
