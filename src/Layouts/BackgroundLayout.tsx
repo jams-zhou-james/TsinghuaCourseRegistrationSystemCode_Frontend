@@ -101,3 +101,4 @@ const BackgroundLayout: React.FC<BackgroundLayoutProps> = ({
 };
 
 export default BackgroundLayout;
+
