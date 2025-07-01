@@ -106,7 +106,7 @@ const timeSlots = [
   { id: 6, name: '第六节', time: '19:20-21:45' }
 ];
 
-export const courseTablePagePath = '/course-table';
+export const courseTablePagePath = '/student/course-table';
 
 const CourseTablePage: React.FC = () => {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -149,60 +149,62 @@ const CourseTablePage: React.FC = () => {
   }
 
   const renderContent = () => {
-  return (
-    <div className="course-table-container">
-      <h1 className="course-table-title">课程表</h1>
-      <table className="course-table">
-        <colgroup>
-          <col style={{ width: '10%' }} /> {/* 时间列 */}
-          <col style={{ width: '12.85%' }} /> {/* 星期一 */}
-          <col style={{ width: '12.85%' }} /> {/* 星期二 */}
-          <col style={{ width: '12.85%' }} /> {/* 星期三 */}
-          <col style={{ width: '12.85%' }} /> {/* 星期四 */}
-          <col style={{ width: '12.85%' }} /> {/* 星期五 */}
-          <col style={{ width: '12.85%' }} /> {/* 星期六 */}
-          <col style={{ width: '12.85%' }} /> {/* 星期日 */}
-        </colgroup>
-        <thead>
-          <tr>
-            <th>时间</th>
-            <th>星期一</th>
-            <th>星期二</th>
-            <th>星期三</th>
-            <th>星期四</th>
-            <th>星期五</th>
-            <th>星期六</th>
-            <th>星期日</th>
-          </tr>
-        </thead>
-        <tbody>
-          {timeSlots.map(slot => (
-            <tr key={slot.id}>
-              <td className="time-slot">{slot.time}</td>
-              {[1, 2, 3, 4, 5, 6, 7].map(day => {
-                const course = getCourseForSlot(day, slot.id);
-                return (
-                  <td key={day} className="course-cell">
-                    {course ? (
-                      <div className="course-info">
-                        <div className="course-name">{course.name}</div>
-                        <div className="course-teacher">{course.teacher}</div>
-                        <div className="course-location">{course.location}</div>
-                      </div>
-                    ) : null}
-                  </td>
-                );
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
+    return (
+      <div className="course-table-container">
+        <h1 className="course-table-title">课程表</h1>
+        <div style={{ overflowX: 'auto', width: '100%' }}>
+          <table className="course-table">
+            <colgroup>
+              <col style={{ width: '120px' }} /> {/* 时间列 */}
+              <col style={{ width: '140px' }} /> {/* 星期一 */}
+              <col style={{ width: '140px' }} /> {/* 星期二 */}
+              <col style={{ width: '140px' }} /> {/* 星期三 */}
+              <col style={{ width: '140px' }} /> {/* 星期四 */}
+              <col style={{ width: '140px' }} /> {/* 星期五 */}
+              <col style={{ width: '140px' }} /> {/* 星期六 */}
+              <col style={{ width: '140px' }} /> {/* 星期日 */}
+            </colgroup>
+            <thead>
+              <tr>
+                <th>时间</th>
+                <th>星期一</th>
+                <th>星期二</th>
+                <th>星期三</th>
+                <th>星期四</th>
+                <th>星期五</th>
+                <th>星期六</th>
+                <th>星期日</th>
+              </tr>
+            </thead>
+            <tbody>
+              {timeSlots.map(slot => (
+                <tr key={slot.id}>
+                  <td className="time-slot">{slot.time}</td>
+                  {[1, 2, 3, 4, 5, 6, 7].map(day => {
+                    const course = getCourseForSlot(day, slot.id);
+                    return (
+                      <td key={day} className="course-cell">
+                        {course ? (
+                          <div className="course-info">
+                            <div className="course-name">{course.name}</div>
+                            <div className="course-teacher">{course.teacher}</div>
+                            <div className="course-location">{course.location}</div>
+                          </div>
+                        ) : null}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
     return (
     <WithRoleBasedSidebarLayout role={UserRole.student}>
-      <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-100 to-purple-200 py-12 px-2">
+      <div style={{ padding: '24px', minHeight: '100vh' }}>
         {renderContent()}
       </div>
     </WithRoleBasedSidebarLayout>

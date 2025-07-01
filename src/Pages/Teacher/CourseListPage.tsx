@@ -18,7 +18,7 @@ const mockFetchCourseGroups = async (): Promise<CourseGroup[]> => {
 const userID = 'teacher1'; // 或 'teacher1'
 const userRole: UserRole = UserRole.teacher; // 或 UserRole.teacher
 
-export const teacherCourseListPagePath = '/course-list';
+export const teacherCourseListPagePath = '/teacher/course-list';
 
 export const TeacherCourseListPage: React.FC = () => {
   const [groups, setGroups] = useState<CourseGroup[]>([]);
@@ -190,8 +190,12 @@ export const TeacherCourseListPage: React.FC = () => {
   
   return (
     <WithRoleBasedSidebarLayout role={userRole}>
-      <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-100 to-purple-200 py-12 px-2">
-        {renderContent()}
+      <div style={{ padding: '24px', minHeight: '100vh' }}>
+        <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-100 to-purple-200 py-12 px-8 rounded-lg">
+          <div className="flex justify-center w-full">
+            {renderContent()}
+          </div>
+        </div>
       </div>
     </WithRoleBasedSidebarLayout>
   );

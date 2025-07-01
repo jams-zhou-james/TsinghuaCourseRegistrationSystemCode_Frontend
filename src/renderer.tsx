@@ -2,7 +2,7 @@ import React from 'react'
 import { render } from 'react-dom'
 import { HashRouter, Route, Switch } from 'react-router-dom'
 import LoginPage, {loginPagePath} from "Pages/LoginPage";
-import {courseSelectionPagePath, CourseSelectionPage} from 'Pages/Student/CourseSelectionPage';
+import {CourseSelectionPage, courseSelectionPagePath} from 'Pages/Student/CourseSelectionPage';
 import UserManagementPage, { userManagementPagePath } from 'Pages/Admin/UserManagementPage';
 import TeacherCourseListPage, { teacherCourseListPagePath } from 'Pages/Teacher/CourseListPage';
 import StudentCourseListPage, { studentCourseListPagePath } from 'Pages/Student/CourseListPage';

@@ -23,6 +23,23 @@ const mockFetchStudentCourses = async (studentID: string): Promise<Course[]> => 
   ];
 };
 
+// 模拟课程组数据
+const mockCourseGroups = [
+  { groupID: 'g1', groupName: '高等数学组', courseName: '高等数学' },
+  { groupID: 'g2', groupName: '大学物理组', courseName: '大学物理' },
+  { groupID: 'g3', groupName: '线性代数组', courseName: '线性代数' },
+  { groupID: 'g4', groupName: '概率统计组', courseName: '概率统计' },
+  { groupID: 'g5', groupName: '计算机程序设计组', courseName: '计算机程序设计' },
+  { groupID: 'g6', groupName: '数据结构组', courseName: '数据结构' },
+  { groupID: 'g7', groupName: '算法分析组', courseName: '算法分析' },
+];
+
+// 根据课程组ID获取课程名称
+const getCourseNameByGroupID = (groupID: string): string => {
+  const group = mockCourseGroups.find(g => g.groupID === groupID);
+  return group ? group.courseName : `课程-${groupID}`;
+};
+
 const mockDropCourse = async (studentID: string, courseID: string): Promise<boolean> => {
   return true;
 };
@@ -31,7 +48,7 @@ const mockDropCourse = async (studentID: string, courseID: string): Promise<bool
 const userID: string = 'admin';
 const userRole: UserRole = UserRole.student;
 
-export const studentCourseListPagePath = '/course-list';
+export const studentCourseListPagePath = '/student/course-list';
 
 export const StudentCourseListPage: React.FC = () => {
   const [studentCourses, setStudentCourses] = useState<Course[]>([]);
@@ -148,7 +165,7 @@ export const StudentCourseListPage: React.FC = () => {
                   <div style={{ flex: 1, overflow: 'hidden' }}>
                     <Space direction="vertical" size={4}> {/* 减小元素间距 */}
                       <Text strong ellipsis style={{ fontSize: '14px' }}>
-                        {course.courseID} - {course.location}
+                        {getCourseNameByGroupID(course.groupID)} - {course.courseID}
                       </Text>
                       
                       <Space size={4} wrap> {/* 减小标签间距并允许换行 */}
@@ -195,7 +212,9 @@ export const StudentCourseListPage: React.FC = () => {
 
   return (
     <DefaultLayout role={userRole}>
-      {renderContent()}
+      <div style={{ padding: '24px' }}>
+        {renderContent()}
+      </div>
     </DefaultLayout>
   );
 };

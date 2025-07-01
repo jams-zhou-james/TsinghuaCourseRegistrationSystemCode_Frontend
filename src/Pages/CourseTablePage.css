@@ -1,58 +1,67 @@
-/* 整体缩小20% */
+/* 课程表容器 */
 .course-table-container {
-  margin: 16px; /* 原20px缩小20% */
+  margin: 0;
   font-family: Arial, sans-serif;
-  transform: scale(0.8);
-  transform-origin: top left;
+  width: 100%;
+  overflow-x: auto;
 }
 
 .course-table-title {
-  font-size: 1.25rem; /* 原1.5rem缩小20% */
-  margin-bottom: 16px; /* 原20px缩小20% */
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  text-align: center;
+  color: #333;
+  font-weight: bold;
 }
 
 .course-table {
-  width: 125%;
+  width: 100%;
   border-collapse: collapse;
-  margin-top: 16px; /* 原20px缩小20% */
+  margin-top: 20px;
   table-layout: fixed;
-  font-size: 1.0rem; /* 缩小字体 */
+  font-size: 0.9rem;
+  min-width: 800px; /* 确保表格最小宽度 */
 }
 
 .course-table th, .course-table td {
   border: 1px solid #333;
-  padding: 6px; /* 原8px缩小25% */
+  padding: 8px;
   text-align: center;
+  word-wrap: break-word;
 }
 
 .course-table th {
   background-color: #f2f2f2;
   font-weight: bold;
   border-bottom: 2px solid #333;
-  padding: 8px 6px; /* 调整上下padding */
+  padding: 10px 8px;
 }
 
 .time-slot {
   background-color: #f9f9f9;
   font-weight: bold;
-  padding: 8px 6px; /* 调整上下padding */
+  padding: 10px 8px;
+  white-space: nowrap;
 }
 
 .course-cell {
-  height: 64px; /* 原80px缩小20% */
+  height: 80px;
   vertical-align: top;
-  position: relative; /* 为悬停效果做准备 */
+  position: relative;
+  padding: 4px; /* 减少内边距以减少留白 */
 }
 
 .course-info {
-  padding: 4px; /* 原5px缩小20% */
+  padding: 6px;
   background-color: #e6f7ff;
-  border-radius: 3px; /* 原4px缩小25% */
-  height: calc(100% - 8px); /* 确保不超出单元格 */
-  margin: 2px; /* 添加微小边距 */
+  border-radius: 4px;
+  height: calc(100% - 8px); /* 调整高度计算 */
   border: 1px solid #b3e0ff;
-  overflow: hidden; /* 防止内容溢出 */
-  transition: all 0.2s ease; /* 悬停动画效果 */
+  overflow: hidden;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* 垂直居中 */
 }
 
 /* 悬停效果 */
@@ -65,21 +74,23 @@
 
 .course-name {
   font-weight: bold;
-  margin-bottom: 2px; /* 原3px缩小33% */
-  font-size: 0.9em; /* 缩小字体 */
+  margin-bottom: 4px;
+  font-size: 0.85em;
+  line-height: 1.2;
 }
 
 .course-teacher, .course-location {
-  font-size: 0.72em; /* 原0.9em缩小20% */
+  font-size: 0.75em;
   color: #555;
-  line-height: 1.2; /* 调整行高 */
+  line-height: 1.1;
+  margin: 1px 0; /* 减少垂直间距 */
 }
 
-/* 加载和错误状态也相应缩小 */
+/* 加载和错误状态 */
 .course-table-loading, .course-table-error {
   text-align: center;
-  padding: 16px; /* 原20px缩小20% */
-  font-size: 0.96rem; /* 原1.2rem缩小20% */
+  padding: 20px;
+  font-size: 1.1rem;
 }
 
 .course-table-error {

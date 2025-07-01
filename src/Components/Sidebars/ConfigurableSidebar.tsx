@@ -1,7 +1,7 @@
 // Components/Sidebars/ConfigurableSidebar.tsx
 import { ConfigProvider, Layout, Menu } from 'antd';
-import { Link } from 'react-router-dom';
-import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import React, { useMemo } from 'react';
 import './ConfigurableSidebar.css';
 
 const { Sider } = Layout;
@@ -51,6 +51,13 @@ export const ConfigurableSidebar: React.FC<ConfigurableSidebarProps> = ({
   onCollapse,
   config
 }) => {
+  const location = useLocation();
+  
+  // 根据当前路由找到对应的菜单项key
+  const selectedKeys = useMemo(() => {
+    const currentItem = config.menuItems.find(item => item.path === location.pathname);
+    return currentItem ? [currentItem.key] : [];
+  }, [location.pathname, config.menuItems]);
   return (
     <ConfigProvider
       theme={{
@@ -95,7 +102,7 @@ export const ConfigurableSidebar: React.FC<ConfigurableSidebarProps> = ({
         
         <Menu 
           theme="light"
-          defaultSelectedKeys={['1']} 
+          selectedKeys={selectedKeys}
           mode="inline"
           className="custom-menu"
         >
