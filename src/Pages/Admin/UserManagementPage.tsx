@@ -311,7 +311,7 @@ const UserManagementPage: React.FC = () => {
                 label="角色"
                 rules={[{ required: true, message: '请选择角色' }]}
               >
-                <Select>
+                <Select disabled={!!editUser}>
                   {userRoleList.filter(r => r !== UserRole.superAdmin).map(role => (
                     <Select.Option key={role} value={role}>
                       {role}
