@@ -18,64 +18,90 @@ const studentHomePagePath = studentCourseListPagePath
 const teacherHomePagePath = teacherCourseListPagePath;
 const adminHomePagePath = userManagementPagePath;
 
+// 自定义错误处理方法
+const customErrorHandler = (error: string) => {
+  // 从错误信息中提取更友好的提示
+  if (error.includes('账号不存在')) {
+    antdMessage.error('用户名或密码错误');
+  } else if (error.includes('密码错误')) {
+    antdMessage.error('用户名或密码错误');
+  } else {
+    antdMessage.error('登录失败: ' + error);
+  }
+};
+
 export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const history = useHistory();
 
-  const handleLogin = async (values: any) => {
+ // 修改后的handleLogin函数
+const handleLogin = async (values: any) => {
   setLoading(true);
   const { username, password } = values;
+  
   try {
-    new UserLoginMessage(username, password).send(async (info: string) => {
-      const token = JSON.parse(info);
-      setUserToken(token);
-      try {
-        // 获取用户安全信息
-        const userInfo = await new Promise<any>((resolve, reject) => {
-          new QuerySafeUserInfoByTokenMessage(token).send((info: string) => {
-            try {
-              const data = JSON.parse(info);
-              console.log('Received user info data:', data); // 添加日志
-              if (!data) {
-                reject(new Error('用户信息格式不正确'));
-                return;
+    new UserLoginMessage(username, password).send(
+      async (info: string) => {
+        try {
+          const token = JSON.parse(info);
+          setUserToken(token);
+          
+          // 获取用户安全信息
+          const userInfo = await new Promise<any>((resolve, reject) => {
+            new QuerySafeUserInfoByTokenMessage(token).send(
+              (info: string) => {
+                try {
+                  const data = JSON.parse(info);
+                  console.log('Received user info data:', data);
+                  if (!data) {
+                    reject(new Error('用户信息格式不正确'));
+                    return;
+                  }
+                  resolve(data);
+                } catch (e) {
+                  reject(e);
+                }
+              },
+              (error: string) => {
+                customErrorHandler(error);
+                reject(error);
               }
-              resolve(data);
-            } catch (e) {
-              reject(e);
-            }
+            );
           });
-        });
-        
-        console.log('User info:', userInfo); // 添加日志
-        
-        if (!userInfo || !userInfo.role) {
-          throw new Error('用户信息中缺少角色信息');
+
+          console.log('User info:', userInfo);
+
+          if (!userInfo || !userInfo.role) {
+            throw new Error('用户信息中缺少角色信息');
+          }
+
+          // 根据用户角色跳转不同页面
+          switch (userInfo.role as UserRole) {
+            case UserRole.student:
+              history.push(studentHomePagePath);
+              break;
+            case UserRole.teacher:
+              history.push(teacherHomePagePath);
+              break;
+            case UserRole.superAdmin:
+              history.push(adminHomePagePath);
+              break;
+            default:
+              throw new Error('未知的用户角色');
+          }
+        } catch (err: any) {
+          console.error('Error getting user info:', err);
+          antdMessage.error('获取用户信息失败: ' + (err.message || '未知错误'));
+          setLoading(false); // 确保这里也重置loading
         }
-        
-        // 根据用户角色跳转不同页面
-        switch (userInfo.role as UserRole) {
-          case UserRole.student:
-            history.push(studentHomePagePath);
-            break;
-          case UserRole.teacher:
-            history.push(teacherHomePagePath);
-            break;
-          case UserRole.superAdmin:
-            history.push(adminHomePagePath);
-            break;
-          default:
-            throw new Error('未知的用户角色');
-        }
-      } catch (err: any) {
-        console.error('Error getting user info:', err); // 添加日志
-        antdMessage.error('获取用户信息失败: ' + (err.message || '未知错误'));
-      } finally {
-        setLoading(false);
+      },
+      (error: string) => {
+        customErrorHandler(error);
+        setLoading(false); // 登录失败时重置loading
       }
-    });
+    );
   } catch (err: any) {
     setLoading(false);
     antdMessage.error(err.message || '登录失败');
