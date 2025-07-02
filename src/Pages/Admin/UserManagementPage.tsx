@@ -13,9 +13,10 @@ import {
   Input, 
   message 
 } from 'antd';
-
-// 假设有全局获取管理员Token的方法
-const userRole: UserRole = UserRole.superAdmin; // 假设当前用户是超级管理员
+import { getUserToken } from 'Globals/GlobalStore';
+import { QueryAllUsersMessage } from 'Plugins/UserAccountService/APIs/QueryAllUsersMessage';
+import { CreateUserAccountMessage } from 'Plugins/UserAccountService/APIs/CreateUserAccountMessage';
+import { UpdateUserAccountMessage } from 'Plugins/UserAccountService/APIs/UpdateUserAccountMessage';
 
 export const userManagementPagePath = '/admin/user-management';
 
@@ -27,20 +28,53 @@ const UserManagementPage: React.FC = () => {
   const [editUser, setEditUser] = useState<UserInfo | null>(null);
   const [form] = Form.useForm();
 
-  // 获取所有用户（无后端时用模拟数据）
+  // 获取所有用户
   const fetchUsers = async () => {
     setLoading(true);
-    // 模拟数据
-    const mockUsers: UserInfo[] = [
-      new UserInfo(1, 'student01', '', '张三', UserRole.student ),
-      new UserInfo(2, 'teacher01', '', '李老师', UserRole.teacher, ),
-      new UserInfo(3, 'student02', '', '王五',UserRole.student, ),
-      new UserInfo(4, 'teacher02', '', '赵老师', UserRole.teacher, ),
-    ];
-    setTimeout(() => {
-      setUsers(mockUsers);
+    const adminToken = getUserToken();
+    
+    if (!adminToken) {
+      message.error('管理员令牌无效，请重新登录');
       setLoading(false);
-    }, 500);
+      return;
+    }
+
+    try {
+      // 获取所有角色的用户
+      const allUsers: UserInfo[] = [];
+      const roles = [UserRole.student, UserRole.teacher];
+      
+      for (const role of roles) {
+        await new Promise<void>((resolve, reject) => {
+          new QueryAllUsersMessage(adminToken, role).send(
+            (response: string) => {
+              try {
+                const userData = JSON.parse(response);
+                if (Array.isArray(userData)) {
+                  allUsers.push(...userData.map((user: any) => 
+                    new UserInfo(user.userID, user.userName, user.accountName, user.password, user.role)
+                  ));
+                }
+                resolve();
+              } catch (err) {
+                console.error('解析用户数据失败:', err);
+                reject(err);
+              }
+            },
+            (error: string) => {
+              console.error('获取用户列表失败:', error);
+              reject(new Error(error));
+            }
+          );
+        });
+      }
+      
+      setUsers(allUsers);
+    } catch (error: any) {
+      message.error('获取用户列表失败: ' + (error.message || '未知错误'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -49,25 +83,75 @@ const UserManagementPage: React.FC = () => {
 
   const handleSave = () => {
     form.validateFields().then(values => {
-      // const adminToken = getAdminToken();
-      // 这里应该是实际的API调用
-      message.success(editUser ? '用户信息已更新' : '用户创建成功');
-      setShowModal(false);
-      fetchUsers();
+      const adminToken = getUserToken();
+      
+      if (!adminToken) {
+        message.error('管理员令牌无效，请重新登录');
+        return;
+      }
+
+      if (editUser) {
+        // 更新用户
+        const { username, password, name, role } = values;
+        new UpdateUserAccountMessage(
+          adminToken,
+          editUser.userID,
+          name !== editUser.userName ? name : null,
+          username !== editUser.accountName ? username : null,
+          password ? password : null
+        ).send(
+          (response: string) => {
+            try {
+              const updatedUser = JSON.parse(response);
+              message.success('用户信息已更新');
+              setShowModal(false);
+              fetchUsers();
+            } catch (err) {
+              message.error('更新用户信息失败');
+            }
+          },
+          (error: string) => {
+            message.error('更新用户失败: ' + error);
+          }
+        );
+      } else {
+        // 创建新用户
+        const { username, password, name, role } = values;
+        new CreateUserAccountMessage(
+          adminToken,
+          name,
+          username,
+          password,
+          role
+        ).send(
+          (response: string) => {
+            try {
+              const newUser = JSON.parse(response);
+              message.success('用户创建成功');
+              setShowModal(false);
+              fetchUsers();
+            } catch (err) {
+              message.error('创建用户失败');
+            }
+          },
+          (error: string) => {
+            message.error('创建用户失败: ' + error);
+          }
+        );
+      }
     }).catch(err => {
       console.error('验证失败:', err);
     });
   };
 
   const handleDelete = (user: UserInfo) => {
+    // 注意：当前后端API中没有删除用户的接口
+    // 这里暂时禁用删除功能
     Modal.confirm({
-      title: '确认删除用户',
-      content: `确定要删除用户 ${user.userName} 吗？`,
+      title: '删除功能暂不可用',
+      content: '当前系统暂不支持删除用户功能，请联系系统管理员。',
       onOk: () => {
-        // const adminToken = getAdminToken();
-        // 这里应该是实际的API调用
-        message.success('用户已删除');
-        fetchUsers();
+        message.info('删除功能暂不可用');
       },
     });
   };
