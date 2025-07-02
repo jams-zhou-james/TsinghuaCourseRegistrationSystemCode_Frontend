@@ -5,6 +5,7 @@ import { courseSelectionPagePath } from 'Pages/Student/CourseSelectionPage';
 import { courseTablePagePath } from 'Pages/CourseTablePage';
 import { SidebarConfig } from 'Components/Sidebars/ConfigurableSidebar';
 import React from 'react';
+import { logoutPagePath } from 'Pages/LogoutPage';
 
 export const studentSidebarConfig: SidebarConfig = {
   theme: {
@@ -46,7 +47,13 @@ export const studentSidebarConfig: SidebarConfig = {
       icon: <CalendarOutlined />,
       label: '课程表',
       path: courseTablePagePath
-    }
+    },
+        {
+          key: '4',
+          icon: <SolutionOutlined />,
+          label: '登出',
+          path: logoutPagePath
+        }
   ]
 };
 
