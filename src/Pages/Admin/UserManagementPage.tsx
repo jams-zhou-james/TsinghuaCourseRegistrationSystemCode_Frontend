@@ -70,6 +70,7 @@ const UserManagementPage: React.FC = () => {
       }
       
       setUsers(allUsers);
+      message.success('用户数据加载成功');
     } catch (error: any) {
       message.error('获取用户列表失败: ' + (error.message || '未知错误'));
     } finally {
@@ -91,46 +92,115 @@ const UserManagementPage: React.FC = () => {
       }
 
       if (editUser) {
-        // 更新用户
-        const { username, password, name, role } = values;
-        new UpdateUserAccountMessage(
-          adminToken,
-          editUser.userID,
-          name !== editUser.userName ? name : null,
-          username !== editUser.accountName ? username : null,
-          password ? password : null
-        ).send(
-          (response: string) => {
-            try {
-              const updatedUser = JSON.parse(response);
-              message.success('用户信息已更新');
-              setShowModal(false);
-              fetchUsers();
-            } catch (err) {
-              message.error('更新用户信息失败');
-            }
-          },
-          (error: string) => {
-            message.error('更新用户失败: ' + error);
+        // 编辑用户逻辑
+        const { accountName, password, userName, role } = values;
+        
+        // 检查账户名是否发生变更
+        if (accountName !== editUser.accountName) {
+          // 账户名变更：需要创建新用户并删除原用户
+          console.log('账户名发生变更，执行创建新用户并删除原用户的操作');
+          
+          // 先检查新账户名是否已存在
+          const existingUser = users.find(u => u.accountName === accountName && u.userID !== editUser.userID);
+          if (existingUser) {
+            message.error(`账户名 "${accountName}" 已存在，请使用其他账户名`);
+            return;
           }
-        );
+          
+          // 1. 先创建新用户
+          new CreateUserAccountMessage(
+            adminToken,
+            userName,
+            accountName,
+            password || editUser.password,
+            role
+          ).send(
+            (response: string) => {
+              try {
+                const newUser = JSON.parse(response);
+                console.log('新用户创建成功:', newUser);
+                
+                // 2. 创建成功后，从本地列表删除原用户并添加新用户
+                const updatedUsers = users
+                  .filter(u => u.userID !== editUser.userID) // 删除原用户
+                  .concat(new UserInfo(newUser.userID, newUser.userName, newUser.accountName, newUser.password, newUser.role)); // 添加新用户
+                
+                setUsers(updatedUsers);
+                message.success(`账户名已更新：${editUser.accountName} → ${accountName}`);
+                setShowModal(false);
+              } catch (err) {
+                console.error('解析新用户数据失败:', err);
+                message.error('创建新用户失败');
+              }
+            },
+            (error: string) => {
+              message.error('创建新用户失败: ' + error);
+            }
+          );
+          
+        } else {
+          // 账户名未变更：只更新用户信息
+          console.log('账户名未变更，只更新用户信息');
+          
+          new UpdateUserAccountMessage(
+            adminToken,
+            editUser.userID,
+            userName !== editUser.userName ? userName : null,
+            null, // 账户名未变更，传null
+            password ? password : null
+          ).send(
+            (response: string) => {
+              try {
+                const updatedUser = JSON.parse(response);
+                console.log('用户信息更新成功:', updatedUser);
+                
+                const updatedUsers = users.map(user => 
+                  user.userID === editUser.userID 
+                    ? new UserInfo(user.userID, userName, accountName, password || user.password, role)
+                    : user
+                );
+                setUsers(updatedUsers);
+                message.success('用户信息已更新');
+                setShowModal(false);
+              } catch (err) {
+                console.error('解析更新用户数据失败:', err);
+                message.error('更新用户信息失败');
+              }
+            },
+            (error: string) => {
+              message.error('更新用户失败: ' + error);
+            }
+          );
+        }
+        
       } else {
         // 创建新用户
-        const { username, password, name, role } = values;
+        const { accountName, password, userName, role } = values;
+        
+        // 检查账户名是否已存在
+        const existingUser = users.find(u => u.accountName === accountName);
+        if (existingUser) {
+          message.error(`账户名 "${accountName}" 已存在，请使用其他账户名`);
+          return;
+        }
+        
         new CreateUserAccountMessage(
           adminToken,
-          name,
-          username,
+          userName,
+          accountName,
           password,
           role
         ).send(
           (response: string) => {
             try {
               const newUser = JSON.parse(response);
+              console.log('用户创建成功:', newUser);
+              
+              setUsers([...users, new UserInfo(newUser.userID, newUser.userName, newUser.accountName, newUser.password, newUser.role)]);
               message.success('用户创建成功');
               setShowModal(false);
-              fetchUsers();
             } catch (err) {
+              console.error('解析新用户数据失败:', err);
               message.error('创建用户失败');
             }
           },
@@ -144,24 +214,14 @@ const UserManagementPage: React.FC = () => {
     });
   };
 
-  const handleDelete = (user: UserInfo) => {
-    // 注意：当前后端API中没有删除用户的接口
-    // 这里暂时禁用删除功能
-    Modal.confirm({
-      title: '删除功能暂不可用',
-      content: '当前系统暂不支持删除用户功能，请联系系统管理员。',
-      onOk: () => {
-        message.info('删除功能暂不可用');
-      },
-    });
-  };
+  // 删除用户功能已移除
 
   const openEdit = (user: UserInfo) => {
     setEditUser(user);
     form.setFieldsValue({
-      username: user.userName,
+      accountName: user.accountName,
       password: '',
-      name: user.userName,
+      userName: user.userName,
       role: user.role,
     });
     setShowModal(true);
@@ -182,14 +242,14 @@ const UserManagementPage: React.FC = () => {
       key: 'userID',
     },
     {
-      title: '用户名',
-      dataIndex: 'username',
-      key: 'username',
+      title: '账户名',
+      dataIndex: 'accountName',
+      key: 'accountName',
     },
     {
-      title: '姓名',
-      dataIndex: 'name',
-      key: 'name',
+      title: '用户名',
+      dataIndex: 'userName',
+      key: 'userName',
     },
     {
       title: '角色',
@@ -200,14 +260,9 @@ const UserManagementPage: React.FC = () => {
       title: '操作',
       key: 'action',
       render: (_: any, record: UserInfo) => (
-        <>
-          <Button type="link" onClick={() => openEdit(record)}>
-            编辑
-          </Button>
-          <Button type="link" danger onClick={() => handleDelete(record)}>
-            删除
-          </Button>
-        </>
+        <Button type="link" onClick={() => openEdit(record)}>
+          编辑
+        </Button>
       ),
     },
   ];
@@ -260,11 +315,11 @@ const UserManagementPage: React.FC = () => {
           >
             <Form form={form} layout="vertical">
               <Form.Item
-                name="username"
-                label="用户名"
-                rules={[{ required: true, message: '请输入用户名' }]}
+                name="accountName"
+                label="账户名"
+                rules={[{ required: true, message: '请输入账户名' }]}
               >
-                <Input disabled={!!editUser} />
+                <Input />
               </Form.Item>
               <Form.Item
                 name="password"
@@ -277,9 +332,9 @@ const UserManagementPage: React.FC = () => {
                 <Input.Password placeholder={editUser ? '不修改请留空' : ''} />
               </Form.Item>
               <Form.Item
-                name="name"
-                label="姓名"
-                rules={[{ required: true, message: '请输入姓名' }]}
+                name="userName"
+                label="用户名"
+                rules={[{ required: true, message: '请输入用户名' }]}
               >
                 <Input />
               </Form.Item>
