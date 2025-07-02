@@ -1,6 +1,6 @@
 // components/DynamicSidebar.tsx
 import React from 'react';
-import { UserRole } from 'Plugins/UserService/Objects/UserRole';
+import { UserRole } from 'Plugins/UserAccountService/Objects/UserRole';
 import StudentSidebar from './StudentSidebar';
 import TeacherSidebar from './TeacherSidebar';
 import AdminSidebar from './AdminSidebar';

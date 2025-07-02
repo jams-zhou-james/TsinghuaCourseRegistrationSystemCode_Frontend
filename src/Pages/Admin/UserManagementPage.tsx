@@ -1,8 +1,7 @@
 // src/pages/UserManagementPage.tsx
 import React, { useEffect, useState } from 'react';
-import { UserInfo } from 'Plugins/UserService/Objects/UserInfo';
-import { UserRole, userRoleList } from 'Plugins/UserService/Objects/UserRole';
-import { Token } from 'Plugins/AuthService/Objects/Token';
+import { UserInfo } from 'Plugins/UserAccountService/Objects/UserInfo';
+import { UserRole, userRoleList } from 'Plugins/UserAccountService/Objects/UserRole';
 import WithRoleBasedSidebarLayout from "../../Layouts/WithRoleBasedSidebarLayout";
 import BackgroundLayout from '../../Layouts/BackgroundLayout';
 import { 
@@ -16,7 +15,6 @@ import {
 } from 'antd';
 
 // 假设有全局获取管理员Token的方法
-declare function getAdminToken(): Token;
 const userRole: UserRole = UserRole.superAdmin; // 假设当前用户是超级管理员
 
 export const userManagementPagePath = '/admin/user-management';
@@ -34,10 +32,10 @@ const UserManagementPage: React.FC = () => {
     setLoading(true);
     // 模拟数据
     const mockUsers: UserInfo[] = [
-      new UserInfo('1', 'student01', '', UserRole.student, '张三'),
-      new UserInfo('2', 'teacher01', '', UserRole.teacher, '李老师'),
-      new UserInfo('3', 'student02', '', UserRole.student, '王五'),
-      new UserInfo('4', 'teacher02', '', UserRole.teacher, '赵老师'),
+      new UserInfo(1, 'student01', '', '张三', UserRole.student ),
+      new UserInfo(2, 'teacher01', '', '李老师', UserRole.teacher, ),
+      new UserInfo(3, 'student02', '', '王五',UserRole.student, ),
+      new UserInfo(4, 'teacher02', '', '赵老师', UserRole.teacher, ),
     ];
     setTimeout(() => {
       setUsers(mockUsers);
@@ -51,7 +49,7 @@ const UserManagementPage: React.FC = () => {
 
   const handleSave = () => {
     form.validateFields().then(values => {
-      const adminToken = getAdminToken();
+      // const adminToken = getAdminToken();
       // 这里应该是实际的API调用
       message.success(editUser ? '用户信息已更新' : '用户创建成功');
       setShowModal(false);
@@ -64,9 +62,9 @@ const UserManagementPage: React.FC = () => {
   const handleDelete = (user: UserInfo) => {
     Modal.confirm({
       title: '确认删除用户',
-      content: `确定要删除用户 ${user.name} 吗？`,
+      content: `确定要删除用户 ${user.userName} 吗？`,
       onOk: () => {
-        const adminToken = getAdminToken();
+        // const adminToken = getAdminToken();
         // 这里应该是实际的API调用
         message.success('用户已删除');
         fetchUsers();
@@ -77,9 +75,9 @@ const UserManagementPage: React.FC = () => {
   const openEdit = (user: UserInfo) => {
     setEditUser(user);
     form.setFieldsValue({
-      username: user.username,
+      username: user.userName,
       password: '',
-      name: user.name,
+      name: user.userName,
       role: user.role,
     });
     setShowModal(true);

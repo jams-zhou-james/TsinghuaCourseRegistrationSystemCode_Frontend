@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Input, Button, List, message, Form, Row, Col, Tag } from 'antd';
 import DefaultLayout from '../../Layouts/WithRoleBasedSidebarLayout'; // 确保路径正确
-import { UserRole } from 'Plugins/UserService/Objects/UserRole';
+import { UserRole } from 'Plugins/UserAccountService/Objects/UserRole';
 // import { Course } from 'Plugins/CourseService/Objects/Course';
 
 // 假设Course类型如下

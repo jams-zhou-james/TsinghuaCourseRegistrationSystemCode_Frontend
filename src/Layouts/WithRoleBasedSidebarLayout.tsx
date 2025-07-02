@@ -1,7 +1,7 @@
 // layouts/WithRoleBasedSidebarLayout.tsx
 import React, { useState } from 'react';
 import { Layout } from 'antd';
-import { UserRole } from 'Plugins/UserService/Objects/UserRole';
+import { UserRole } from 'Plugins/UserAccountService/Objects/UserRole';
 import DynamicSidebar from '../Components/Sidebars/DynamicSidebar';
 
 const { Content } = Layout;
