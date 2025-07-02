@@ -6,8 +6,17 @@ import { UserLoginMessage } from 'Plugins/UserAuthService/APIs/UserLoginMessage'
 import { Button, Form, Input, message as antdMessage } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import BackgroundLayout from '../Layouts/BackgroundLayout';
+import { QuerySafeUserInfoByTokenMessage } from 'Plugins/UserAccountService/APIs/QuerySafeUserInfoByTokenMessage';
+import { UserRole } from 'Plugins/UserAccountService/Objects/UserRole';
+import { studentCourseListPagePath } from './Student/CourseListPage';
+import { teacherCourseListPagePath } from './Teacher/CourseListPage';
+import { userManagementPagePath } from './Admin/UserManagementPage';
 
 export const loginPagePath = '/login';
+
+const studentHomePagePath = studentCourseListPagePath
+const teacherHomePagePath = teacherCourseListPagePath;
+const adminHomePagePath = userManagementPagePath;
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -15,16 +24,40 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const history = useHistory();
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLogin = async (values: any) => {
     setLoading(true);
-
+    const { username, password } = values;
     try {
-      new UserLoginMessage(username, password).send((info: string) => {
+      new UserLoginMessage(username, password).send(async (info: string) => {
         const token = JSON.parse(info);
         setUserToken(token);
-        setLoading(false);
-        // history.push(courseListPagePath);
+        try {
+          // 获取用户安全信息
+          const userInfo = await new Promise<any>((resolve, reject) => {
+            new QuerySafeUserInfoByTokenMessage(token).send((info: string) => {
+              const data = JSON.parse(info);
+              resolve(data.safeUserInfo);
+            });
+          });
+          // 根据用户角色跳转不同页面
+          switch (userInfo.role as UserRole) {
+            case UserRole.student:
+              history.push(studentHomePagePath);
+              break;
+            case UserRole.teacher:
+              history.push(teacherHomePagePath);
+              break;
+            case UserRole.superAdmin:
+              history.push(adminHomePagePath);
+              break;
+            default:
+              throw new Error('未知的用户角色');
+          }
+        } catch (err: any) {
+          antdMessage.error('获取用户信息失败: ' + (err.message || '未知错误'));
+        } finally {
+          setLoading(false);
+        }
       });
     } catch (err: any) {
       setLoading(false);
