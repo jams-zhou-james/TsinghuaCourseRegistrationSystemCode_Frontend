@@ -3,6 +3,7 @@ import { HomeOutlined, SolutionOutlined } from '@ant-design/icons';
 import { SidebarConfig } from 'Components/Sidebars/ConfigurableSidebar';
 import React from 'react';
 import { teacherCourseListPagePath } from 'Pages/Teacher/CourseListPage';
+import { logoutPagePath } from 'Pages/LogoutPage';
 
 export const teacherSidebarConfig: SidebarConfig = {
   theme: {
@@ -32,6 +33,12 @@ export const teacherSidebarConfig: SidebarConfig = {
       icon: <HomeOutlined />,
       label: '我的课程',
       path: teacherCourseListPagePath
-    }
+    },
+        {
+          key: '2',
+          icon: <SolutionOutlined />,
+          label: '登出',
+          path: logoutPagePath
+        }
   ]
 };
