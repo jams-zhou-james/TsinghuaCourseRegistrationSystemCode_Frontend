@@ -25,45 +25,62 @@ export default function LoginPage() {
   const history = useHistory();
 
   const handleLogin = async (values: any) => {
-    setLoading(true);
-    const { username, password } = values;
-    try {
-      new UserLoginMessage(username, password).send(async (info: string) => {
-        const token = JSON.parse(info);
-        setUserToken(token);
-        try {
-          // 获取用户安全信息
-          const userInfo = await new Promise<any>((resolve, reject) => {
-            new QuerySafeUserInfoByTokenMessage(token).send((info: string) => {
+  setLoading(true);
+  const { username, password } = values;
+  try {
+    new UserLoginMessage(username, password).send(async (info: string) => {
+      const token = JSON.parse(info);
+      setUserToken(token);
+      try {
+        // 获取用户安全信息
+        const userInfo = await new Promise<any>((resolve, reject) => {
+          new QuerySafeUserInfoByTokenMessage(token).send((info: string) => {
+            try {
               const data = JSON.parse(info);
-              resolve(data.safeUserInfo);
-            });
+              console.log('Received user info data:', data); // 添加日志
+              if (!data) {
+                reject(new Error('用户信息格式不正确'));
+                return;
+              }
+              resolve(data);
+            } catch (e) {
+              reject(e);
+            }
           });
-          // 根据用户角色跳转不同页面
-          switch (userInfo.role as UserRole) {
-            case UserRole.student:
-              history.push(studentHomePagePath);
-              break;
-            case UserRole.teacher:
-              history.push(teacherHomePagePath);
-              break;
-            case UserRole.superAdmin:
-              history.push(adminHomePagePath);
-              break;
-            default:
-              throw new Error('未知的用户角色');
-          }
-        } catch (err: any) {
-          antdMessage.error('获取用户信息失败: ' + (err.message || '未知错误'));
-        } finally {
-          setLoading(false);
+        });
+        
+        console.log('User info:', userInfo); // 添加日志
+        
+        if (!userInfo || !userInfo.role) {
+          throw new Error('用户信息中缺少角色信息');
         }
-      });
-    } catch (err: any) {
-      setLoading(false);
-      antdMessage.error(err.message || '登录失败');
-    }
-  };
+        
+        // 根据用户角色跳转不同页面
+        switch (userInfo.role as UserRole) {
+          case UserRole.student:
+            history.push(studentHomePagePath);
+            break;
+          case UserRole.teacher:
+            history.push(teacherHomePagePath);
+            break;
+          case UserRole.superAdmin:
+            history.push(adminHomePagePath);
+            break;
+          default:
+            throw new Error('未知的用户角色');
+        }
+      } catch (err: any) {
+        console.error('Error getting user info:', err); // 添加日志
+        antdMessage.error('获取用户信息失败: ' + (err.message || '未知错误'));
+      } finally {
+        setLoading(false);
+      }
+    });
+  } catch (err: any) {
+    setLoading(false);
+    antdMessage.error(err.message || '登录失败');
+  }
+};
 
   return (
     <BackgroundLayout>
