@@ -95,83 +95,51 @@ const UserManagementPage: React.FC = () => {
         // 编辑用户逻辑
         const { accountName, password, userName, role } = values;
         
-        // 检查账户名是否发生变更
+        // 如果账户名发生变更，先检查新账户名是否已存在
         if (accountName !== editUser.accountName) {
-          // 账户名变更：需要创建新用户并删除原用户
-          console.log('账户名发生变更，执行创建新用户并删除原用户的操作');
-          
-          // 先检查新账户名是否已存在
           const existingUser = users.find(u => u.accountName === accountName && u.userID !== editUser.userID);
           if (existingUser) {
             message.error(`账户名 "${accountName}" 已存在，请使用其他账户名`);
             return;
           }
-          
-          // 1. 先创建新用户
-          new CreateUserAccountMessage(
-            adminToken,
-            userName,
-            accountName,
-            password || editUser.password,
-            role
-          ).send(
-            (response: string) => {
-              try {
-                const newUser = JSON.parse(response);
-                console.log('新用户创建成功:', newUser);
-                
-                // 2. 创建成功后，从本地列表删除原用户并添加新用户
-                const updatedUsers = users
-                  .filter(u => u.userID !== editUser.userID) // 删除原用户
-                  .concat(new UserInfo(newUser.userID, newUser.userName, newUser.accountName, newUser.password, newUser.role)); // 添加新用户
-                
-                setUsers(updatedUsers);
-                message.success(`账户名已更新：${editUser.accountName} → ${accountName}`);
-                setShowModal(false);
-              } catch (err) {
-                console.error('解析新用户数据失败:', err);
-                message.error('创建新用户失败');
-              }
-            },
-            (error: string) => {
-              message.error('创建新用户失败: ' + error);
-            }
-          );
-          
-        } else {
-          // 账户名未变更：只更新用户信息
-          console.log('账户名未变更，只更新用户信息');
-          
-          new UpdateUserAccountMessage(
-            adminToken,
-            editUser.userID,
-            userName !== editUser.userName ? userName : null,
-            null, // 账户名未变更，传null
-            password ? password : null
-          ).send(
-            (response: string) => {
-              try {
-                const updatedUser = JSON.parse(response);
-                console.log('用户信息更新成功:', updatedUser);
-                
-                const updatedUsers = users.map(user => 
-                  user.userID === editUser.userID 
-                    ? new UserInfo(user.userID, userName, accountName, password || user.password, role)
-                    : user
-                );
-                setUsers(updatedUsers);
-                message.success('用户信息已更新');
-                setShowModal(false);
-              } catch (err) {
-                console.error('解析更新用户数据失败:', err);
-                message.error('更新用户信息失败');
-              }
-            },
-            (error: string) => {
-              message.error('更新用户失败: ' + error);
-            }
-          );
         }
+        
+        // 调用UpdateUserAccountMessage接口更新用户信息
+        new UpdateUserAccountMessage(
+          adminToken,
+          editUser.userID,
+          userName !== editUser.userName ? userName : null,
+          accountName !== editUser.accountName ? accountName : null, // 账户名变更时传入新账户名，否则传null
+          password ? password : null
+        ).send(
+          (response: string) => {
+            try {
+              const updatedUser = JSON.parse(response);
+              console.log('用户信息更新成功:', updatedUser);
+              
+              // 更新本地状态
+              const updatedUsers = users.map(user => 
+                user.userID === editUser.userID 
+                  ? new UserInfo(updatedUser.userID, updatedUser.userName, updatedUser.accountName, updatedUser.password, updatedUser.role)
+                  : user
+              );
+              setUsers(updatedUsers);
+              
+              if (accountName !== editUser.accountName) {
+                message.success(`账户名已更新：${editUser.accountName} → ${accountName}`);
+              } else {
+                message.success('用户信息已更新');
+              }
+              setShowModal(false);
+            } catch (err) {
+              console.error('解析更新用户数据失败:', err);
+              message.error('更新用户信息失败');
+            }
+          },
+          (error: string) => {
+            message.error('更新用户失败: ' + error);
+          }
+        );
         
       } else {
         // 创建新用户
