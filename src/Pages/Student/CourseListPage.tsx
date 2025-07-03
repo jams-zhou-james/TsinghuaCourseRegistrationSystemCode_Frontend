@@ -1,3 +1,7 @@
+// src/Pages/Student/CourseListPage.tsx
+
+export const studentCourseListPagePath = '/student/course-list';
+
 import React, { useEffect, useState } from 'react';
 // import { CourseInfo } from 'Plugins/CourseService/Objects/Course';
 import { UserRole } from 'Plugins/UserAccountService/Objects/UserRole';
@@ -60,11 +64,10 @@ const mockDropCourse = async (studentID: string, courseID: string): Promise<bool
   return true;
 };
 
+
 // 从全局store获取的类型安全数据
 const userID: string = 'admin';
 const userRole: UserRole = UserRole.student;
-
-export const studentCourseListPagePath = '/student/course-list';
 
 export const StudentCourseListPage: React.FC = () => {
   const [studentCourses, setStudentCourses] = useState<Course[]>([]);
