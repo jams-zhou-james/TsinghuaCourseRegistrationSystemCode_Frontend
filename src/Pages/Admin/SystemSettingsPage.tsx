@@ -1,15 +1,32 @@
 // src/Pages/Admin/SystemSettingsPage.tsx
 
-import React, { useState } from 'react';
+export const systemSettingsPagePath = "/admin/system-settings"
+
+import React, { useState, useEffect } from 'react';
 import { Card, Switch, Button, Typography, Divider, message } from 'antd';
 import DefaultLayout from '../../Layouts/WithRoleBasedSidebarLayout';
 import BackgroundLayout from '../../Layouts/BackgroundLayout';
 import { UserRole } from '../../Plugins/UserAccountService/Objects/UserRole';
+import { useUserToken } from 'Globals/GlobalStore';
+import { Serializable } from 'Plugins/CommonUtils/Send/Serializable';
+import { QuerySemesterPhaseStatusMessage } from 'Plugins/SemesterPhaseService/APIs/QuerySemesterPhaseStatusMessage';
+import { RunCourseRandomSelectionAndMoveToNextPhaseMessage } from 'Plugins/SemesterPhaseService/APIs/RunCourseRandomSelectionAndMoveToNextPhaseMessage';
+import { UpdateSemesterPhasePermissionsMessage } from 'Plugins/SemesterPhaseService/APIs/UpdateSemesterPhasePermissionsMessage';
+import { Phase } from 'Plugins/SemesterPhaseService/Objects/Phase';
+import { Permissions } from 'Plugins/SemesterPhaseService/Objects/Permissions'
+import { SemesterPhase } from 'Plugins/SemesterPhaseService/Objects/SemesterPhase';
 
-export const systemSettingsPagePath = '/admin/system-settings';
+interface SystemConfig {
+  phase: Phase;
+  allowTeacherEditCourse: boolean;
+  allowStudentSelectCourse: boolean;
+  allowStudentDropCourse: boolean;
+  allowStudentEvaluate: boolean;
+  lotteryDone: boolean;
+}
 
-const initialConfig = {
-  phase: 1,
+const initialConfig: SystemConfig = {
+  phase: Phase.phase1,
   allowTeacherEditCourse: false,
   allowStudentSelectCourse: false,
   allowStudentDropCourse: false,
@@ -19,24 +36,131 @@ const initialConfig = {
 
 interface SettingItem {
   label: string;
-  key: keyof typeof initialConfig;
+  key: keyof Omit<SystemConfig, 'phase' | 'lotteryDone'>;
 }
 
 const SystemSettingsPage: React.FC = () => {
-  const [config, setConfig] = useState(initialConfig);
-  
-  const updateConfig = (key: keyof typeof initialConfig, value: boolean) => {
+  const [config, setConfig] = useState<SystemConfig>(initialConfig);
+  const [loading, setLoading] = useState(false);
+  const userToken = useUserToken();
+
+  useEffect(() => {
+    fetchSystemStatus();
+  }, []);
+
+  const fetchSystemStatus = () => {
+  setLoading(true);
+  new QuerySemesterPhaseStatusMessage(userToken).send(
+    (info: string) => {
+      try {
+        // Parse the JSON string to get the raw data
+        const rawData = JSON.parse(info);
+        
+        // Create a new SemesterPhase instance from the raw data
+        const semesterPhase = new SemesterPhase(
+          Phase[rawData.currentPhase as keyof typeof Phase],
+          new Permissions(
+            rawData.permissions.allowTeacherManage,
+            rawData.permissions.allowStudentSelect,
+            rawData.permissions.allowStudentDrop,
+            rawData.permissions.allowStudentEvaluate
+          )
+        );
+
+        setConfig({
+          phase: semesterPhase.currentPhase,
+          allowTeacherEditCourse: semesterPhase.permissions.allowTeacherManage,
+          allowStudentSelectCourse: semesterPhase.permissions.allowStudentSelect,
+          allowStudentDropCourse: semesterPhase.permissions.allowStudentDrop,
+          allowStudentEvaluate: semesterPhase.permissions.allowStudentEvaluate,
+          lotteryDone: semesterPhase.currentPhase === Phase.phase2,
+        });
+      } catch (error) {
+        message.error('解析系统状态数据失败');
+        console.error('Error parsing system status:', error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    (error: string) => {
+      message.error('获取系统状态失败');
+      console.error('Error fetching system status:', error);
+      setLoading(false);
+    }
+  );
+};
+
+
+  const updateConfig = (key: keyof Omit<SystemConfig, 'phase' | 'lotteryDone'>, value: boolean) => {
+    setLoading(true);
+    const updatedConfig = { ...config, [key]: value };
+    
+    new UpdateSemesterPhasePermissionsMessage(
+      userToken,
+      updatedConfig.allowTeacherEditCourse,
+      updatedConfig.allowStudentSelectCourse,
+      updatedConfig.allowStudentDropCourse,
+      updatedConfig.allowStudentEvaluate
+    ).send(
+      (info: string) => {
+  try {
+    const rawData = JSON.parse(info);
+    const permissions = new Permissions(
+      rawData.allowTeacherManage,
+      rawData.allowStudentSelect,
+      rawData.allowStudentDrop,
+      rawData.allowStudentEvaluate
+    );
+    
     setConfig(prev => ({ ...prev, [key]: value }));
-    message.success('设置已更新（模拟）');
+    message.success('设置已更新');
+  } catch (error) {
+    message.error('解析权限数据失败');
+    console.error('Error parsing permissions:', error);
+  } finally {
+    setLoading(false);
+  }
+}
+    );
   };
 
   const handleLottery = () => {
-    setConfig(prev => ({ ...prev, phase: 2, lotteryDone: true }));
-    message.success('抽签完成，已进入阶段2（模拟）');
+    setLoading(true);
+    new RunCourseRandomSelectionAndMoveToNextPhaseMessage(userToken).send(
+      (info: string) => {
+        try {
+          const result = JSON.parse(info);
+          if (!result || typeof result !== 'string') {
+            throw new Error('Invalid lottery result');
+          }
+
+          setConfig(prev => ({
+            ...prev,
+            phase: Phase.phase2,
+            lotteryDone: true,
+            allowTeacherEditCourse: false,
+            allowStudentSelectCourse: false,
+            allowStudentDropCourse: false,
+            allowStudentEvaluate: false,
+          }));
+          message.success(result);
+        } catch (error) {
+          message.error('解析抽签结果失败');
+          console.error('Error parsing lottery result:', error);
+        } finally {
+          setLoading(false);
+        }
+      },
+      (error: string) => {
+        message.error('抽签操作失败');
+        console.error('Error running lottery:', error);
+        setLoading(false);
+      }
+    );
   };
 
   const canLottery =
-    config.phase === 1 &&
+    config.phase === Phase.phase1 &&
     !config.allowTeacherEditCourse &&
     !config.allowStudentSelectCourse &&
     !config.allowStudentDropCourse &&
@@ -52,36 +176,19 @@ const SystemSettingsPage: React.FC = () => {
 
   return (
     <DefaultLayout role={UserRole.superAdmin}>
-      <BackgroundLayout 
-        gradient="linear-gradient(135deg, #f0f4ff 0%, #e6f0ff 100%)"
-        contentMaxWidth={800}
-        contentPadding={24}
-        contentStyle={{
-          background: 'rgba(255, 255, 255, 0.9)',
-          backdropFilter: 'blur(8px)',
-          border: '1px solid rgba(255, 255, 255, 0.3)'
-        }}
-      >
-        <Card 
-          title={<Typography.Title level={4} style={{ margin: 0 }}>系统设置</Typography.Title>}
-          bordered={false}
-          headStyle={{
-            borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
-            padding: '0 16px',
-            minHeight: 56
-          }}
-          bodyStyle={{ 
-            padding: 16,
-            background: 'transparent'
-          }}
-          style={{ 
-            width: '100%', 
-            boxShadow: 'none',
-            background: 'transparent'
+      <BackgroundLayout>
+        <Card
+          title="系统设置"
+          loading={loading}
+          style={{
+            maxWidth: 800,
+            margin: '0 auto',
+            borderRadius: 8,
+            boxShadow: '0 2px 12px 0 rgba(0, 0, 0, 0.1)',
           }}
         >
           <Typography.Text strong style={{ display: 'block', marginBottom: 16 }}>
-            当前阶段：{config.phase === 1 ? '阶段 1' : '阶段 2'}
+            当前阶段：{config.phase === Phase.phase1 ? '阶段 1' : '阶段 2'}
           </Typography.Text>
           
           <div style={{ 
@@ -104,6 +211,7 @@ const SystemSettingsPage: React.FC = () => {
                 <Switch
                   checked={config[item.key] as boolean}
                   onChange={v => updateConfig(item.key, v)}
+                  disabled={loading || (config.phase === Phase.phase2 && item.key !== 'allowStudentEvaluate')}
                 />
               </div>
             ))}
@@ -114,18 +222,7 @@ const SystemSettingsPage: React.FC = () => {
             borderColor: 'rgba(0, 0, 0, 0.06)'
           }} />
           
-          <Typography.Text 
-            type="secondary" 
-            style={{ 
-              display: 'block', 
-              marginBottom: 16,
-              fontSize: 13
-            }}
-          >
-            所有状态仅为模拟，实际应由后端API驱动
-          </Typography.Text>
-          
-          {config.phase === 1 && (
+          {config.phase === Phase.phase1 && (
             <div style={{ 
               display: 'flex', 
               alignItems: 'center', 
@@ -138,8 +235,9 @@ const SystemSettingsPage: React.FC = () => {
               <Button
                 type="primary"
                 danger
-                disabled={!canLottery}
+                disabled={!canLottery || loading}
                 onClick={handleLottery}
+                loading={loading}
                 style={{ minWidth: 160 }}
               >
                 进行抽签并进入阶段2
@@ -150,7 +248,7 @@ const SystemSettingsPage: React.FC = () => {
             </div>
           )}
           
-          {config.phase === 2 && (
+          {config.phase === Phase.phase2 && (
             <Typography.Text 
               type="warning"
               style={{
