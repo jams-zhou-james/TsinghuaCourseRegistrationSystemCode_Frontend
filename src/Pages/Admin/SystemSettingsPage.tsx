@@ -3,12 +3,11 @@
 export const systemSettingsPagePath = "/admin/system-settings"
 
 import React, { useState, useEffect } from 'react';
-import { Card, Switch, Button, Typography, Divider, message } from 'antd';
+import { Card, Switch, Button, Typography, Divider, message, Skeleton } from 'antd';
 import DefaultLayout from '../../Layouts/WithRoleBasedSidebarLayout';
 import BackgroundLayout from '../../Layouts/BackgroundLayout';
 import { UserRole } from '../../Plugins/UserAccountService/Objects/UserRole';
 import { useUserToken } from 'Globals/GlobalStore';
-import { Serializable } from 'Plugins/CommonUtils/Send/Serializable';
 import { QuerySemesterPhaseStatusMessage } from 'Plugins/SemesterPhaseService/APIs/QuerySemesterPhaseStatusMessage';
 import { RunCourseRandomSelectionAndMoveToNextPhaseMessage } from 'Plugins/SemesterPhaseService/APIs/RunCourseRandomSelectionAndMoveToNextPhaseMessage';
 import { UpdateSemesterPhasePermissionsMessage } from 'Plugins/SemesterPhaseService/APIs/UpdateSemesterPhasePermissionsMessage';
@@ -55,7 +54,7 @@ const SystemSettingsPage: React.FC = () => {
       try {
         // Parse the JSON string to get the raw data
         const rawData = JSON.parse(info);
-        
+
         // Create a new SemesterPhase instance from the raw data
         const semesterPhase = new SemesterPhase(
           Phase[rawData.currentPhase as keyof typeof Phase],
@@ -120,7 +119,11 @@ const SystemSettingsPage: React.FC = () => {
   } finally {
     setLoading(false);
   }
-}
+}, (error: string) => {
+      message.error('更新系统状态失败');
+      console.error('Error fetching system status:', error);
+      setLoading(false);
+    }
     );
   };
 
@@ -178,91 +181,87 @@ const SystemSettingsPage: React.FC = () => {
     <DefaultLayout role={UserRole.superAdmin}>
       <BackgroundLayout>
         <Card
-          title="系统设置"
+  title="系统设置"
+  loading={loading}
+  style={{
+    maxWidth: 800,
+    width: '100%',
+    margin: '0 auto',
+    borderRadius: 8,
+    minHeight: 500,
+    boxShadow: '0 2px 12px 0 rgba(0, 0, 0, 0.1)',
+  }}
+>
+  {/* 阶段显示 - 固定高度 */}
+  <div style={{ minHeight: 40, marginBottom: 16 }}>
+    <Typography.Text strong style={{ display: 'block' }}>
+      当前阶段：{loading ? '加载中...' : config.phase === Phase.phase1 ? '阶段 1' : '阶段 2'}
+    </Typography.Text>
+  </div>
+
+  {/* 开关组 - 固定高度容器 */}
+  <div style={{ 
+    minHeight: 200, // 根据项目数量调整
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 8,
+    marginBottom: 16
+  }}>
+    {loading ? (
+      <Skeleton active paragraph={{ rows: 4 }} /> // 加载态骨架屏
+    ) : (
+      settingItems.map((item) => (
+        <div key={item.key} style={{ 
+          minHeight: 48, // 每个选项最小高度
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          padding: '12px 16px',
+          borderRadius: 8,
+          background: 'rgba(255, 255, 255, 0.6)',
+          boxShadow: '0 1px 1px rgba(0, 0, 0, 0.03)'
+        }}>
+          <Typography.Text>{item.label}</Typography.Text>
+          <Switch
+            checked={config[item.key] as boolean}
+            onChange={v => updateConfig(item.key, v)}
+            disabled={loading || (config.phase === Phase.phase2 && item.key !== 'allowStudentEvaluate')}
+          />
+        </div>
+      ))
+    )}
+  </div>
+
+  {/* 分隔线 - 固定位置 */}
+  <Divider style={{ margin: '16px 0' }} />
+
+  {/* 底部操作区 - 固定高度 */}
+  <div style={{ minHeight: 80 }}>
+    {loading ? (
+      <Skeleton.Button active style={{ width: 160, height: 32 }} />
+    ) : config.phase === Phase.phase1 ? (
+      <div style={{ /* 原有样式 */ }}>
+        <Button
+          type="primary"
+          danger
+          disabled={!canLottery || loading}
+          onClick={handleLottery}
           loading={loading}
-          style={{
-            maxWidth: 800,
-            margin: '0 auto',
-            borderRadius: 8,
-            boxShadow: '0 2px 12px 0 rgba(0, 0, 0, 0.1)',
-          }}
+          style={{ minWidth: 160 }}
         >
-          <Typography.Text strong style={{ display: 'block', marginBottom: 16 }}>
-            当前阶段：{config.phase === Phase.phase1 ? '阶段 1' : '阶段 2'}
-          </Typography.Text>
-          
-          <div style={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
-            gap: 8,
-            marginBottom: 16
-          }}>
-            {settingItems.map((item) => (
-              <div key={item.key} style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center',
-                padding: '12px 16px',
-                borderRadius: 8,
-                background: 'rgba(255, 255, 255, 0.6)',
-                boxShadow: '0 1px 1px rgba(0, 0, 0, 0.03)'
-              }}>
-                <Typography.Text>{item.label}</Typography.Text>
-                <Switch
-                  checked={config[item.key] as boolean}
-                  onChange={v => updateConfig(item.key, v)}
-                  disabled={loading || (config.phase === Phase.phase2 && item.key !== 'allowStudentEvaluate')}
-                />
-              </div>
-            ))}
-          </div>
-          
-          <Divider style={{ 
-            margin: '16px 0',
-            borderColor: 'rgba(0, 0, 0, 0.06)'
-          }} />
-          
-          {config.phase === Phase.phase1 && (
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 8,
-              padding: 12,
-              borderRadius: 8,
-              background: 'rgba(255, 241, 242, 0.6)',
-              border: '1px solid rgba(254, 202, 202, 0.3)'
-            }}>
-              <Button
-                type="primary"
-                danger
-                disabled={!canLottery || loading}
-                onClick={handleLottery}
-                loading={loading}
-                style={{ minWidth: 160 }}
-              >
-                进行抽签并进入阶段2
-              </Button>
-              <Typography.Text type="secondary" style={{ fontSize: 13 }}>
-                仅当所有开关都关闭时可抽签
-              </Typography.Text>
-            </div>
-          )}
-          
-          {config.phase === Phase.phase2 && (
-            <Typography.Text 
-              type="warning"
-              style={{
-                display: 'inline-block',
-                padding: '6px 12px',
-                borderRadius: 6,
-                background: 'rgba(253, 230, 138, 0.3)',
-                fontSize: 13
-              }}
-            >
-              阶段2不可逆回阶段1
-            </Typography.Text>
-          )}
-        </Card>
+          进行抽签并进入阶段2
+        </Button>
+        <Typography.Text type="secondary" style={{ fontSize: 13 }}>
+          仅当所有开关都关闭时可抽签
+        </Typography.Text>
+      </div>
+    ) : (
+      <Typography.Text type="warning" style={{ /* 原有样式 */ }}>
+        阶段2不可逆回阶段1
+      </Typography.Text>
+    )}
+  </div>
+</Card>
       </BackgroundLayout>
     </DefaultLayout>
   );
