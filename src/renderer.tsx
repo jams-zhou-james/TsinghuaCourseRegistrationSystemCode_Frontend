@@ -3,6 +3,7 @@ import { render } from 'react-dom'
 import { HashRouter, Route, Switch } from 'react-router-dom'
 import LoginPage, {loginPagePath} from "Pages/LoginPage";
 import {CourseSelectionPage, courseSelectionPagePath} from 'Pages/Student/CourseSelectionPage';
+import CourseEvaluationPage, { courseEvaluationPagePath } from 'Pages/Student/CourseEvaluationPage';
 import UserManagementPage, { userManagementPagePath } from 'Pages/Admin/UserManagementPage';
 import TeacherCourseListPage, { teacherCourseListPagePath } from 'Pages/Teacher/CourseListPage';
 import StudentCourseListPage, { studentCourseListPagePath } from 'Pages/Student/CourseListPage';
@@ -20,6 +21,7 @@ const Layout = () => {
                 <Route path={studentCourseListPagePath} exact component={StudentCourseListPage} />
                 <Route path={teacherCourseListPagePath} exact component={TeacherCourseListPage} />
                 <Route path={courseSelectionPagePath} exact component = {CourseSelectionPage} />
+                <Route path={courseEvaluationPagePath} exact component={CourseEvaluationPage} />
                 <Route path={userManagementPagePath} exact component={UserManagementPage} />
                 <Route path={systemSettingsPagePath} exact component={SystemSettingsPage} />
                 <Route path={courseTablePagePath} exact component={CourseTablePage} />
