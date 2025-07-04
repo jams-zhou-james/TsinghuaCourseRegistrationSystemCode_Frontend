@@ -262,7 +262,7 @@ export const CourseSelectionPage: React.FC = () => {
               课程选择中心
             </Title>
             <Text style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: 16 }}>
-              发现并选择您感兴趣的课程
+              选择您这学期的课程
             </Text>
           </div>
         </Card>
