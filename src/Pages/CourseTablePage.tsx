@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import './CourseTablePage.css';
 import { UserRole } from 'Plugins/UserAccountService/Objects/UserRole';
 import WithRoleBasedSidebarLayout from '../Layouts/WithRoleBasedSidebarLayout';
+import BackgroundLayout from '../Layouts/BackgroundLayout';
 
 // 定义课程类型
 interface Course {
@@ -140,29 +141,23 @@ const CourseTablePage: React.FC = () => {
     ) || null;
   };
 
-  if (loading) {
-    return <div className="course-table-loading">加载中...</div>;
-  }
-
-  if (error) {
-    return <div className="course-table-error">{error}</div>;
-  }
-
-  const renderContent = () => {
-    return (
-      <div className="course-table-container">
-        <h1 className="course-table-title">课程表</h1>
+  const renderContent = () => (
+    <div style={{ width: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+        <h2 style={{ fontSize: 24, color: '#1e40af', fontWeight: 700, margin: 0 }}>课程表</h2>
+      </div>
+      <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 4px 24px 0 rgba(124,60,237,0.08)', padding: 32, minHeight: 400 }}>
         <div style={{ overflowX: 'auto', width: '100%' }}>
           <table className="course-table">
             <colgroup>
-              <col style={{ width: '120px' }} /> {/* 时间列 */}
-              <col style={{ width: '140px' }} /> {/* 星期一 */}
-              <col style={{ width: '140px' }} /> {/* 星期二 */}
-              <col style={{ width: '140px' }} /> {/* 星期三 */}
-              <col style={{ width: '140px' }} /> {/* 星期四 */}
-              <col style={{ width: '140px' }} /> {/* 星期五 */}
-              <col style={{ width: '140px' }} /> {/* 星期六 */}
-              <col style={{ width: '140px' }} /> {/* 星期日 */}
+              <col style={{ width: '120px' }} />
+              <col style={{ width: '140px' }} />
+              <col style={{ width: '140px' }} />
+              <col style={{ width: '140px' }} />
+              <col style={{ width: '140px' }} />
+              <col style={{ width: '140px' }} />
+              <col style={{ width: '140px' }} />
+              <col style={{ width: '140px' }} />
             </colgroup>
             <thead>
               <tr>
@@ -200,13 +195,18 @@ const CourseTablePage: React.FC = () => {
           </table>
         </div>
       </div>
-    );
-  }
-    return (
+    </div>
+  );
+
+  return (
     <WithRoleBasedSidebarLayout role={UserRole.student}>
-      <div style={{ padding: '24px', minHeight: '100vh' }}>
-        {renderContent()}
-      </div>
+      <BackgroundLayout
+        gradient="linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)"
+        contentMaxWidth="90%"
+        contentStyle={{ maxWidth: 1200 }}
+      >
+        {loading ? <div className="course-table-loading">加载中...</div> : error ? <div className="course-table-error">{error}</div> : renderContent()}
+      </BackgroundLayout>
     </WithRoleBasedSidebarLayout>
   );
 };
