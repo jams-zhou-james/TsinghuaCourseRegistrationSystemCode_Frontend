@@ -165,7 +165,7 @@ const CourseTablePage: React.FC = () => {
   // 渲染课程卡片
   const renderCourseCard = (course: Course | null) => {
     if (!course) {
-      return <div style={{ height: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d9d9d9' }}>无课程</div>;
+      return <div style={{ height: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d9d9d9' }}></div>;
     }
 
     return (
@@ -173,9 +173,9 @@ const CourseTablePage: React.FC = () => {
         size="small"
         style={{
           margin: 0,
-          backgroundColor: '#f0f8ff',
+          backgroundColor: 'rgb(255, 240, 249)',
           border: '1px solid #d9d9d9',
-          borderRadius: '4px',
+          borderRadius: '6px',
           minHeight: '80px',
           boxShadow: 'none'
         }}
@@ -184,7 +184,7 @@ const CourseTablePage: React.FC = () => {
         <div style={{ textAlign: 'center' }}>
           <div style={{ 
             fontWeight: 'bold', 
-            color: '#262626', 
+            color: '#0050b3', 
             fontSize: '14px',
             marginBottom: '4px',
             overflow: 'hidden',
@@ -194,14 +194,14 @@ const CourseTablePage: React.FC = () => {
             {course.name}
           </div>
           <div style={{ 
-            color: '#666', 
+            color: '#003a8c', 
             fontSize: '12px',
             marginBottom: '2px'
           }}>
             {course.teacher}
           </div>
           <div style={{ 
-            color: '#999', 
+            color: '#096dd9', 
             fontSize: '11px',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
@@ -326,7 +326,7 @@ const CourseTablePage: React.FC = () => {
   return (
     <WithRoleBasedSidebarLayout role={UserRole.student}>
       <BackgroundLayout
-        gradient="linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)"
+        gradient="linear-gradient(135deg,rgb(220, 241, 255) 0%, #e0f2fe 100%)"
         contentMaxWidth="90%"
         contentStyle={{ maxWidth: 1200 }}
       >

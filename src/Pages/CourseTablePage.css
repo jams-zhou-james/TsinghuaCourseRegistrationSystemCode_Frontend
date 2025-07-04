@@ -16,79 +16,108 @@
 
 /* Ant Design Table 行间色样式 */
 .course-table-row-even .ant-table-cell {
-  background-color: #f0f8ff !important; /* 浅蓝色 */
+  background-color: #edf7ff !important; /* 浅蓝色 */
 }
 
 .course-table-row-odd .ant-table-cell {
   background-color: #ffffff !important; /* 白色 */
 }
 
-/* 表格头部样式 - 平面化 */
+/* 表格头部样式 - 略微加深边框 */
 .ant-table-thead > tr > th {
   background-color: #fafafa !important;
-  border-bottom: 1px solid #d9d9d9 !important;
-  border-right: 1px solid #f0f0f0 !important;
+  border-bottom: 1px solid #bfbfbf !important;
+  border-right: 1px solid #e0e0e0 !important;
+  border-top: 1px solid #bfbfbf !important;
+  border-left: 1px solid #e0e0e0 !important;
   font-weight: bold !important;
   color: #262626 !important;
   text-align: center !important;
   padding: 12px 8px !important;
 }
 
-/* 表格边框样式 - 平面化无外边距 */
+/* 表格头部左上角圆角 */
+.ant-table-thead > tr > th:first-child {
+  border-top-left-radius: 8px !important;
+}
+
+/* 表格头部右上角圆角 */
+.ant-table-thead > tr > th:last-child {
+  border-top-right-radius: 8px !important;
+}
+
+/* 表格边框样式 - 略微加深边框线 */
 .ant-table-bordered .ant-table-container {
-  border: 1px solid #d9d9d9;
-  border-radius: 0;
+  border: 1px solid #bfbfbf;
+  border-radius: 8px;
   margin: 0;
+  overflow: hidden;
 }
 
 .ant-table-bordered .ant-table-cell {
-  border-right: 1px solid #f0f0f0 !important;
-  border-bottom: 1px solid #f0f0f0 !important;
+  border-right: 1px solid #e0e0e0 !important;
+  border-bottom: 1px solid #e0e0e0 !important;
+  border-left: 1px solid #e0e0e0 !important;
+  border-top: 1px solid #e0e0e0 !important;
   padding: 8px !important;
 }
 
-.ant-table-bordered .ant-table-thead > tr > th {
-  border-bottom: 1px solid #d9d9d9 !important;
+/* 表格最后一行左下角圆角 */
+.ant-table-tbody > tr:last-child > td:first-child {
+  border-bottom-left-radius: 8px !important;
+}
+
+/* 表格最后一行右下角圆角 */
+.ant-table-tbody > tr:last-child > td:last-child {
+  border-bottom-right-radius: 8px !important;
+}
+
+/* .ant-table-bordered .ant-table-thead > tr > th {
+  border-bottom: 2px solid #595959 !important;
 }
 
 .ant-table-tbody > tr > td {
-  border-right: 1px solid #f0f0f0 !important;
-}
+  border-right: 1px solid #8c8c8c !important;
+} */
+
+
 
 /* 表格整体边框 */
-.ant-table-bordered .ant-table-tbody > tr:last-child > td {
-  border-bottom: 1px solid #d9d9d9 !important;
-}
+/* .ant-table-bordered .ant-table-tbody > tr:last-child > td {
+  border-bottom: 2px solid #595959 !important;
+} */
 
-/* 移除表格容器的额外边距和圆角 */
+/* 移除表格容器的额外边距和设置圆角 */
 .ant-table-wrapper {
   margin: 0 !important;
   padding: 0 !important;
+  border-radius: 8px !important;
+  overflow: hidden;
 }
 
 .ant-table {
   margin: 0 !important;
-  border-radius: 0 !important;
+  border-radius: 8px !important;
 }
 
-/* 课程卡片悬浮效果 - 平面化设计 */
+/* 课程卡片悬浮效果 - 加深蓝色 */
 .ant-card-small > .ant-card-body {
   transition: all 0.2s ease;
 }
 
 .ant-card-small:hover > .ant-card-body {
-  background-color: #e6f4ff !important;
+  background-color: #fed4ff !important;
 }
 
-/* 课程卡片平面化样式 */
+/* 课程卡片样式 - 圆润化 */
 .ant-card-small {
   border: 1px solid #d9d9d9 !important;
   box-shadow: none !important;
-  border-radius: 4px !important;
+  border-radius: 6px !important;
 }
 
 .ant-card-small:hover {
-  border: 1px solid #1890ff !important;
+  border: 1px solid #01060a !important;
   box-shadow: none !important;
 }
 
