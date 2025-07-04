@@ -4,30 +4,10 @@ export const courseEvaluationPagePath = '/student/course-evaluation';
 
 import React, { useEffect, useState } from 'react';
 import { 
-  Card, 
-  Rate, 
-  Input, 
-  Button, 
-  List, 
-  message, 
-  Typography, 
-  Space, 
-  Tag, 
-  Avatar, 
-  Divider,
-  Alert,
-  Empty,
-  Spin,
-  Modal,
-  Popconfirm
+  Card,   Rate,   Input,   Button,   List,   message,   Typography,   Space,   Tag,   Avatar,   Divider,  Alert,  Empty,  Spin,  Modal,  Popconfirm
 } from 'antd';
 import { 
-  StarOutlined, 
-  EditOutlined, 
-  DeleteOutlined, 
-  SaveOutlined,
-  CloseOutlined,
-  BookOutlined
+  StarOutlined,   EditOutlined,   DeleteOutlined,   SaveOutlined,  CloseOutlined,  BookOutlined
 } from '@ant-design/icons';
 import DefaultLayout from '../../Layouts/WithRoleBasedSidebarLayout';
 import { UserRole } from 'Plugins/UserAccountService/Objects/UserRole';
