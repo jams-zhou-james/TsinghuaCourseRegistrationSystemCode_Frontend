@@ -22,6 +22,9 @@ import { QueryCourseGroupAuthorizedTeachersMessage } from 'Plugins/CourseManagem
 import { RevokeCourseGroupAuthorizationMessage } from 'Plugins/CourseManagementService/APIs/RevokeCourseGroupAuthorizationMessage';
 import { QuerySafeUserInfoByUserIDMessage } from 'Plugins/UserAccountService/APIs/QuerySafeUserInfoByUserIDMessage';
 import { UserRole as UserRoleEnum } from 'Plugins/UserAccountService/Objects/UserRole';
+import { CourseTime } from 'Plugins/CourseManagementService/Objects/CourseTime';
+import { DayOfWeek, dayOfWeekList } from 'Plugins/CourseManagementService/Objects/DayOfWeek';
+import { TimePeriod, timePeriodList } from 'Plugins/CourseManagementService/Objects/TimePeriod';
 
 // 获取当前用户Token
 const userRole: UserRole = UserRole.teacher;
@@ -51,7 +54,10 @@ export const TeacherCourseListPage: React.FC = () => {
             (groupsInfo: string) => {
               try {
                 const arr = JSON.parse(groupsInfo);
-                const groupObjs = arr.map((g: any) => new CourseGroup(g.courseGroupID, g.name, g.credit, g.ownerTeacherID, g.authorizedTeachers));
+                console.log("arr:", arr)
+                const groupJSONObjs = arr.map((g: any) => JSON.parse(g))
+                const groupObjs = groupJSONObjs.map((g: any) => new CourseGroup(g.courseGroupID, g.name, g.credit, g.ownerTeacherID, g.authorizedTeachers));
+                console.log('groupObjs:', groupObjs)
                 setGroups(groupObjs);
                 // 查询每个课程组下的课程
                 groupObjs.forEach((group: CourseGroup) => {
@@ -89,7 +95,8 @@ export const TeacherCourseListPage: React.FC = () => {
   };
   const handleDeleteGroup = (groupID: number) => {
     setLoading(true);
-    new DeleteCourseGroupMessage(userToken, groupID).send(
+    // DeleteCourseGroupMessage 需传递 { teacherToken, courseGroupID }
+    new (require('Plugins/CourseManagementService/APIs/DeleteCourseGroupMessage').DeleteCourseGroupMessage)(userToken, groupID).send(
       (info: string) => {
         message.success('已删除课程组');
         setGroups(groups.filter(g => g.courseGroupID !== groupID));
@@ -152,7 +159,11 @@ export const TeacherCourseListPage: React.FC = () => {
       } else if (modal.type === 'course') {
         if (modal.mode === 'add' && modal.groupID) {
           setLoading(true);
-          new CreateCourseMessage(userToken, modal.groupID, Number(values.capacity), [], values.location).send(
+          // 取出表单中的课程时间，转换为 CourseTime[]
+          const courseTimes = Array.isArray(values.courseTimes)
+            ? values.courseTimes.map((ct: { dayOfWeek: DayOfWeek; timePeriod: TimePeriod }) => new CourseTime(ct.dayOfWeek, ct.timePeriod))
+            : [];
+          new CreateCourseMessage(userToken, modal.groupID, Number(values.capacity), courseTimes, values.location).send(
             (info: string) => {
               try {
                 const c = JSON.parse(info);
@@ -186,6 +197,70 @@ export const TeacherCourseListPage: React.FC = () => {
     });
   };
   const handleModalCancel = () => setModal({visible: false, type: null, mode: 'add'});
+  // 授权老师相关状态
+  const [authModal, setAuthModal] = useState<{visible: boolean, group?: CourseGroup}|null>(null);
+  const [authTeachers, setAuthTeachers] = useState<number[]>([]);
+  const [authLoading, setAuthLoading] = useState(false);
+
+  // 查询授权老师
+  const handleShowAuthTeachers = (group: CourseGroup) => {
+    setAuthLoading(true);
+    new (require('Plugins/CourseManagementService/APIs/QueryCourseGroupAuthorizedTeachersMessage').QueryCourseGroupAuthorizedTeachersMessage)(userToken, group.courseGroupID).send(
+      (info: string) => {
+        try {
+          const arr = JSON.parse(info);
+          setAuthTeachers(arr);
+          setAuthModal({visible: true, group});
+        } catch (e) { message.error('解析授权老师失败'); }
+        setAuthLoading(false);
+      },
+      () => { message.error('获取授权老师失败'); setAuthLoading(false); }
+    );
+  };
+  // 授权老师
+  const handleGrantAuth = (group: CourseGroup, teacherID: number) => {
+    setAuthLoading(true);
+    new (require('Plugins/CourseManagementService/APIs/GrantCourseGroupAuthorizationMessage').GrantCourseGroupAuthorizationMessage)(userToken, group.courseGroupID, teacherID).send(
+      (info: string) => {
+        try {
+          const arr = JSON.parse(info);
+          setAuthTeachers(arr);
+          message.success('授权成功');
+        } catch (e) { message.error('授权后解析失败'); }
+        setAuthLoading(false);
+      },
+      () => { message.error('授权失败'); setAuthLoading(false); }
+    );
+  };
+  // 取消授权
+  const handleRevokeAuth = (group: CourseGroup, teacherID: number) => {
+    setAuthLoading(true);
+    new (require('Plugins/CourseManagementService/APIs/RevokeCourseGroupAuthorizationMessage').RevokeCourseGroupAuthorizationMessage)(userToken, group.courseGroupID, teacherID).send(
+      (info: string) => {
+        try {
+          const arr = JSON.parse(info);
+          setAuthTeachers(arr);
+          message.success('取消授权成功');
+        } catch (e) { message.error('取消授权后解析失败'); }
+        setAuthLoading(false);
+      },
+      () => { message.error('取消授权失败'); setAuthLoading(false); }
+    );
+  };
+
+  // 星期label
+  function dayOfWeekLabel(d: DayOfWeek) {
+    switch (d) {
+      case DayOfWeek.monday: return '周一';
+      case DayOfWeek.tuesday: return '周二';
+      case DayOfWeek.wednesday: return '周三';
+      case DayOfWeek.thursday: return '周四';
+      case DayOfWeek.friday: return '周五';
+      case DayOfWeek.saturday: return '周六';
+      case DayOfWeek.sunday: return '周日';
+      default: return d;
+    }
+  }
 
   const renderContent = () => (
     <div style={{ width: '100%' }}>
@@ -228,6 +303,7 @@ export const TeacherCourseListPage: React.FC = () => {
                 <Popconfirm title="确定删除该课程组？" onConfirm={() => handleDeleteGroup(group.courseGroupID)}>
                   <Button size="small" danger style={{ background: '#fef2f2', color: '#be123c', border: 'none', borderRadius: 6, fontWeight: 500 }}>删除组</Button>
                 </Popconfirm>
+                <Button size="small" onClick={() => handleShowAuthTeachers(group)} style={{ background: '#f1f5f9', color: '#1e40af', border: 'none', borderRadius: 6, fontWeight: 500 }}>授权老师</Button>
               </div>
               <List
                 bordered
@@ -267,23 +343,74 @@ export const TeacherCourseListPage: React.FC = () => {
       >
         <Form form={form} layout="vertical">
           {modal.type === 'group' && <>
-            <Form.Item name="groupName" label={<span style={{ color: '#1e40af' }}>课程组名称</span>} rules={[{ required: true, message: '请输入课程组名称' }]}>
+            <Form.Item name="groupName" label={<span style={{ color: '#1e40af' }}>课程组名称</span>} rules={[{ required: true, message: '请输入课程组名称' }]}> 
               <Input />
             </Form.Item>
-            <Form.Item name="credits" label={<span style={{ color: '#1e40af' }}>学分</span>} rules={[{ required: true, message: '请输入学分' }]}>
+            <Form.Item name="credits" label={<span style={{ color: '#1e40af' }}>学分</span>} rules={[{ required: true, message: '请输入学分' }]}> 
               <Input type="number" />
             </Form.Item>
           </>}
           {modal.type === 'course' && <>
-            <Form.Item name="location" label={<span style={{ color: '#1e40af' }}>上课地点</span>} rules={[{ required: true, message: '请输入上课地点' }]}>
+            <Form.Item name="location" label={<span style={{ color: '#1e40af' }}>上课地点</span>} rules={[{ required: true, message: '请输入上课地点' }]}> 
               <Input />
             </Form.Item>
-            <Form.Item name="capacity" label={<span style={{ color: '#1e40af' }}>容量</span>} rules={[{ required: true, message: '请输入容量' }]}>
+            <Form.Item name="capacity" label={<span style={{ color: '#1e40af' }}>容量</span>} rules={[{ required: true, message: '请输入容量' }]}> 
               <Input type="number" />
             </Form.Item>
+            {modal.mode === 'add' && (
+              <Form.List name="courseTimes">
+                {(fields, { add, remove }) => (
+                  <div>
+                    <div style={{ marginBottom: 8, color: '#1e40af', fontWeight: 500 }}>课程时间安排（可添加多个时间段）</div>
+                    {fields.map((field) => (
+                      <div key={field.key} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                        <Form.Item {...field} name={[field.name, 'dayOfWeek']} rules={[{ required: true, message: '请选择星期' }]} style={{ marginBottom: 0 }}>
+                          <Select style={{ width: 120 }} placeholder="星期"
+                            options={dayOfWeekList.map(d => ({ label: dayOfWeekLabel(d), value: d }))}
+                          />
+                        </Form.Item>
+                        <Form.Item {...field} name={[field.name, 'timePeriod']} rules={[{ required: true, message: '请选择时间段' }]} style={{ marginBottom: 0 }}>
+                          <Select style={{ width: 140 }} placeholder="时间段"
+                            options={timePeriodList.map(t => ({ label: t, value: t }))}
+                          />
+                        </Form.Item>
+                        <Button danger type="link" onClick={() => remove(field.name)} style={{ padding: 0 }}>删除</Button>
+                      </div>
+                    ))}
+                    <Button type="dashed" onClick={() => add()} style={{ width: 260, marginBottom: 8 }}>添加时间段</Button>
+                    <div style={{ color: '#64748b', fontSize: 12 }}>如课程无需占用时间段可不添加，系统会弹窗确认。</div>
+                  </div>
+                )}
+              </Form.List>
+            )}
           </>}
         </Form>
       </Modal>
+      {/* 授权老师弹窗 */}
+      {authModal?.visible && authModal.group && (
+        <Modal
+          title={`授权老师 - ${authModal.group.name}`}
+          open={authModal.visible}
+          onCancel={() => setAuthModal(null)}
+          footer={null}
+        >
+          <div>已授权老师ID: {authTeachers.join(', ') || '无'}</div>
+          <div style={{ marginTop: 12 }}>
+            <Input type="number" placeholder="输入老师ID授权" id="grantTeacherID" style={{ width: 180, marginRight: 8 }} />
+            <Button type="primary" size="small" loading={authLoading} onClick={() => {
+              const tid = Number((document.getElementById('grantTeacherID') as HTMLInputElement)?.value);
+              if (tid) handleGrantAuth(authModal.group!, tid);
+            }}>授权</Button>
+          </div>
+          <div style={{ marginTop: 12 }}>
+            <Input type="number" placeholder="输入老师ID取消授权" id="revokeTeacherID" style={{ width: 180, marginRight: 8 }} />
+            <Button size="small" loading={authLoading} onClick={() => {
+              const tid = Number((document.getElementById('revokeTeacherID') as HTMLInputElement)?.value);
+              if (tid) handleRevokeAuth(authModal.group!, tid);
+            }}>取消授权</Button>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 
