@@ -3,7 +3,31 @@ import './CourseTablePage.css';
 import { UserRole } from 'Plugins/UserAccountService/Objects/UserRole';
 import WithRoleBasedSidebarLayout from '../Layouts/WithRoleBasedSidebarLayout';
 import BackgroundLayout from '../Layouts/BackgroundLayout';
-import { Table, Card, Tag, Spin } from 'antd';
+import { Table, Card, Tag, Spin, message } from 'antd';
+import { useUserToken } from 'Globals/GlobalStore';
+import { QuerySafeUserInfoByTokenMessage } from 'Plugins/UserAccountService/APIs/QuerySafeUserInfoByTokenMessage';
+import { SafeUserInfo } from 'Plugins/UserAccountService/Objects/SafeUserInfo';
+import { QuerySemesterPhaseStatusMessage } from 'Plugins/SemesterPhaseService/APIs/QuerySemesterPhaseStatusMessage';
+import { SemesterPhase } from 'Plugins/SemesterPhaseService/Objects/SemesterPhase';
+import { Phase } from 'Plugins/SemesterPhaseService/Objects/Phase';
+import { QueryOwnCoursesMessage } from 'Plugins/CourseManagementService/APIs/QueryOwnCoursesMessage';
+import { QueryStudentPreselectedCoursesMessage } from 'Plugins/CourseSelectionService/APIs/QueryStudentPreselectedCoursesMessage';
+import { QueryStudentSelectedCoursesMessage } from 'Plugins/CourseSelectionService/APIs/QueryStudentSelectedCoursesMessage';
+import { QueryStudentWaitingListStatusMessage } from 'Plugins/CourseSelectionService/APIs/QueryStudentWaitingListStatusMessage';
+import { CourseInfo } from 'Plugins/CourseManagementService/Objects/CourseInfo';
+import { CourseTime } from 'Plugins/CourseManagementService/Objects/CourseTime';
+import { DayOfWeek } from 'Plugins/CourseManagementService/Objects/DayOfWeek';
+import { TimePeriod } from 'Plugins/CourseManagementService/Objects/TimePeriod';
+import { PairOfCourseAndRank } from 'Plugins/CourseSelectionService/Objects/PairOfCourseAndRank';
+import { QueryCourseGroupByIDMessage } from 'Plugins/CourseManagementService/APIs/QueryCourseGroupByIDMessage';
+import { CourseGroup } from 'Plugins/CourseManagementService/Objects/CourseGroup';
+
+// 定义课程状态枚举
+enum CourseStatus {
+  SELECTED = 'selected',    // 已选中
+  WAITING = 'waiting',      // 候补名单
+  PRESELECTED = 'preselected' // 预选（仅阶段1）
+}
 
 // 定义课程类型
 interface Course {
@@ -14,92 +38,242 @@ interface Course {
   dayOfWeek: number;  // 星期几 (1-7, 1表示星期一)
   startTime: string;  // 开始时间 (如 "08:00")
   endTime: string;    // 结束时间 (如 "09:35")
+  status?: CourseStatus; // 课程状态（学生用）
+  waitingRank?: number;   // 候补排名（如果是候补状态）
 }
-//QueryStudentPreselectedCoursesMessage
-//QueryStudentWaitingListStatusMessage
-//QueryStudentSelectedCoursesMessage
 
+// 时间段映射
+const TIME_PERIOD_MAP = {
+  [TimePeriod.morning]: { startTime: '08:00', endTime: '09:35' },
+  [TimePeriod.lateMorning]: { startTime: '09:50', endTime: '12:15' },
+  [TimePeriod.earlyAfternoon]: { startTime: '13:30', endTime: '15:05' },
+  [TimePeriod.midAfternoon]: { startTime: '15:20', endTime: '16:55' },
+  [TimePeriod.lateAfternoon]: { startTime: '17:05', endTime: '18:40' },
+  [TimePeriod.evening]: { startTime: '19:20', endTime: '21:45' }
+};
 
-// 模拟API获取课表数据
-const fetchCourseTable = async (): Promise<Course[]> => {
-  // 模拟API延迟
-  await new Promise(resolve => setTimeout(resolve, 500));
+// 星期映射
+const DAY_OF_WEEK_MAP = {
+  [DayOfWeek.monday]: 1,
+  [DayOfWeek.tuesday]: 2,
+  [DayOfWeek.wednesday]: 3,
+  [DayOfWeek.thursday]: 4,
+  [DayOfWeek.friday]: 5,
+  [DayOfWeek.saturday]: 6,
+  [DayOfWeek.sunday]: 7
+};
+
+// 将CourseInfo转换为Course格式的辅助函数
+const convertCourseInfoToCourse = async (
+  courseInfo: CourseInfo, 
+  userToken: string, 
+  status?: CourseStatus, 
+  waitingRank?: number
+): Promise<Course[]> => {
+  const courses: Course[] = [];
   
-  // 返回模拟数据
-  return [
-    {
-      id: '1',
-      name: '高等数学',
-      teacher: '张教授',
-      location: '教学楼A201',
-      dayOfWeek: 1,
-      startTime: '08:00',
-      endTime: '09:35'
-    },
-    {
-      id: '2',
-      name: '大学英语',
-      teacher: '李老师',
-      location: '外语楼105',
-      dayOfWeek: 2,
-      startTime: '09:50',
-      endTime: '12:15'
-    },
-    {
-      id: '3',
-      name: '计算机科学导论',
-      teacher: '王教授',
-      location: '计算机中心302',
-      dayOfWeek: 3,
-      startTime: '13:30',
-      endTime: '15:05'
-    },
-    {
-      id: '4',
-      name: '体育',
-      teacher: '赵教练',
-      location: '体育馆',
-      dayOfWeek: 4,
-      startTime: '15:20',
-      endTime: '16:55'
-    },
-    {
-      id: '5',
-      name: '物理实验',
-      teacher: '钱教授',
-      location: '物理实验室B',
-      dayOfWeek: 5,
-      startTime: '17:05',
-      endTime: '18:40'
-    },
-    {
-      id: '6',
-      name: '艺术鉴赏',
-      teacher: '孙老师',
-      location: '艺术楼101',
-      dayOfWeek: 6,
-      startTime: '19:20',
-      endTime: '21:45'
-    },
-    {
-      id: '7',
-      name: '数据结构',
-      teacher: '周教授',
-      location: '教学楼B305',
-      dayOfWeek: 3,
-      startTime: '09:50',
-      endTime: '12:15'
-    },
-    {
-      id: '8',
-      name: '算法设计',
-      teacher: '吴教授',
-      location: '教学楼B305',
-      dayOfWeek: 5,
-      startTime: '09:50',
-      endTime: '12:15'
+  // 获取课程组信息来获得课程名称
+  const courseGroup = await new Promise<CourseGroup | null>((resolve) => {
+    new QueryCourseGroupByIDMessage(userToken, courseInfo.courseGroupID).send(
+      (info: string) => {
+        try {
+          const data = JSON.parse(info);
+          resolve(new CourseGroup(data.courseGroupID, data.name, data.credit, data.ownerTeacherID, data.authorizedTeachers));
+        } catch (e) {
+          console.error('解析课程组失败:', e);
+          resolve(null);
+        }
+      },
+      () => {
+        console.error('获取课程组失败');
+        resolve(null);
+      }
+    );
+  });
+
+  // 处理每个上课时间
+  courseInfo.time.forEach((courseTime: CourseTime) => {
+    const dayOfWeek = DAY_OF_WEEK_MAP[courseTime.dayOfWeek];
+    const timeInfo = TIME_PERIOD_MAP[courseTime.timePeriod];
+    
+    if (dayOfWeek && timeInfo) {
+      courses.push({
+        id: `${courseInfo.courseID}-${dayOfWeek}-${courseTime.timePeriod}`,
+        name: courseGroup?.name || `课程-${courseInfo.courseID}`,
+        teacher: `教师-${courseInfo.teacherID}`, // 实际应用中可能需要查询教师姓名
+        location: courseInfo.location,
+        dayOfWeek,
+        startTime: timeInfo.startTime,
+        endTime: timeInfo.endTime,
+        status,
+        waitingRank
+      });
     }
-  ];
+  });
+
+  return courses;
+};
+
+// 获取课表数据的主函数
+const fetchCourseTable = async (userToken: string): Promise<Course[]> => {
+  try {
+    // 1. 获取用户信息
+    const userInfo = await new Promise<SafeUserInfo>((resolve, reject) => {
+      new QuerySafeUserInfoByTokenMessage(userToken).send(
+        (info: string) => {
+          try {
+            const data = JSON.parse(info);
+            resolve(new SafeUserInfo(data.userID, data.userName, data.accountName, data.role));
+          } catch (e) {
+            reject(e);
+          }
+        },
+        (error: string) => reject(new Error(error))
+      );
+    });
+
+    let allCourses: Course[] = [];
+
+    if (userInfo.role === UserRole.teacher) {
+      // 教师：查询自己开设的课程
+      const teacherCourses = await new Promise<CourseInfo[]>((resolve, reject) => {
+        new QueryOwnCoursesMessage(userToken).send(
+          (info: string) => {
+            try {
+              const data = JSON.parse(info);
+              const courses = Array.isArray(data) ? data : [];
+              resolve(courses.map((c: any) => new CourseInfo(
+                c.courseID, c.courseCapacity, c.time, c.location, 
+                c.courseGroupID, c.teacherID, c.preselectedStudentsSize, 
+                c.selectedStudentsSize, c.waitingListSize
+              )));
+            } catch (e) {
+              reject(e);
+            }
+          },
+          (error: string) => reject(new Error(error))
+        );
+      });
+
+      // 转换教师课程
+      for (const courseInfo of teacherCourses) {
+        const courses = await convertCourseInfoToCourse(courseInfo, userToken);
+        allCourses.push(...courses);
+      }
+
+    } else if (userInfo.role === UserRole.student) {
+      // 学生：根据选课阶段查询不同的课程
+      
+      // 2. 获取当前选课阶段
+      const semesterPhase = await new Promise<SemesterPhase>((resolve, reject) => {
+        new QuerySemesterPhaseStatusMessage(userToken).send(
+          (info: string) => {
+            try {
+              const data = JSON.parse(info);
+              resolve(new SemesterPhase(data.currentPhase, data.permissions));
+            } catch (e) {
+              reject(e);
+            }
+          },
+          (error: string) => reject(new Error(error))
+        );
+      });
+
+      if (semesterPhase.currentPhase === Phase.phase1) {
+        // 阶段1：查询预选课程
+        const preselectedCourses = await new Promise<CourseInfo[]>((resolve, reject) => {
+          new QueryStudentPreselectedCoursesMessage(userToken).send(
+            (info: string) => {
+              try {
+                const data = JSON.parse(info);
+                const courses = Array.isArray(data) ? data : [];
+                resolve(courses.map((c: any) => new CourseInfo(
+                  c.courseID, c.courseCapacity, c.time, c.location, 
+                  c.courseGroupID, c.teacherID, c.preselectedStudentsSize, 
+                  c.selectedStudentsSize, c.waitingListSize
+                )));
+              } catch (e) {
+                reject(e);
+              }
+            },
+            (error: string) => reject(new Error(error))
+          );
+        });
+
+        // 转换预选课程
+        for (const courseInfo of preselectedCourses) {
+          const courses = await convertCourseInfoToCourse(courseInfo, userToken, CourseStatus.PRESELECTED);
+          allCourses.push(...courses);
+        }
+
+      } else if (semesterPhase.currentPhase === Phase.phase2) {
+        // 阶段2：查询已选课程和候补课程
+        
+        // 查询已选课程
+        const selectedCourses = await new Promise<CourseInfo[]>((resolve, reject) => {
+          new QueryStudentSelectedCoursesMessage(userToken).send(
+            (info: string) => {
+              try {
+                const data = JSON.parse(info);
+                const courses = Array.isArray(data) ? data : [];
+                resolve(courses.map((c: any) => new CourseInfo(
+                  c.courseID, c.courseCapacity, c.time, c.location, 
+                  c.courseGroupID, c.teacherID, c.preselectedStudentsSize, 
+                  c.selectedStudentsSize, c.waitingListSize
+                )));
+              } catch (e) {
+                reject(e);
+              }
+            },
+            (error: string) => reject(new Error(error))
+          );
+        });
+
+        // 转换已选课程
+        for (const courseInfo of selectedCourses) {
+          const courses = await convertCourseInfoToCourse(courseInfo, userToken, CourseStatus.SELECTED);
+          allCourses.push(...courses);
+        }
+
+        // 查询候补课程
+        const waitingListStatus = await new Promise<PairOfCourseAndRank[]>((resolve, reject) => {
+          new QueryStudentWaitingListStatusMessage(userToken).send(
+            (info: string) => {
+              try {
+                const data = JSON.parse(info);
+                const waitingList = Array.isArray(data) ? data : [];
+                resolve(waitingList.map((item: any) => new PairOfCourseAndRank(
+                  new CourseInfo(
+                    item.course.courseID, item.course.courseCapacity, item.course.time, 
+                    item.course.location, item.course.courseGroupID, item.course.teacherID, 
+                    item.course.preselectedStudentsSize, item.course.selectedStudentsSize, 
+                    item.course.waitingListSize
+                  ),
+                  item.rank
+                )));
+              } catch (e) {
+                reject(e);
+              }
+            },
+            (error: string) => reject(new Error(error))
+          );
+        });
+
+        // 转换候补课程
+        for (const pair of waitingListStatus) {
+          const courses = await convertCourseInfoToCourse(pair.course, userToken, CourseStatus.WAITING, pair.rank);
+          allCourses.push(...courses);
+        }
+      }
+    }
+
+    return allCourses;
+
+  } catch (error) {
+    console.error('获取课表数据失败:', error);
+    message.error('获取课表数据失败: ' + (error instanceof Error ? error.message : '未知错误'));
+    return [];
+  }
 };
 
 // 定义时间段
@@ -118,21 +292,51 @@ const CourseTablePage: React.FC = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const userToken = useUserToken();
 
   useEffect(() => {
     const loadCourseTable = async () => {
+      if (!userToken) {
+        setError('用户未登录');
+        setLoading(false);
+        return;
+      }
+
       try {
-        const data = await fetchCourseTable();
+        setLoading(true);
+        setError(null);
+        
+        // 首先获取用户角色
+        const userInfo = await new Promise<SafeUserInfo>((resolve, reject) => {
+          new QuerySafeUserInfoByTokenMessage(userToken).send(
+            (info: string) => {
+              try {
+                const data = JSON.parse(info);
+                resolve(new SafeUserInfo(data.userID, data.userName, data.accountName, data.role));
+              } catch (e) {
+                reject(e);
+              }
+            },
+            (error: string) => reject(new Error(error))
+          );
+        });
+        
+        setUserRole(userInfo.role);
+        
+        // 获取课表数据
+        const data = await fetchCourseTable(userToken);
         setCourses(data);
         setLoading(false);
       } catch (err) {
-        setError('无法加载课程表数据');
+        console.error('加载课表失败:', err);
+        setError('无法加载课程表数据: ' + (err instanceof Error ? err.message : '未知错误'));
         setLoading(false);
       }
     };
 
     loadCourseTable();
-  }, []);
+  }, [userToken]);
 
   // 将课程按星期几和时间段分组
   const getCourseForSlot = (day: number, slotId: number): Course | null => {
@@ -168,20 +372,56 @@ const CourseTablePage: React.FC = () => {
       return <div style={{ height: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d9d9d9' }}></div>;
     }
 
+    // 根据课程状态确定卡片样式
+    let cardStyle = {
+      margin: 0,
+      backgroundColor: 'rgb(255, 240, 249)', // 默认样式
+      border: '1px solid #d9d9d9',
+      borderRadius: '6px',
+      minHeight: '80px',
+      boxShadow: 'none'
+    };
+
+    let statusTag = null;
+
+    if (userRole === UserRole.student && course.status) {
+      switch (course.status) {
+        case CourseStatus.SELECTED:
+          cardStyle.backgroundColor = 'rgb(240, 255, 240)'; // 浅绿色
+          cardStyle.border = '1px solid #52c41a';
+          statusTag = <Tag color="success" style={{ fontSize: '10px' }}>已选</Tag>;
+          break;
+        case CourseStatus.WAITING:
+          cardStyle.backgroundColor = 'rgb(255, 245, 230)'; // 浅橙色
+          cardStyle.border = '1px solid #fa8c16';
+          statusTag = (
+            <Tag color="warning" style={{ fontSize: '10px' }}>
+              候补{course.waitingRank ? ` (第${course.waitingRank}位)` : ''}
+            </Tag>
+          );
+          break;
+        case CourseStatus.PRESELECTED:
+          cardStyle.backgroundColor = 'rgb(240, 245, 255)'; // 浅蓝色
+          cardStyle.border = '1px solid #1890ff';
+          statusTag = <Tag color="processing" style={{ fontSize: '10px' }}>预选</Tag>;
+          break;
+        default:
+          break;
+      }
+    }
+
     return (
       <Card
         size="small"
-        style={{
-          margin: 0,
-          backgroundColor: 'rgb(255, 240, 249)',
-          border: '1px solid #d9d9d9',
-          borderRadius: '6px',
-          minHeight: '80px',
-          boxShadow: 'none'
-        }}
+        style={cardStyle}
         bodyStyle={{ padding: '8px' }}
       >
         <div style={{ textAlign: 'center' }}>
+          {statusTag && (
+            <div style={{ marginBottom: '4px', textAlign: 'right' }}>
+              {statusTag}
+            </div>
+          )}
           <div style={{ 
             fontWeight: 'bold', 
             color: '#0050b3', 
@@ -324,23 +564,33 @@ const CourseTablePage: React.FC = () => {
   );
 
   return (
-    <WithRoleBasedSidebarLayout role={UserRole.student}>
-      <BackgroundLayout
-        gradient="linear-gradient(135deg,rgb(220, 241, 255) 0%, #e0f2fe 100%)"
-        contentMaxWidth="90%"
-        contentStyle={{ maxWidth: 1200 }}
-      >
-        {loading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
-            <Spin size="large" />
-          </div>
-        ) : error ? (
-          <div className="course-table-error">{error}</div>
-        ) : (
-          renderContent()
-        )}
-      </BackgroundLayout>
-    </WithRoleBasedSidebarLayout>
+    <>
+      {userRole === null ? (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+          <Spin size="large" />
+        </div>
+      ) : (
+        <WithRoleBasedSidebarLayout role={userRole}>
+          <BackgroundLayout
+            gradient="linear-gradient(135deg,rgb(220, 241, 255) 0%, #e0f2fe 100%)"
+            contentMaxWidth="90%"
+            contentStyle={{ maxWidth: 1200 }}
+          >
+            {loading ? (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
+                <Spin size="large" />
+              </div>
+            ) : error ? (
+              <div className="course-table-error" style={{ textAlign: 'center', color: '#ff4d4f', fontSize: '16px', marginTop: '50px' }}>
+                {error}
+              </div>
+            ) : (
+              renderContent()
+            )}
+          </BackgroundLayout>
+        </WithRoleBasedSidebarLayout>
+      )}
+    </>
   );
 };
 
