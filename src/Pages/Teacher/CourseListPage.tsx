@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { UserRole } from 'Plugins/UserAccountService/Objects/UserRole';
 import { Button, Collapse, List, Modal, Input, Form, Popconfirm, message, Tag, Select, Spin } from 'antd';
 import WithRoleBasedSidebarLayout from '../../Layouts/WithRoleBasedSidebarLayout';
+import BackgroundLayout from '../../Layouts/BackgroundLayout';
 import { useUserToken } from 'Globals/GlobalStore';
 import { QuerySafeUserInfoByTokenMessage } from 'Plugins/UserAccountService/APIs/QuerySafeUserInfoByTokenMessage';
 import { SafeUserInfo } from 'Plugins/UserAccountService/Objects/SafeUserInfo';
@@ -186,106 +187,115 @@ export const TeacherCourseListPage: React.FC = () => {
   };
   const handleModalCancel = () => setModal({visible: false, type: null, mode: 'add'});
 
-  const renderContent = () => {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-100 to-purple-200 py-12 px-2">
-        <div className="w-full max-w-3xl bg-white rounded-3xl shadow-xl p-8 mt-8">
-          <h2 className="text-3xl font-extrabold mb-8 text-center text-purple-700 drop-shadow">我的课程组</h2>
-          <Button type="primary" onClick={handleAddGroup} style={{ marginBottom: 24, background: 'linear-gradient(90deg, #a78bfa 0%, #7c3aed 100%)', border: 'none' }}>添加课程组</Button>
-          <Collapse
-  activeKey={expanded}
-  onChange={keys => {
-    if (Array.isArray(keys)) {
-      // 将字符串数组转换为数字数组
-      setExpanded(keys.map(key => Number(key)));
-    } else {
-      // 处理单个key的情况（accordion模式）
-      setExpanded(keys ? [Number(keys)] : []);
-    }
-  }}
-  className="bg-transparent"
-  expandIconPosition="end"
-  style={{ background: 'transparent' }}
->
-            {groups.map(group => (
-              <Collapse.Panel
-                header={<span className="font-semibold text-lg text-purple-800">{group.name} <span className="text-purple-400 text-base">(学分: {group.credit})</span></span>}
-                key={group.courseGroupID}
-                className="bg-white rounded-xl shadow border border-purple-200 mb-4"
-              >
-                <div className="mb-4 flex flex-wrap gap-2">
-                  <Button size="small" onClick={() => handleAddCourse(group.courseGroupID)} style={{ background: '#c4b5fd', color: '#6d28d9', border: 'none' }}>添加课程</Button>
-                  <Button size="small" onClick={() => handleEditGroup(group)} style={{ background: '#ede9fe', color: '#7c3aed', border: 'none' }}>编辑组</Button>
-                  <Popconfirm title="确定删除该课程组？" onConfirm={() => handleDeleteGroup(group.courseGroupID)}>
-                    <Button size="small" danger style={{ background: '#f3e8ff', color: '#a21caf', border: 'none' }}>删除组</Button>
-                  </Popconfirm>
-                </div>
-                <List
-                  bordered
-                  dataSource={courses[group.courseGroupID] || []}
-                  locale={{emptyText: '暂无课程'}}
-                  renderItem={course => (
-                    <List.Item
-                      className="rounded-lg border border-purple-100 my-2 bg-purple-50"
-                      actions={[
-                        <Button size="small" onClick={() => handleEditCourse(group.courseGroupID, course)} style={{ background: '#ede9fe', color: '#7c3aed', border: 'none' }}>编辑</Button>,
-                        <Popconfirm title="确定删除该课程？" onConfirm={() => handleDeleteCourse(group.courseGroupID, course.courseID)}>
-                          <Button size="small" danger style={{ background: '#f3e8ff', color: '#a21caf', border: 'none' }}>删除</Button>
-                        </Popconfirm>
-                      ]}
-                    >
-                      <div>
-                        <div className="text-purple-900 font-medium">{course.location} <span className="text-purple-400">(容量: {course.courseCapacity})</span></div>
-                        <div className="text-purple-700 text-sm">课程ID: {course.courseID}</div>
-                        <div className="text-purple-700 text-sm">预选人数: {course.preselectedStudentsSize}，已选人数: {course.selectedStudentsSize}，候补人数: {course.waitingListSize}</div>
-                      </div>
-                    </List.Item>
-                  )}
-                />
-              </Collapse.Panel>
-            ))}
-          </Collapse>
-          <Modal
-            open={modal.visible}
-            title={modal.type === 'group' ? (modal.mode === 'add' ? '添加课程组' : '编辑课程组') : (modal.mode === 'add' ? '添加课程' : '编辑课程')}
-            onOk={handleModalOk}
-            onCancel={handleModalCancel}
-            okButtonProps={{ style: { background: 'linear-gradient(90deg, #a78bfa 0%, #7c3aed 100%)', border: 'none' } }}
-            cancelButtonProps={{ style: { borderColor: '#a78bfa', color: '#7c3aed' } }}
-          >
-            <Form form={form} layout="vertical">
-              {modal.type === 'group' && <>
-                <Form.Item name="groupName" label={<span className="text-purple-700">课程组名称</span>} rules={[{ required: true, message: '请输入课程组名称' }]}>
-                  <Input className="border-purple-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 rounded-xl" />
-                </Form.Item>
-                <Form.Item name="credits" label={<span className="text-purple-700">学分</span>} rules={[{ required: true, message: '请输入学分' }]}>
-                  <Input type="number" className="border-purple-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 rounded-xl" />
-                </Form.Item>
-              </>}
-              {modal.type === 'course' && <>
-                <Form.Item name="location" label={<span className="text-purple-700">上课地点</span>} rules={[{ required: true, message: '请输入上课地点' }]}>
-                  <Input className="border-purple-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 rounded-xl" />
-                </Form.Item>
-                <Form.Item name="capacity" label={<span className="text-purple-700">容量</span>} rules={[{ required: true, message: '请输入容量' }]}>
-                  <Input type="number" className="border-purple-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 rounded-xl" />
-                </Form.Item>
-              </>}
-            </Form>
-          </Modal>
-        </div>
+  const renderContent = () => (
+    <div style={{ width: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+        <h2 style={{ fontSize: 24, color: '#1e40af', fontWeight: 700, margin: 0 }}>课程组管理</h2>
+        <Button
+          type="primary"
+          onClick={handleAddGroup}
+          style={{ marginRight: 0 }}
+        >
+          新增课程组
+        </Button>
       </div>
-    );
-  }
-  
+      <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 4px 24px 0 rgba(124,60,237,0.08)', padding: 32, minHeight: 400 }}>
+        <Collapse
+          activeKey={expanded}
+          onChange={keys => {
+            if (Array.isArray(keys)) {
+              setExpanded(keys.map(key => Number(key)));
+            } else {
+              setExpanded(keys ? [Number(keys)] : []);
+            }
+          }}
+          expandIconPosition="end"
+          style={{ background: 'transparent' }}
+        >
+          {groups.map(group => (
+            <Collapse.Panel
+              header={
+                <span style={{ fontWeight: 700, fontSize: 16, color: '#1e40af' }}>
+                  {group.name} <span style={{ color: '#64748b', fontSize: 14, fontWeight: 500 }}>(学分: {group.credit})</span>
+                </span>
+              }
+              key={group.courseGroupID}
+              style={{ marginBottom: 16, borderRadius: 8, border: '1.5px solid #e0e7ef', background: '#f8fafc' }}
+            >
+              <div style={{ marginBottom: 16, display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                <Button size="small" onClick={() => handleAddCourse(group.courseGroupID)} style={{ background: '#e0e7ef', color: '#1e40af', border: 'none', borderRadius: 6, fontWeight: 500 }}>新增课程</Button>
+                <Button size="small" onClick={() => handleEditGroup(group)} style={{ background: '#f1f5f9', color: '#1e40af', border: 'none', borderRadius: 6, fontWeight: 500 }}>编辑组</Button>
+                <Popconfirm title="确定删除该课程组？" onConfirm={() => handleDeleteGroup(group.courseGroupID)}>
+                  <Button size="small" danger style={{ background: '#fef2f2', color: '#be123c', border: 'none', borderRadius: 6, fontWeight: 500 }}>删除组</Button>
+                </Popconfirm>
+              </div>
+              <List
+                bordered
+                dataSource={courses[group.courseGroupID] || []}
+                locale={{ emptyText: <span style={{ color: '#64748b' }}>暂无课程</span> }}
+                style={{ background: '#f8fafc', borderRadius: 8 }}
+                renderItem={course => (
+                  <List.Item
+                    style={{ margin: '8px 0', borderRadius: 8, border: '1px solid #e0e7ef', background: '#fff' }}
+                    actions={[
+                      <Button size="small" onClick={() => handleEditCourse(group.courseGroupID, course)} style={{ background: '#f1f5f9', color: '#1e40af', border: 'none', borderRadius: 6, fontWeight: 500 }}>编辑</Button>,
+                      <Popconfirm title="确定删除该课程？" onConfirm={() => handleDeleteCourse(group.courseGroupID, course.courseID)}>
+                        <Button size="small" danger style={{ background: '#fef2f2', color: '#be123c', border: 'none', borderRadius: 6, fontWeight: 500 }}>删除</Button>
+                      </Popconfirm>
+                    ]}
+                  >
+                    <div>
+                      <div style={{ color: '#1e40af', fontWeight: 600 }}>{course.location} <span style={{ color: '#64748b', fontWeight: 400 }}>(容量: {course.courseCapacity})</span></div>
+                      <div style={{ color: '#64748b', fontSize: 13 }}>课程ID: {course.courseID}</div>
+                      <div style={{ color: '#64748b', fontSize: 13 }}>预选人数: {course.preselectedStudentsSize}，已选人数: {course.selectedStudentsSize}，候补人数: {course.waitingListSize}</div>
+                    </div>
+                  </List.Item>
+                )}
+              />
+            </Collapse.Panel>
+          ))}
+        </Collapse>
+      </div>
+      <Modal
+        title={modal.type === 'group' ? (modal.mode === 'add' ? '新增课程组' : '编辑课程组') : (modal.mode === 'add' ? '新增课程' : '编辑课程')}
+        open={modal.visible}
+        onOk={handleModalOk}
+        onCancel={handleModalCancel}
+        width={600}
+        okButtonProps={{ style: { background: '#1e40af', border: 'none' } }}
+        cancelButtonProps={{ style: { borderColor: '#1e40af', color: '#1e40af' } }}
+      >
+        <Form form={form} layout="vertical">
+          {modal.type === 'group' && <>
+            <Form.Item name="groupName" label={<span style={{ color: '#1e40af' }}>课程组名称</span>} rules={[{ required: true, message: '请输入课程组名称' }]}>
+              <Input />
+            </Form.Item>
+            <Form.Item name="credits" label={<span style={{ color: '#1e40af' }}>学分</span>} rules={[{ required: true, message: '请输入学分' }]}>
+              <Input type="number" />
+            </Form.Item>
+          </>}
+          {modal.type === 'course' && <>
+            <Form.Item name="location" label={<span style={{ color: '#1e40af' }}>上课地点</span>} rules={[{ required: true, message: '请输入上课地点' }]}>
+              <Input />
+            </Form.Item>
+            <Form.Item name="capacity" label={<span style={{ color: '#1e40af' }}>容量</span>} rules={[{ required: true, message: '请输入容量' }]}>
+              <Input type="number" />
+            </Form.Item>
+          </>}
+        </Form>
+      </Modal>
+    </div>
+  );
+
   return (
     <WithRoleBasedSidebarLayout role={userRole}>
-      <div style={{ padding: '24px', minHeight: '100vh' }}>
-        <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-100 to-purple-200 py-12 px-8 rounded-lg">
-          <div className="flex justify-center w-full">
-            {renderContent()}
-          </div>
-        </div>
-      </div>
+      <BackgroundLayout
+        gradient="linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)"
+        contentMaxWidth="90%"
+        contentStyle={{ maxWidth: 1200 }}
+      >
+        {renderContent()}
+      </BackgroundLayout>
     </WithRoleBasedSidebarLayout>
   );
 };
