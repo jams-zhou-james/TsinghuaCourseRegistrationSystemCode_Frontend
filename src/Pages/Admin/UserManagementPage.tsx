@@ -215,7 +215,7 @@ const UserManagementPage: React.FC = () => {
       key: 'accountName',
     },
     {
-      title: '用户名',
+      title: '姓名',
       dataIndex: 'userName',
       key: 'userName',
     },
