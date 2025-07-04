@@ -3,6 +3,7 @@ import './CourseTablePage.css';
 import { UserRole } from 'Plugins/UserAccountService/Objects/UserRole';
 import WithRoleBasedSidebarLayout from '../Layouts/WithRoleBasedSidebarLayout';
 import BackgroundLayout from '../Layouts/BackgroundLayout';
+import { Table, Card, Tag, Spin } from 'antd';
 
 // 定义课程类型
 interface Course {
@@ -14,6 +15,10 @@ interface Course {
   startTime: string;  // 开始时间 (如 "08:00")
   endTime: string;    // 结束时间 (如 "09:35")
 }
+//QueryStudentPreselectedCoursesMessage
+//QueryStudentWaitingListStatusMessage
+//QueryStudentSelectedCoursesMessage
+
 
 // 模拟API获取课表数据
 const fetchCourseTable = async (): Promise<Course[]> => {
@@ -99,12 +104,12 @@ const fetchCourseTable = async (): Promise<Course[]> => {
 
 // 定义时间段
 const timeSlots = [
-  { id: 1, name: '第一节', time: '08:00-09:35' },
-  { id: 2, name: '第二节', time: '09:50-12:15' },
-  { id: 3, name: '第三节', time: '13:30-15:05' },
-  { id: 4, name: '第四节', time: '15:20-16:55' },
-  { id: 5, name: '第五节', time: '17:05-18:40' },
-  { id: 6, name: '第六节', time: '19:20-21:45' }
+  { id: 1, name: '第一大节', time: '08:00-09:35' },
+  { id: 2, name: '第二大节', time: '09:50-12:15' },
+  { id: 3, name: '第三大节', time: '13:30-15:05' },
+  { id: 4, name: '第四大节', time: '15:20-16:55' },
+  { id: 5, name: '第五大节', time: '17:05-18:40' },
+  { id: 6, name: '第六大节', time: '19:20-21:45' }
 ];
 
 export const courseTablePagePath = '/course-table';
@@ -141,59 +146,179 @@ const CourseTablePage: React.FC = () => {
     ) || null;
   };
 
+  // 准备表格数据
+  const tableData = timeSlots.map(slot => {
+    const rowData: any = {
+      key: slot.id,
+      timeSlot: slot,
+    };
+    
+    // 为每一天添加课程数据
+    [1, 2, 3, 4, 5, 6, 7].forEach(day => {
+      const course = getCourseForSlot(day, slot.id);
+      rowData[`day${day}`] = course;
+    });
+    
+    return rowData;
+  });
+
+  // 渲染课程卡片
+  const renderCourseCard = (course: Course | null) => {
+    if (!course) {
+      return <div style={{ height: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d9d9d9' }}>无课程</div>;
+    }
+
+    return (
+      <Card
+        size="small"
+        style={{
+          margin: 0,
+          backgroundColor: '#f0f8ff',
+          border: '1px solid #d9d9d9',
+          borderRadius: '4px',
+          minHeight: '80px',
+          boxShadow: 'none'
+        }}
+        bodyStyle={{ padding: '8px' }}
+      >
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ 
+            fontWeight: 'bold', 
+            color: '#262626', 
+            fontSize: '14px',
+            marginBottom: '4px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}>
+            {course.name}
+          </div>
+          <div style={{ 
+            color: '#666', 
+            fontSize: '12px',
+            marginBottom: '2px'
+          }}>
+            {course.teacher}
+          </div>
+          <div style={{ 
+            color: '#999', 
+            fontSize: '11px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}>
+            {course.location}
+          </div>
+        </div>
+      </Card>
+    );
+  };
+
+  // 表格列配置
+  const columns = [
+    {
+      title: '时间',
+      dataIndex: 'timeSlot',
+      key: 'timeSlot',
+      width: '12%',
+      align: 'center' as const,
+      render: (slot: any) => (
+        <div style={{ textAlign: 'center', padding: '8px' }}>
+          <div style={{ 
+            fontWeight: 'bold', 
+            color: '#262626',
+            fontSize: '14px',
+            marginBottom: '4px'
+          }}>
+            {slot.name}
+          </div>
+          <div style={{ 
+            color: '#666', 
+            fontSize: '12px'
+          }}>
+            {slot.time}
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: '星期一',
+      dataIndex: 'day1',
+      key: 'day1',
+      width: '12.5%',
+      align: 'center' as const,
+      render: (course: Course | null) => renderCourseCard(course),
+    },
+    {
+      title: '星期二',
+      dataIndex: 'day2',
+      key: 'day2',
+      width: '12.5%',
+      align: 'center' as const,
+      render: (course: Course | null) => renderCourseCard(course),
+    },
+    {
+      title: '星期三',
+      dataIndex: 'day3',
+      key: 'day3',
+      width: '12.5%',
+      align: 'center' as const,
+      render: (course: Course | null) => renderCourseCard(course),
+    },
+    {
+      title: '星期四',
+      dataIndex: 'day4',
+      key: 'day4',
+      width: '12.5%',
+      align: 'center' as const,
+      render: (course: Course | null) => renderCourseCard(course),
+    },
+    {
+      title: '星期五',
+      dataIndex: 'day5',
+      key: 'day5',
+      width: '12.5%',
+      align: 'center' as const,
+      render: (course: Course | null) => renderCourseCard(course),
+    },
+    {
+      title: '星期六',
+      dataIndex: 'day6',
+      key: 'day6',
+      width: '12.5%',
+      align: 'center' as const,
+      render: (course: Course | null) => renderCourseCard(course),
+    },
+    {
+      title: '星期日',
+      dataIndex: 'day7',
+      key: 'day7',
+      width: '12.5%',
+      align: 'center' as const,
+      render: (course: Course | null) => renderCourseCard(course),
+    },
+  ];
+
   const renderContent = () => (
     <div style={{ width: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
         <h2 style={{ fontSize: 24, color: '#1e40af', fontWeight: 700, margin: 0 }}>课程表</h2>
       </div>
-      <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 4px 24px 0 rgba(124,60,237,0.08)', padding: 32, minHeight: 400 }}>
-        <div style={{ overflowX: 'auto', width: '100%' }}>
-          <table className="course-table">
-            <colgroup>
-              <col style={{ width: '120px' }} />
-              <col style={{ width: '140px' }} />
-              <col style={{ width: '140px' }} />
-              <col style={{ width: '140px' }} />
-              <col style={{ width: '140px' }} />
-              <col style={{ width: '140px' }} />
-              <col style={{ width: '140px' }} />
-              <col style={{ width: '140px' }} />
-            </colgroup>
-            <thead>
-              <tr>
-                <th>时间</th>
-                <th>星期一</th>
-                <th>星期二</th>
-                <th>星期三</th>
-                <th>星期四</th>
-                <th>星期五</th>
-                <th>星期六</th>
-                <th>星期日</th>
-              </tr>
-            </thead>
-            <tbody>
-              {timeSlots.map(slot => (
-                <tr key={slot.id}>
-                  <td className="time-slot">{slot.time}</td>
-                  {[1, 2, 3, 4, 5, 6, 7].map(day => {
-                    const course = getCourseForSlot(day, slot.id);
-                    return (
-                      <td key={day} className="course-cell">
-                        {course ? (
-                          <div className="course-info">
-                            <div className="course-name">{course.name}</div>
-                            <div className="course-teacher">{course.teacher}</div>
-                            <div className="course-location">{course.location}</div>
-                          </div>
-                        ) : null}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      <div style={{ background: '#fff', borderRadius: 0, padding: 0, minHeight: 400 }}>
+        <Table
+          dataSource={tableData}
+          columns={columns}
+          pagination={false}
+          bordered
+          size="small"
+          rowClassName={(record, index) => 
+            index % 2 === 0 ? 'course-table-row-even' : 'course-table-row-odd'
+          }
+          style={{
+            backgroundColor: '#fff',
+            width: '100%'
+          }}
+        />
       </div>
     </div>
   );
@@ -205,7 +330,15 @@ const CourseTablePage: React.FC = () => {
         contentMaxWidth="90%"
         contentStyle={{ maxWidth: 1200 }}
       >
-        {loading ? <div className="course-table-loading">加载中...</div> : error ? <div className="course-table-error">{error}</div> : renderContent()}
+        {loading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
+            <Spin size="large" />
+          </div>
+        ) : error ? (
+          <div className="course-table-error">{error}</div>
+        ) : (
+          renderContent()
+        )}
       </BackgroundLayout>
     </WithRoleBasedSidebarLayout>
   );

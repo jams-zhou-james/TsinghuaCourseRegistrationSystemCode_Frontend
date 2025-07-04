@@ -14,85 +14,105 @@
   font-weight: bold;
 }
 
-.course-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 20px;
-  table-layout: fixed;
-  font-size: 0.9rem;
-  min-width: 800px; /* 确保表格最小宽度 */
+/* Ant Design Table 行间色样式 */
+.course-table-row-even .ant-table-cell {
+  background-color: #f0f8ff !important; /* 浅蓝色 */
 }
 
-.course-table th, .course-table td {
-  border: 1px solid #333;
-  padding: 8px;
-  text-align: center;
-  word-wrap: break-word;
+.course-table-row-odd .ant-table-cell {
+  background-color: #ffffff !important; /* 白色 */
 }
 
-.course-table th {
-  background-color: #f2f2f2;
-  font-weight: bold;
-  border-bottom: 2px solid #333;
-  padding: 10px 8px;
+/* 表格头部样式 - 平面化 */
+.ant-table-thead > tr > th {
+  background-color: #fafafa !important;
+  border-bottom: 1px solid #d9d9d9 !important;
+  border-right: 1px solid #f0f0f0 !important;
+  font-weight: bold !important;
+  color: #262626 !important;
+  text-align: center !important;
+  padding: 12px 8px !important;
 }
 
-.time-slot {
-  background-color: #f9f9f9;
-  font-weight: bold;
-  padding: 10px 8px;
-  white-space: nowrap;
+/* 表格边框样式 - 平面化无外边距 */
+.ant-table-bordered .ant-table-container {
+  border: 1px solid #d9d9d9;
+  border-radius: 0;
+  margin: 0;
 }
 
-.course-cell {
-  height: 80px;
-  vertical-align: top;
-  position: relative;
-  padding: 4px; /* 减少内边距以减少留白 */
+.ant-table-bordered .ant-table-cell {
+  border-right: 1px solid #f0f0f0 !important;
+  border-bottom: 1px solid #f0f0f0 !important;
+  padding: 8px !important;
 }
 
-.course-info {
-  padding: 6px;
-  background-color: #e6f7ff;
-  border-radius: 4px;
-  height: calc(100% - 8px); /* 调整高度计算 */
-  border: 1px solid #b3e0ff;
-  overflow: hidden;
+.ant-table-bordered .ant-table-thead > tr > th {
+  border-bottom: 1px solid #d9d9d9 !important;
+}
+
+.ant-table-tbody > tr > td {
+  border-right: 1px solid #f0f0f0 !important;
+}
+
+/* 表格整体边框 */
+.ant-table-bordered .ant-table-tbody > tr:last-child > td {
+  border-bottom: 1px solid #d9d9d9 !important;
+}
+
+/* 移除表格容器的额外边距和圆角 */
+.ant-table-wrapper {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.ant-table {
+  margin: 0 !important;
+  border-radius: 0 !important;
+}
+
+/* 课程卡片悬浮效果 - 平面化设计 */
+.ant-card-small > .ant-card-body {
   transition: all 0.2s ease;
-  display: flex;
-  flex-direction: column;
-  justify-content: center; /* 垂直居中 */
 }
 
-/* 悬停效果 */
-.course-cell:hover .course-info {
-  background-color: #cceeff;
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
-  transform: scale(1.03);
-  z-index: 1;
+.ant-card-small:hover > .ant-card-body {
+  background-color: #e6f4ff !important;
 }
 
-.course-name {
-  font-weight: bold;
-  margin-bottom: 4px;
-  font-size: 0.85em;
-  line-height: 1.2;
+/* 课程卡片平面化样式 */
+.ant-card-small {
+  border: 1px solid #d9d9d9 !important;
+  box-shadow: none !important;
+  border-radius: 4px !important;
 }
 
-.course-teacher, .course-location {
-  font-size: 0.75em;
-  color: #555;
-  line-height: 1.1;
-  margin: 1px 0; /* 减少垂直间距 */
+.ant-card-small:hover {
+  border: 1px solid #1890ff !important;
+  box-shadow: none !important;
 }
 
-/* 加载和错误状态 */
+/* 加载状态样式 */
 .course-table-loading, .course-table-error {
-  text-align: center;
-  padding: 20px;
-  font-size: 1.1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  font-size: 16px;
+  color: #666;
 }
 
 .course-table-error {
   color: #f44336;
+}
+
+/* 响应式样式 */
+@media (max-width: 768px) {
+  .ant-table-bordered .ant-table-cell {
+    padding: 4px !important;
+  }
+  
+  .ant-card-small .ant-card-body {
+    padding: 4px !important;
+  }
 }
