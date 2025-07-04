@@ -107,7 +107,7 @@ const timeSlots = [
   { id: 6, name: '第六节', time: '19:20-21:45' }
 ];
 
-export const courseTablePagePath = '/student/course-table';
+export const courseTablePagePath = '/course-table';
 
 const CourseTablePage: React.FC = () => {
   const [courses, setCourses] = useState<Course[]>([]);
