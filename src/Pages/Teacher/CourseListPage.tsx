@@ -60,7 +60,7 @@ export const TeacherCourseListPage: React.FC = () => {
                 setGroups(groupObjs);
                 // 查询每个课程组下的课程
                 groupObjs.forEach((group: CourseGroup) => {
-                  new QueryCoursesByCourseGroupMessage(group.courseGroupID).send(
+                  new QueryCoursesByCourseGroupMessage(userToken, group.courseGroupID).send(
                     (coursesInfo: string) => {
                       try {
                         const arr = JSON.parse(coursesInfo);
@@ -69,7 +69,9 @@ export const TeacherCourseListPage: React.FC = () => {
                         )) }));
                       } catch (e) { /* ignore */ }
                     },
-                    () => {}
+                    () => {
+                      console.log(group)
+                      console.log(new QueryCoursesByCourseGroupMessage(userToken, group.courseGroupID))}
                   );
                 });
               } catch (e) { message.error('解析课程组失败'); }
