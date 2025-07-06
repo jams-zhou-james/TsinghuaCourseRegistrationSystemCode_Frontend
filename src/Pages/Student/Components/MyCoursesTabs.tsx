@@ -134,10 +134,12 @@ export const MyCoursesTabs: React.FC<MyCoursesTabsProps> = ({
             </Space>
           </Col>
           <Col span={24}>
-            <Space>
+            <Space align="start">
               <ClockCircleOutlined style={{ color: '#ff69b4', fontSize: 12 }} />
               <span style={{ color: '#666', fontSize: 12 }}>时间:</span>
-              <span style={{ fontSize: 12 }}>{course.schedule || '时间待定'}</span>
+              <div style={{ fontSize: 12, whiteSpace: 'pre-line' }}>
+                {course.schedule || '时间待定'}
+              </div>
             </Space>
           </Col>
           <Col span={24}>

@@ -230,10 +230,12 @@ export const CourseCard: React.FC<CourseCardProps> = ({
           </Space>
         </Col>
         <Col span={24}>
-          <Space>
+          <Space align="start">
             <ClockCircleOutlined style={{ color: '#ff69b4' }} />
             <span style={{ color: '#666' }}>时间:</span>
-            <span>{courseData.schedule || '时间待定'}</span>
+            <div style={{ whiteSpace: 'pre-line' }}>
+              {courseData.schedule || '时间待定'}
+            </div>
           </Space>
         </Col>
         <Col span={24}>

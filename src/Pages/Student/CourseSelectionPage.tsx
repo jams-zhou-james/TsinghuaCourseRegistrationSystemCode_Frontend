@@ -14,6 +14,7 @@ import WithRoleBasedSidebarLayout from '../../Layouts/WithRoleBasedSidebarLayout
 import { UserRole } from 'Plugins/UserAccountService/Objects/UserRole';
 import { useUserToken } from 'Globals/GlobalStore';
 import { QuerySafeUserInfoByTokenMessage } from 'Plugins/UserAccountService/APIs/QuerySafeUserInfoByTokenMessage';
+import { QuerySafeUserInfoByUserIDMessage } from 'Plugins/UserAccountService/APIs/QuerySafeUserInfoByUserIDMessage';
 import { SafeUserInfo } from 'Plugins/UserAccountService/Objects/SafeUserInfo';
 
 // 学期阶段相关
@@ -75,7 +76,7 @@ const formatCourseTime = (timeArray: CourseTime[]): string => {
   
   return timeArray.map(time => 
     `${dayNames[time.dayOfWeek] || time.dayOfWeek} ${timeNames[time.timePeriod] || time.timePeriod}`
-  ).join(', ');
+  ).join('\n');
 };
 
 export const courseSelectionPagePath = '/student/course-selection';
@@ -92,19 +93,55 @@ export const CourseSelectionPage: React.FC = () => {
   const [mySelectedCourses, setMySelectedCourses] = useState<CourseDisplayData[]>([]);
   const [myPreselectedCourses, setMyPreselectedCourses] = useState<CourseDisplayData[]>([]);
   const [myWaitingList, setMyWaitingList] = useState<PairOfCourseAndRank[]>([]);
+  const [myWaitingListWithTeacherNames, setMyWaitingListWithTeacherNames] = useState<CourseDisplayData[]>([]);
   const [loading, setLoading] = useState(false);
   const [searching, setSearching] = useState(false);
+  const [teacherInfoCache, setTeacherInfoCache] = useState<{ [key: number]: string }>({});
+
+  // 查询教师信息的函数
+  const getTeacherName = async (teacherID: number): Promise<string> => {
+    // 检查缓存
+    if (teacherInfoCache[teacherID]) {
+      return teacherInfoCache[teacherID];
+    }
+
+    return new Promise((resolve) => {
+      new QuerySafeUserInfoByUserIDMessage(teacherID).send(
+        (response: string) => {
+          try {
+            const teacherInfo: SafeUserInfo = JSON.parse(response);
+            const teacherName = teacherInfo.userName || `教师${teacherID}`;
+            
+            // 更新缓存
+            setTeacherInfoCache(prev => ({
+              ...prev,
+              [teacherID]: teacherName
+            }));
+            
+            resolve(teacherName);
+          } catch (e) {
+            resolve(`教师${teacherID}`);
+          }
+        },
+        () => {
+          resolve(`教师${teacherID}`);
+        }
+      );
+    });
+  };
 
   // API数据转换函数
-  const transformToCourse = (pair: PairOfGroupAndCourse): CourseDisplayData => {
+  const transformToCourse = async (pair: PairOfGroupAndCourse): Promise<CourseDisplayData> => {
     const courseGroup = pair.CourseGroup;
     const courseInfo = pair.Course;
+    
+    const teacherName = await getTeacherName(courseInfo.teacherID);
     
     return {
       courseID: courseInfo.courseID,
       courseGroupID: courseGroup.courseGroupID,
       courseName: courseGroup.name,
-      teacher: `教师${courseInfo.teacherID}`,
+      teacher: teacherName,
       schedule: formatCourseTime(courseInfo.time),
       location: courseInfo.location || '待定',
       currentStudents: courseInfo.selectedStudentsSize || 0,
@@ -115,12 +152,14 @@ export const CourseSelectionPage: React.FC = () => {
     };
   };
 
-  const convertCourseInfoToDisplayData = (courseInfo: CourseInfo): CourseDisplayData => {
+  const convertCourseInfoToDisplayData = async (courseInfo: CourseInfo): Promise<CourseDisplayData> => {
+    const teacherName = await getTeacherName(courseInfo.teacherID);
+    
     return {
       courseID: courseInfo.courseID,
       courseGroupID: courseInfo.courseGroupID,
       courseName: `课程${courseInfo.courseID}`,
-      teacher: `教师${courseInfo.teacherID}`,
+      teacher: teacherName,
       schedule: formatCourseTime(courseInfo.time),
       location: courseInfo.location || '待定',
       currentStudents: courseInfo.selectedStudentsSize || 0,
@@ -177,7 +216,7 @@ export const CourseSelectionPage: React.FC = () => {
     );
   }, [userToken]);
 
-  const loadAllCourses = (filters: any = {}) => {
+  const loadAllCourses = async (filters: any = {}) => {
     new QueryCoursesByFilterMessage(
       userToken,
       filters.courseGroupID ? parseInt(filters.courseGroupID) : null,
@@ -185,10 +224,11 @@ export const CourseSelectionPage: React.FC = () => {
       filters.teacher || null,
       []
     ).send(
-      (response: string) => {
+      async (response: string) => {
         try {
           const apiData: PairOfGroupAndCourse[] = JSON.parse(response);
-          const courses = apiData.map(transformToCourse);
+          const coursePromises = apiData.map(transformToCourse);
+          const courses = await Promise.all(coursePromises);
           setAllCourses(courses);
           setFilteredCourses(courses);
         } catch (e) {
@@ -202,10 +242,12 @@ export const CourseSelectionPage: React.FC = () => {
   const loadMyCourses = () => {
     // 加载已选课程
     new QueryStudentSelectedCoursesMessage(userToken).send(
-      (response: string) => {
+      async (response: string) => {
         try {
           const courses: CourseInfo[] = JSON.parse(response);
-          setMySelectedCourses(courses.map(convertCourseInfoToDisplayData));
+          const coursePromises = courses.map(convertCourseInfoToDisplayData);
+          const coursesWithTeacherNames = await Promise.all(coursePromises);
+          setMySelectedCourses(coursesWithTeacherNames);
         } catch (e) {
           setMySelectedCourses([]);
         }
@@ -215,10 +257,12 @@ export const CourseSelectionPage: React.FC = () => {
 
     // 加载预选课程
     new QueryStudentPreselectedCoursesMessage(userToken).send(
-      (response: string) => {
+      async (response: string) => {
         try {
           const courses: CourseInfo[] = JSON.parse(response);
-          setMyPreselectedCourses(courses.map(convertCourseInfoToDisplayData));
+          const coursePromises = courses.map(convertCourseInfoToDisplayData);
+          const coursesWithTeacherNames = await Promise.all(coursePromises);
+          setMyPreselectedCourses(coursesWithTeacherNames);
         } catch (e) {
           setMyPreselectedCourses([]);
         }
@@ -228,15 +272,24 @@ export const CourseSelectionPage: React.FC = () => {
 
     // 加载等待列表
     new QueryStudentWaitingListStatusMessage(userToken).send(
-      (response: string) => {
+      async (response: string) => {
         try {
           const waitingList: PairOfCourseAndRank[] = JSON.parse(response);
           setMyWaitingList(waitingList);
+          
+          // 转换等待列表为显示数据
+          const waitingCoursesPromises = waitingList.map(item => convertCourseInfoToDisplayData(item.course));
+          const waitingCoursesWithTeacherNames = await Promise.all(waitingCoursesPromises);
+          setMyWaitingListWithTeacherNames(waitingCoursesWithTeacherNames);
         } catch (e) {
           setMyWaitingList([]);
+          setMyWaitingListWithTeacherNames([]);
         }
       },
-      () => setMyWaitingList([])
+      () => {
+        setMyWaitingList([]);
+        setMyWaitingListWithTeacherNames([]);
+      }
     );
   };
 
@@ -401,7 +454,7 @@ export const CourseSelectionPage: React.FC = () => {
                     <MyCoursesTabs
                       selectedCourses={mySelectedCourses}
                       preselectedCourses={myPreselectedCourses}
-                      waitingListCourses={myWaitingList.map(item => convertCourseInfoToDisplayData(item.course))}
+                      waitingListCourses={myWaitingListWithTeacherNames}
                       onDropCourse={handleDropCourse}
                     />
                   )
