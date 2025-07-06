@@ -74,6 +74,28 @@ export const TeacherCourseListPage: React.FC = () => {
     );
   }, [userToken]);
 
+  // 自动拉取每个课程组下的课程
+useEffect(() => {
+  if (groups && groups.length > 0) {
+    groups.forEach(group => {
+      new (require('Plugins/CourseManagementService/APIs/QueryCoursesByCourseGroupMessage').QueryCoursesByCourseGroupMessage)(userToken, group.courseGroupID).send(
+        (coursesInfo: string) => {
+          try {
+            const arr = JSON.parse(coursesInfo);
+            setCourses(prev => ({
+              ...prev,
+              [group.courseGroupID]: arr.map((c: any) => new CourseInfo(
+                c.courseID, c.courseCapacity, c.time, c.location, c.courseGroupID, c.teacherID, c.preselectedStudentsSize, c.selectedStudentsSize, c.waitingListSize
+              ))
+            }));
+          } catch (e) { /* ignore */ }
+        },
+        () => {}
+      );
+    });
+  }
+}, [groups, userToken]);
+
   // 课程组/课程操作
   const handleAddGroup = () => {
     setModal({ visible: true, type: 'group', mode: 'add' });
@@ -163,16 +185,6 @@ export const TeacherCourseListPage: React.FC = () => {
           {groups.map(group => {
             const isOwner = userInfo && group.ownerTeacherID === userInfo.userID;
             return (
-              <Collapse.Panel
-                header={
-                  <span style={{ fontWeight: 700, fontSize: 16, color: '#1e40af' }}>
-                    {group.name} <span style={{ color: '#64748b', fontSize: 14, fontWeight: 500 }}>(学分: {group.credit})</span>
-                    {isOwner && <Tag color="blue" style={{ marginLeft: 8 }}>Owner</Tag>}
-                  </span>
-                }
-                key={group.courseGroupID}
-                style={{ marginBottom: 16, borderRadius: 8, border: '1.5px solid #e0e7ef', background: '#f8fafc' }}
-              >
                 <CourseGroupPanel
                   group={group}
                   courses={courses[group.courseGroupID] || []}
@@ -185,7 +197,6 @@ export const TeacherCourseListPage: React.FC = () => {
                   onDeleteCourse={handleDeleteCourse}
                   onShowAuthTeachers={handleShowAuthTeachers}
                 />
-              </Collapse.Panel>
             );
           })}
         </Collapse>
