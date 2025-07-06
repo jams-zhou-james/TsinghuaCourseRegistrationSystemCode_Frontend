@@ -39,10 +39,11 @@ export const useCourseData = (userToken: string, semesterPhase: SemesterPhase | 
   ): Promise<CourseDisplayData[]> => {
     return await courseUtils.transformCoursesToDisplayData(
       courseData,
+      userToken,
       selectedCourseIds,
       preselectedCourseIds
     );
-  }, []);
+  }, [userToken]);
 
   const transformPairsToDisplayData = useCallback(async (
     pairs: PairOfGroupAndCourse[],
@@ -148,7 +149,7 @@ export const useCourseData = (userToken: string, semesterPhase: SemesterPhase | 
         try {
           const waitingListData: PairOfCourseAndRank[] = JSON.parse(response);
           const waitingCourses = waitingListData.map(async (pair) => {
-            const displayData = await courseUtils.convertCourseToDisplayData(pair.course);
+            const displayData = await courseUtils.convertCourseToDisplayData(pair.course, userToken);
             return {
               ...displayData,
               rank: pair.rank

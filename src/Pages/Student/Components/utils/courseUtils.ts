@@ -3,13 +3,63 @@ import { CourseInfo } from 'Plugins/CourseManagementService/Objects/CourseInfo';
 import { CourseGroup } from 'Plugins/CourseManagementService/Objects/CourseGroup';
 import { PairOfGroupAndCourse } from 'Plugins/CourseManagementService/Objects/PairOfGroupAndCourse';
 import { QuerySafeUserInfoByUserIDMessage } from 'Plugins/UserAccountService/APIs/QuerySafeUserInfoByUserIDMessage';
+import { QueryCourseGroupByIDMessage } from 'Plugins/CourseManagementService/APIs/QueryCourseGroupByIDMessage';
 import { SafeUserInfo } from 'Plugins/UserAccountService/Objects/SafeUserInfo';
 import { CourseDisplayData } from '../hooks/useCourseActions';
 
 // 教师姓名缓存
 const teacherNameCache = new Map<number, string>();
 
-// 获取教师姓名（支持缓存）
+// 课程组信息缓存
+const courseGroupCache = new Map<number, CourseGroup>();
+
+// 获取课程组信息（支持缓存）
+const getCourseGroupInfo = async (courseGroupID: number, userToken: string): Promise<CourseGroup | null> => {
+  if (courseGroupCache.has(courseGroupID)) {
+    return courseGroupCache.get(courseGroupID)!;
+  }
+
+  return new Promise<CourseGroup | null>((resolve) => {
+    // 设置5秒超时，防止API调用卡住
+    const timeout = setTimeout(() => {
+      console.warn(`获取课程组${courseGroupID}信息超时`);
+      resolve(null);
+    }, 5000);
+
+    new QueryCourseGroupByIDMessage(userToken, courseGroupID).send(
+      (response: string) => {
+        clearTimeout(timeout);
+        try {
+          // 先检查response是否为有效JSON
+          let courseGroup: CourseGroup;
+          if (typeof response === 'string') {
+            const parsed = JSON.parse(response);
+            courseGroup = new CourseGroup(
+              parsed.courseGroupID,
+              parsed.name,
+              parsed.credit,
+              parsed.ownerTeacherID,
+              parsed.authorizedTeachers
+            );
+          } else {
+            courseGroup = response as CourseGroup;
+          }
+          
+          courseGroupCache.set(courseGroupID, courseGroup);
+          resolve(courseGroup);
+        } catch (e) {
+          console.error(`获取课程组${courseGroupID}信息失败:`, e, 'Response:', response);
+          resolve(null);
+        }
+      },
+      (error: string) => {
+        clearTimeout(timeout);
+        console.error(`获取课程组${courseGroupID}信息失败:`, error);
+        resolve(null);
+      }
+    );
+  });
+};
 const getTeacherName = async (teacherID: number): Promise<string> => {
   if (teacherNameCache.has(teacherID)) {
     return teacherNameCache.get(teacherID)!;
@@ -150,11 +200,18 @@ const convertPairToDisplayData = async (
 // 转换单个课程数据（仅CourseInfo，用于已选课程等）
 const convertCourseToDisplayData = async (
   course: CourseInfo,
+  userToken: string,
   courseGroup?: CourseGroup,
   selectedCourseIds: number[] = [],
   preselectedCourseIds: number[] = []
 ): Promise<CourseDisplayData> => {
   const teacherName = await getTeacherName(course.teacherID);
+  
+  // 如果没有提供courseGroup，尝试通过API获取
+  let actualCourseGroup = courseGroup;
+  if (!actualCourseGroup && course.courseGroupID) {
+    actualCourseGroup = await getCourseGroupInfo(course.courseGroupID, userToken);
+  }
   
   // 格式化时间显示（多行显示，严格按照原始逻辑）
   const formatSchedule = (times: any[]): string => {
@@ -187,13 +244,13 @@ const convertCourseToDisplayData = async (
 
   return {
     courseID: course.courseID,
-    courseName: courseGroup?.name || `课程${course.courseID}`, // 如果有courseGroup则使用其名称
+    courseName: actualCourseGroup?.name || `课程${course.courseID}`, // 优先使用真实的课程组名称
     teacher: teacherName,
     schedule: formatSchedule(course.time),
     location: course.location || '待定',
     currentStudents: course.selectedStudentsSize + course.preselectedStudentsSize,
     capacity: course.courseCapacity,
-    credit: courseGroup?.credit || 0, // 如果有courseGroup则使用其学分
+    credit: actualCourseGroup?.credit || 0, // 使用真实的课程组学分
     introduction: '',
     courseGroupID: course.courseGroupID,
     isConflicted: false
@@ -251,11 +308,12 @@ const transformPairsToDisplayData = async (
 // 批量转换课程数据（仅CourseInfo）
 const transformCoursesToDisplayData = async (
   courses: CourseInfo[],
+  userToken: string,
   selectedCourseIds: number[] = [],
   preselectedCourseIds: number[] = []
 ): Promise<CourseDisplayData[]> => {
   const transformPromises = courses.map(course => 
-    convertCourseToDisplayData(course, undefined, selectedCourseIds, preselectedCourseIds)
+    convertCourseToDisplayData(course, userToken, undefined, selectedCourseIds, preselectedCourseIds)
   );
   
   return await Promise.all(transformPromises);

@@ -201,32 +201,19 @@ export const CourseCard: React.FC<CourseCardProps> = ({
       </div>
 
       <Row gutter={[16, 8]} style={{ marginBottom: 16 }}>
-        <Col span={12}>
+        <Col span={24}>
           <Space>
             <span style={{ color: '#666' }}>课程编号:</span>
             <Tag color="blue">{courseData.courseID}</Tag>
-          </Space>
-        </Col>
-        <Col span={12}>
-          <Space>
             <span style={{ color: '#666' }}>学分:</span>
             <Tag color="green">{courseData.credit}</Tag>
           </Space>
         </Col>
-        <Col span={12}>
+        <Col span={24}>
           <Space>
             <UserOutlined style={{ color: '#ff69b4' }} />
             <span style={{ color: '#666' }}>教师:</span>
             <span>{courseData.teacher || '未指定'}</span>
-          </Space>
-        </Col>
-        <Col span={12}>
-          <Space>
-            <TeamOutlined style={{ color: '#ff69b4' }} />
-            <span style={{ color: '#666' }}>人数:</span>
-            <span style={{ color: isFull ? '#ff4d4f' : '#52c41a' }}>
-              {capacityText}
-            </span>
           </Space>
         </Col>
         <Col span={24}>
@@ -243,6 +230,15 @@ export const CourseCard: React.FC<CourseCardProps> = ({
             <EnvironmentOutlined style={{ color: '#ff69b4' }} />
             <span style={{ color: '#666' }}>地点:</span>
             <span>{courseData.location || '地点待定'}</span>
+          </Space>
+        </Col>
+        <Col span={24}>
+          <Space>
+            <TeamOutlined style={{ color: '#ff69b4' }} />
+            <span style={{ color: '#666' }}>人数:</span>
+            <span style={{ color: isFull ? '#ff4d4f' : '#52c41a' }}>
+              {capacityText}
+            </span>
           </Space>
         </Col>
       </Row>
