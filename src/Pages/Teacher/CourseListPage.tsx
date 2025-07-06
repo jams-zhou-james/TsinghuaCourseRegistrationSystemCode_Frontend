@@ -201,6 +201,8 @@ export const TeacherCourseListPage: React.FC = () => {
   // 授权老师相关状态
   const [authModal, setAuthModal] = useState<{visible: boolean, group?: CourseGroup}|null>(null);
   const [authTeachers, setAuthTeachers] = useState<number[]>([]);
+  // 新增：保存授权老师的用户信息
+  const [authTeacherInfos, setAuthTeacherInfos] = useState<SafeUserInfo[]>([]);
   const [authLoading, setAuthLoading] = useState(false);
 
   // 查询授权老师
@@ -212,10 +214,26 @@ export const TeacherCourseListPage: React.FC = () => {
           const arr = JSON.parse(info);
           setAuthTeachers(arr);
           setAuthModal({visible: true, group});
-        } catch (e) { message.error('解析授权老师失败'); }
+          // 新增：批量查用户信息
+          if (Array.isArray(arr) && arr.length > 0) {
+            new (require('Plugins/UserAccountService/APIs/QuerySafeUserInfoByUserIDListMessage').QuerySafeUserInfoByUserIDListMessage)(arr).send(
+              (userInfos: string) => {
+                try {
+                  const infos = JSON.parse(userInfos).map((u: any) => new SafeUserInfo(u.userID, u.userName, u.accountName, u.role));
+                  setAuthTeacherInfos(infos);
+                } catch {
+                  setAuthTeacherInfos([]);
+                }
+              },
+              () => setAuthTeacherInfos([])
+            );
+          } else {
+            setAuthTeacherInfos([]);
+          }
+        } catch (e) { message.error('解析授权老师失败'); setAuthTeacherInfos([]); }
         setAuthLoading(false);
       },
-      () => { message.error('获取授权老师失败'); setAuthLoading(false); }
+      () => { message.error('获取授权老师失败'); setAuthLoading(false); setAuthTeacherInfos([]); }
     );
   };
   // 授权老师
@@ -227,10 +245,26 @@ export const TeacherCourseListPage: React.FC = () => {
           const arr = JSON.parse(info);
           setAuthTeachers(arr);
           message.success('授权成功');
-        } catch (e) { message.error('授权后解析失败'); }
+          // 新增：同步刷新用户信息
+          if (Array.isArray(arr) && arr.length > 0) {
+            new (require('Plugins/UserAccountService/APIs/QuerySafeUserInfoByUserIDListMessage').QuerySafeUserInfoByUserIDListMessage)(arr).send(
+              (userInfos: string) => {
+                try {
+                  const infos = JSON.parse(userInfos).map((u: any) => new SafeUserInfo(u.userID, u.userName, u.accountName, u.role));
+                  setAuthTeacherInfos(infos);
+                } catch {
+                  setAuthTeacherInfos([]);
+                }
+              },
+              () => setAuthTeacherInfos([])
+            );
+          } else {
+            setAuthTeacherInfos([]);
+          }
+        } catch (e) { message.error('授权后解析失败'); setAuthTeacherInfos([]); }
         setAuthLoading(false);
       },
-      () => { message.error('授权失败'); setAuthLoading(false); }
+      () => { message.error('授权失败'); setAuthLoading(false); setAuthTeacherInfos([]); }
     );
   };
   // 取消授权
@@ -242,10 +276,26 @@ export const TeacherCourseListPage: React.FC = () => {
           const arr = JSON.parse(info);
           setAuthTeachers(arr);
           message.success('取消授权成功');
-        } catch (e) { message.error('取消授权后解析失败'); }
+          // 新增：同步刷新用户信息
+          if (Array.isArray(arr) && arr.length > 0) {
+            new (require('Plugins/UserAccountService/APIs/QuerySafeUserInfoByUserIDListMessage').QuerySafeUserInfoByUserIDListMessage)(arr).send(
+              (userInfos: string) => {
+                try {
+                  const infos = JSON.parse(userInfos).map((u: any) => new SafeUserInfo(u.userID, u.userName, u.accountName, u.role));
+                  setAuthTeacherInfos(infos);
+                } catch {
+                  setAuthTeacherInfos([]);
+                }
+              },
+              () => setAuthTeacherInfos([])
+            );
+          } else {
+            setAuthTeacherInfos([]);
+          }
+        } catch (e) { message.error('取消授权后解析失败'); setAuthTeacherInfos([]); }
         setAuthLoading(false);
       },
-      () => { message.error('取消授权失败'); setAuthLoading(false); }
+      () => { message.error('取消授权失败'); setAuthLoading(false); setAuthTeacherInfos([]); }
     );
   };
 
@@ -406,7 +456,12 @@ export const TeacherCourseListPage: React.FC = () => {
           onCancel={() => setAuthModal(null)}
           footer={null}
         >
-          <div>已授权老师ID: {authTeachers.join(', ') || '无'}</div>
+          <div>
+            已授权老师：
+            {authTeacherInfos.length > 0
+              ? authTeacherInfos.map(t => `${t.userName}（${t.userID}）`).join('，')
+              : (authTeachers.length > 0 ? authTeachers.join(', ') : '无')}
+          </div>
           <div style={{ marginTop: 12 }}>
             <Input type="number" placeholder="输入老师ID授权" id="grantTeacherID" style={{ width: 180, marginRight: 8 }} />
             <Button type="primary" size="small" loading={authLoading} onClick={() => {
