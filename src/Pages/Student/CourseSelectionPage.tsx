@@ -47,7 +47,7 @@ export const CourseSelectionPage: React.FC = () => {
     error: dataError,
     fetchCourses,
     refreshData
-  } = useCourseData(userToken);
+  } = useCourseData(userToken, semesterPhase);
 
   const {
     handleSelectCourse,
@@ -181,6 +181,7 @@ export const CourseSelectionPage: React.FC = () => {
                     selectedCourses={selectedCourses}
                     preselectedCourses={preselectedCourses}
                     waitingList={waitingList}
+                    semesterPhase={semesterPhase}
                     onDropCourse={handleDropCourse}
                   />
                 )

@@ -10,6 +10,8 @@ import { CourseTime } from 'Plugins/CourseManagementService/Objects/CourseTime';
 import { PairOfCourseAndRank } from 'Plugins/CourseSelectionService/Objects/PairOfCourseAndRank';
 import { CourseDisplayData } from './useCourseActions';
 import { courseUtils } from '../utils/courseUtils';
+import { SemesterPhase } from 'Plugins/SemesterPhaseService/Objects/SemesterPhase';
+import { Phase } from 'Plugins/SemesterPhaseService/Objects/Phase';
 
 export interface UseCourseDataResult {
   courses: CourseDisplayData[];
@@ -22,7 +24,7 @@ export interface UseCourseDataResult {
   refreshData: () => void;
 }
 
-export const useCourseData = (userToken: string): UseCourseDataResult => {
+export const useCourseData = (userToken: string, semesterPhase: SemesterPhase | null): UseCourseDataResult => {
   const [courses, setCourses] = useState<CourseDisplayData[]>([]);
   const [selectedCourses, setSelectedCourses] = useState<CourseDisplayData[]>([]);
   const [preselectedCourses, setPreselectedCourses] = useState<CourseDisplayData[]>([]);
@@ -167,26 +169,61 @@ export const useCourseData = (userToken: string): UseCourseDataResult => {
   }, [userToken]);
 
   const refreshData = useCallback(() => {
-    if (userToken) {
+    if (!userToken || !semesterPhase) return;
+    
+    const isPhase1 = semesterPhase.currentPhase === Phase.phase1;
+    const isPhase2 = semesterPhase.currentPhase === Phase.phase2;
+    
+    console.log('根据学期阶段刷新数据：', {
+      currentPhase: semesterPhase.currentPhase,
+      isPhase1,
+      isPhase2
+    });
+    
+    if (isPhase1) {
+      // 阶段1（预选阶段）：只获取预选课程，不获取已选课程和等待列表
+      fetchPreselectedCourses();
+      setSelectedCourses([]); // 清空已选课程
+      setWaitingList([]); // 清空等待列表
+    } else if (isPhase2) {
+      // 阶段2（正选阶段）：只获取已选课程和等待列表，不获取预选课程
+      fetchSelectedCourses();
+      fetchWaitingList();
+      setPreselectedCourses([]); // 清空预选课程
+    } else {
+      // 其他阶段或未知阶段：获取所有数据
       fetchSelectedCourses();
       fetchPreselectedCourses();
       fetchWaitingList();
     }
-  }, [userToken, fetchSelectedCourses, fetchPreselectedCourses, fetchWaitingList]);
+  }, [userToken, semesterPhase, fetchSelectedCourses, fetchPreselectedCourses, fetchWaitingList]);
 
   // 初始加载我的课程数据和所有课程
   useEffect(() => {
-    if (userToken) {
+    if (userToken && semesterPhase) {
       console.log('自动加载数据，用户Token：', userToken);
-      // 首先加载我的课程数据
-      fetchSelectedCourses();
-      fetchPreselectedCourses();
-      fetchWaitingList();
-      // 然后自动加载所有课程（无过滤条件）
+      console.log('当前学期阶段：', semesterPhase.currentPhase);
+      
+      const isPhase1 = semesterPhase.currentPhase === Phase.phase1;
+      const isPhase2 = semesterPhase.currentPhase === Phase.phase2;
+      
+      // 根据阶段加载对应的课程数据
+      if (isPhase1) {
+        // 阶段1：只加载预选课程
+        console.log('阶段1 - 加载预选课程');
+        fetchPreselectedCourses();
+      } else if (isPhase2) {
+        // 阶段2：加载已选课程和等待列表
+        console.log('阶段2 - 加载已选课程和等待列表');
+        fetchSelectedCourses();
+        fetchWaitingList();
+      }
+      
+      // 自动加载所有课程（无过滤条件）
       console.log('自动加载所有课程...');
       fetchCourses();
     }
-  }, [userToken, fetchSelectedCourses, fetchPreselectedCourses, fetchWaitingList, fetchCourses]);
+  }, [userToken, semesterPhase, fetchSelectedCourses, fetchPreselectedCourses, fetchWaitingList, fetchCourses]);
 
   return {
     courses,

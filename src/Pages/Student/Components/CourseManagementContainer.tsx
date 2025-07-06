@@ -26,7 +26,7 @@ export const CourseManagementContainer: React.FC<CourseManagementContainerProps>
     error,
     fetchCourses,
     refreshData
-  } = useCourseData(userToken);
+  } = useCourseData(userToken, semesterPhase);
 
   const {
     handleSelectCourse,

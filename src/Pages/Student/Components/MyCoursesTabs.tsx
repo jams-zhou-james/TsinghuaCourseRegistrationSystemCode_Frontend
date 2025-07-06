@@ -13,6 +13,7 @@ import {
   DeleteOutlined
 } from '@ant-design/icons';
 import { SemesterPhase } from 'Plugins/SemesterPhaseService/Objects/SemesterPhase';
+import { Phase } from 'Plugins/SemesterPhaseService/Objects/Phase';
 
 // 使用与主页面一致的课程数据接口
 interface CourseDisplayData {
@@ -44,6 +45,33 @@ export const MyCoursesTabs: React.FC<MyCoursesTabsProps> = ({
   semesterPhase,
   onDropCourse
 }) => {
+  // 根据学期阶段决定默认激活的Tab
+  const getDefaultActiveKey = (): string => {
+    if (!semesterPhase) return 'selected';
+    
+    const isPhase1 = semesterPhase.currentPhase === Phase.phase1;
+    const isPhase2 = semesterPhase.currentPhase === Phase.phase2;
+    
+    console.log('MyCoursesTabs - 决定默认Tab：', {
+      currentPhase: semesterPhase.currentPhase,
+      isPhase1,
+      isPhase2
+    });
+    
+    if (isPhase1) {
+      // 阶段1（预选阶段）：默认显示预选课程
+      console.log('阶段1 - 默认显示预选课程Tab');
+      return 'preselected';
+    } else if (isPhase2) {
+      // 阶段2（正选阶段）：默认显示已选课程
+      console.log('阶段2 - 默认显示已选课程Tab');
+      return 'selected';
+    }
+    
+    // 其他情况：默认显示已选课程
+    console.log('其他阶段 - 默认显示已选课程Tab');
+    return 'selected';
+  };
   const renderCourseCard = (course: CourseDisplayData, status: 'selected' | 'preselected' | 'waiting') => {
     const handleDrop = () => {
       Modal.confirm({
@@ -234,6 +262,34 @@ export const MyCoursesTabs: React.FC<MyCoursesTabsProps> = ({
     },
   ];
 
+  // 根据学期阶段过滤显示的Tab
+  const getFilteredTabItems = () => {
+    if (!semesterPhase) return tabItems;
+    
+    const isPhase1 = semesterPhase.currentPhase === Phase.phase1;
+    const isPhase2 = semesterPhase.currentPhase === Phase.phase2;
+    
+    console.log('MyCoursesTabs - 过滤Tab项：', {
+      currentPhase: semesterPhase.currentPhase,
+      isPhase1,
+      isPhase2
+    });
+    
+    if (isPhase1) {
+      // 阶段1（预选阶段）：只显示预选课程Tab
+      console.log('阶段1 - 只显示预选课程Tab');
+      return tabItems.filter(tab => tab.key === 'preselected');
+    } else if (isPhase2) {
+      // 阶段2（正选阶段）：只显示已选课程和等待列表Tab
+      console.log('阶段2 - 显示已选课程和等待列表Tab');
+      return tabItems.filter(tab => tab.key === 'selected' || tab.key === 'waiting');
+    }
+    
+    // 其他情况：显示所有Tab
+    console.log('其他阶段 - 显示所有Tab');
+    return tabItems;
+  };
+
   return (
     <Card
       title={
@@ -249,8 +305,9 @@ export const MyCoursesTabs: React.FC<MyCoursesTabsProps> = ({
       }}
     >
       <Tabs 
-        items={tabItems}
+        items={getFilteredTabItems()}
         type="card"
+        defaultActiveKey={getDefaultActiveKey()}
       />
     </Card>
   );
