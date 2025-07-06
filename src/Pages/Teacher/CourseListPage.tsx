@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { UserRole } from 'Plugins/UserAccountService/Objects/UserRole';
-import { Button, Collapse, List, Modal, Input, Form, Popconfirm, message, Tag, Select, Spin } from 'antd';
+import { Button, Collapse, message, Tag, Spin } from 'antd';
+import CourseGroupPanel from './Components/CourseGroupPanel';
+import CourseList from './Components/CourseList';
+import CourseGroupModal from './Components/CourseGroupModal';
+import CourseModal from './Components/CourseModal';
+import AuthTeacherModal from './Components/AuthTeacherModal';
 import WithRoleBasedSidebarLayout from '../../Layouts/WithRoleBasedSidebarLayout';
 import BackgroundLayout from '../../Layouts/BackgroundLayout';
 import { useUserToken } from 'Globals/GlobalStore';
@@ -37,7 +42,6 @@ export const TeacherCourseListPage: React.FC = () => {
   const [courses, setCourses] = useState<Record<number, CourseInfo[]>>({});
   const [loading, setLoading] = useState(false);
   const [modal, setModal] = useState<{visible: boolean, type: 'group'|'course'|null, mode: 'add'|'edit', groupID?: number, course?: CourseInfo, group?: CourseGroup}>({visible: false, type: null, mode: 'add'});
-  const [form] = Form.useForm();
   const userToken = useUserToken();
   const [userInfo, setUserInfo] = useState<SafeUserInfo | null>(null);
 
@@ -87,12 +91,10 @@ export const TeacherCourseListPage: React.FC = () => {
 
   // 课程组/课程操作
   const handleAddGroup = () => {
-    setModal({visible: true, type: 'group', mode: 'add'});
-    form.resetFields();
+    setModal({ visible: true, type: 'group', mode: 'add' });
   };
   const handleEditGroup = (group: CourseGroup) => {
-    setModal({visible: true, type: 'group', mode: 'edit', group});
-    form.setFieldsValue({ groupName: group.name, credits: group.credit });
+    setModal({ visible: true, type: 'group', mode: 'edit', group });
   };
   const handleDeleteGroup = (groupID: number) => {
     setLoading(true);
@@ -107,12 +109,10 @@ export const TeacherCourseListPage: React.FC = () => {
     );
   };
   const handleAddCourse = (groupID: number) => {
-    setModal({visible: true, type: 'course', mode: 'add', groupID});
-    form.resetFields();
+    setModal({ visible: true, type: 'course', mode: 'add', groupID });
   };
   const handleEditCourse = (groupID: number, course: CourseInfo) => {
-    setModal({visible: true, type: 'course', mode: 'edit', groupID, course});
-    form.setFieldsValue({ location: course.location, capacity: course.courseCapacity });
+    setModal({ visible: true, type: 'course', mode: 'edit', groupID, course });
   };
   const handleDeleteCourse = (groupID: number, courseID: number) => {
     setLoading(true);
@@ -125,79 +125,79 @@ export const TeacherCourseListPage: React.FC = () => {
       () => { message.error('删除课程失败'); setLoading(false); }
     );
   };
-  const handleModalOk = () => {
-    form.validateFields().then(values => {
-      if (!userInfo) return;
-      if (modal.type === 'group') {
-        if (modal.mode === 'add') {
-          setLoading(true);
-          new CreateCourseGroupMessage(userToken, values.groupName, Number(values.credits)).send(
-            (info: string) => {
-              try {
-                const g = JSON.parse(info);
-                const newGroup = new CourseGroup(g.courseGroupID, g.name, g.credit, g.ownerTeacherID, g.authorizedTeachers);
-                setGroups([...groups, newGroup]);
-                message.success('添加课程组成功');
-              } catch (e) { message.error('解析新课程组失败'); }
-              setLoading(false);
-            },
-            () => { message.error('添加课程组失败'); setLoading(false); }
-          );
-        } else if (modal.mode === 'edit' && modal.group) {
-          setLoading(true);
-          new UpdateCourseGroupInfoMessage(userToken, modal.group.courseGroupID, values.groupName, Number(values.credits)).send(
-            (info: string) => {
-              try {
-                const g = JSON.parse(info);
-                setGroups(groups.map(gg => gg.courseGroupID === g.courseGroupID ? new CourseGroup(g.courseGroupID, g.name, g.credit, g.ownerTeacherID, g.authorizedTeachers) : gg));
-                message.success('编辑课程组成功');
-              } catch (e) { message.error('解析编辑课程组失败'); }
-              setLoading(false);
-            },
-            () => { message.error('编辑课程组失败'); setLoading(false); }
-          );
-        }
-      } else if (modal.type === 'course') {
-        if (modal.mode === 'add' && modal.groupID) {
-          setLoading(true);
-          // 取出表单中的课程时间，转换为 CourseTime[]
-          const courseTimes = Array.isArray(values.courseTimes)
-            ? values.courseTimes.map((ct: { dayOfWeek: DayOfWeek; timePeriod: TimePeriod }) => new CourseTime(ct.dayOfWeek, ct.timePeriod))
-            : [];
-          new CreateCourseMessage(userToken, modal.groupID, Number(values.capacity), courseTimes, values.location).send(
-            (info: string) => {
-              try {
-                const c = JSON.parse(info);
-                const newCourse = new CourseInfo(c.courseID, c.courseCapacity, c.time, c.location, c.courseGroupID, c.teacherID, c.preselectedStudentsSize, c.selectedStudentsSize, c.waitingListSize);
-                setCourses(prev => ({...prev, [modal.groupID!]: [...(prev[modal.groupID!]||[]), newCourse]}));
-                message.success('添加课程成功');
-              } catch (e) { message.error('解析新课程失败'); }
-              setLoading(false);
-            },
-            () => { message.error('添加课程失败'); setLoading(false); }
-          );
-        } else if (modal.mode === 'edit' && modal.groupID && modal.course) {
-          setLoading(true);
-          new UpdateCourseMessage(userToken, modal.course.courseID, Number(values.capacity), values.location).send(
-            (info: string) => {
-              try {
-                const c = JSON.parse(info);
-                setCourses(prev => ({
-                  ...prev,
-                  [modal.groupID!]: prev[modal.groupID!].map(cc => cc.courseID === c.courseID ? new CourseInfo(c.courseID, c.courseCapacity, c.time, c.location, c.courseGroupID, c.teacherID, c.preselectedStudentsSize, c.selectedStudentsSize, c.waitingListSize) : cc)
-                }));
-                message.success('编辑课程成功');
-              } catch (e) { message.error('解析编辑课程失败'); }
-              setLoading(false);
-            },
-            () => { message.error('编辑课程失败'); setLoading(false); }
-          );
-        }
-      }
-      setModal({visible: false, type: null, mode: 'add'});
-    });
+  // 课程组弹窗确认
+  const handleGroupModalOk = (values: { groupName: string; credits: number }) => {
+    if (!userInfo) return;
+    if (modal.mode === 'add') {
+      setLoading(true);
+      new CreateCourseGroupMessage(userToken, values.groupName, Number(values.credits)).send(
+        (info: string) => {
+          try {
+            const g = JSON.parse(info);
+            const newGroup = new CourseGroup(g.courseGroupID, g.name, g.credit, g.ownerTeacherID, g.authorizedTeachers);
+            setGroups([...groups, newGroup]);
+            message.success('添加课程组成功');
+          } catch (e) { message.error('解析新课程组失败'); }
+          setLoading(false);
+        },
+        () => { message.error('添加课程组失败'); setLoading(false); }
+      );
+    } else if (modal.mode === 'edit' && modal.group) {
+      setLoading(true);
+      new UpdateCourseGroupInfoMessage(userToken, modal.group.courseGroupID, values.groupName, Number(values.credits)).send(
+        (info: string) => {
+          try {
+            const g = JSON.parse(info);
+            setGroups(groups.map(gg => gg.courseGroupID === g.courseGroupID ? new CourseGroup(g.courseGroupID, g.name, g.credit, g.ownerTeacherID, g.authorizedTeachers) : gg));
+            message.success('编辑课程组成功');
+          } catch (e) { message.error('解析编辑课程组失败'); }
+          setLoading(false);
+        },
+        () => { message.error('编辑课程组失败'); setLoading(false); }
+      );
+    }
+    setModal({ visible: false, type: null, mode: 'add' });
   };
-  const handleModalCancel = () => setModal({visible: false, type: null, mode: 'add'});
+  // 课程弹窗确认
+  const handleCourseModalOk = (values: { location: string; capacity: number; courseTimes?: { dayOfWeek: DayOfWeek; timePeriod: TimePeriod }[] }) => {
+    if (!userInfo) return;
+    if (modal.mode === 'add' && modal.groupID) {
+      setLoading(true);
+      const courseTimes = Array.isArray(values.courseTimes)
+        ? values.courseTimes.map((ct: { dayOfWeek: DayOfWeek; timePeriod: TimePeriod }) => new CourseTime(ct.dayOfWeek, ct.timePeriod))
+        : [];
+      new CreateCourseMessage(userToken, modal.groupID, Number(values.capacity), courseTimes, values.location).send(
+        (info: string) => {
+          try {
+            const c = JSON.parse(info);
+            const newCourse = new CourseInfo(c.courseID, c.courseCapacity, c.time, c.location, c.courseGroupID, c.teacherID, c.preselectedStudentsSize, c.selectedStudentsSize, c.waitingListSize);
+            setCourses(prev => ({ ...prev, [modal.groupID!]: [...(prev[modal.groupID!] || []), newCourse] }));
+            message.success('添加课程成功');
+          } catch (e) { message.error('解析新课程失败'); }
+          setLoading(false);
+        },
+        () => { message.error('添加课程失败'); setLoading(false); }
+      );
+    } else if (modal.mode === 'edit' && modal.groupID && modal.course) {
+      setLoading(true);
+      new UpdateCourseMessage(userToken, modal.course.courseID, Number(values.capacity), values.location).send(
+        (info: string) => {
+          try {
+            const c = JSON.parse(info);
+            setCourses(prev => ({
+              ...prev,
+              [modal.groupID!]: prev[modal.groupID!].map(cc => cc.courseID === c.courseID ? new CourseInfo(c.courseID, c.courseCapacity, c.time, c.location, c.courseGroupID, c.teacherID, c.preselectedStudentsSize, c.selectedStudentsSize, c.waitingListSize) : cc)
+            }));
+            message.success('编辑课程成功');
+          } catch (e) { message.error('解析编辑课程失败'); }
+          setLoading(false);
+        },
+        () => { message.error('编辑课程失败'); setLoading(false); }
+      );
+    }
+    setModal({ visible: false, type: null, mode: 'add' });
+  };
+  const handleModalCancel = () => setModal({ visible: false, type: null, mode: 'add' });
   // 授权老师相关状态
   const [authModal, setAuthModal] = useState<{visible: boolean, group?: CourseGroup}|null>(null);
   const [authTeachers, setAuthTeachers] = useState<number[]>([]);
@@ -317,13 +317,7 @@ export const TeacherCourseListPage: React.FC = () => {
     <div style={{ width: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
         <h2 style={{ fontSize: 24, color: '#1e40af', fontWeight: 700, margin: 0 }}>课程组管理</h2>
-        <Button
-          type="primary"
-          onClick={handleAddGroup}
-          style={{ marginRight: 0 }}
-        >
-          新增课程组
-        </Button>
+        <Button type="primary" onClick={handleAddGroup} style={{ marginRight: 0 }}>新增课程组</Button>
       </div>
       <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 4px 24px 0 rgba(124,60,237,0.08)', padding: 32, minHeight: 400 }}>
         <Collapse
@@ -351,132 +345,53 @@ export const TeacherCourseListPage: React.FC = () => {
                 key={group.courseGroupID}
                 style={{ marginBottom: 16, borderRadius: 8, border: '1.5px solid #e0e7ef', background: '#f8fafc' }}
               >
-                <div style={{ marginBottom: 16, display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-                  <Button size="small" onClick={() => handleAddCourse(group.courseGroupID)} style={{ background: '#e0e7ef', color: '#1e40af', border: 'none', borderRadius: 6, fontWeight: 500 }}>新增课程</Button>
-                  {isOwner && (
-                    <>
-                      <Button size="small" onClick={() => handleEditGroup(group)} style={{ background: '#f1f5f9', color: '#1e40af', border: 'none', borderRadius: 6, fontWeight: 500 }}>编辑组</Button>
-                      <Popconfirm title="确定删除该课程组？" onConfirm={() => handleDeleteGroup(group.courseGroupID)}>
-                        <Button size="small" danger style={{ background: '#fef2f2', color: '#be123c', border: 'none', borderRadius: 6, fontWeight: 500 }}>删除组</Button>
-                      </Popconfirm>
-                      <Button size="small" onClick={() => handleShowAuthTeachers(group)} style={{ background: '#f1f5f9', color: '#1e40af', border: 'none', borderRadius: 6, fontWeight: 500 }}>授权老师</Button>
-                    </>
-                  )}
-                </div>
-                <List
-                  bordered
-                  dataSource={courses[group.courseGroupID] || []}
-                  locale={{ emptyText: <span style={{ color: '#64748b' }}>暂无课程</span> }}
-                  style={{ background: '#f8fafc', borderRadius: 8 }}
-                  renderItem={course => (
-                    <List.Item
-                      style={{ margin: '8px 0', borderRadius: 8, border: '1px solid #e0e7ef', background: '#fff' }}
-                      actions={[
-                        <Button size="small" onClick={() => handleEditCourse(group.courseGroupID, course)} style={{ background: '#f1f5f9', color: '#1e40af', border: 'none', borderRadius: 6, fontWeight: 500 }} disabled={course.teacherID != userInfo.userID}>编辑</Button>,
-                        <Popconfirm title="确定删除该课程？" onConfirm={() => handleDeleteCourse(group.courseGroupID, course.courseID)}>
-                          <Button size="small" danger style={{ background: '#fef2f2', color: '#be123c', border: 'none', borderRadius: 6, fontWeight: 500 }} disabled={course.teacherID != userInfo.userID}>删除</Button>
-                        </Popconfirm>
-                      ]}
-                    >
-                      <div>
-                        <div style={{ color: '#1e40af', fontWeight: 600 }}>{course.location} <span style={{ color: '#64748b', fontWeight: 400 }}>(容量: {course.courseCapacity})</span></div>
-                        <div style={{ color: '#64748b', fontSize: 13 }}>课程ID: {course.courseID}</div>
-                        <div style={{ color: '#64748b', fontSize: 13 }}>预选人数: {course.preselectedStudentsSize}，已选人数: {course.selectedStudentsSize}，候补人数: {course.waitingListSize}</div>
-                      </div>
-                      
-                      {course.teacherID == userInfo.userID && <Tag color="purple" style={{ marginRight: 10 }}>我开的课</Tag>}
-                    </List.Item>
-                    
-                  )}
+                <CourseGroupPanel
+                  group={group}
+                  courses={courses[group.courseGroupID] || []}
+                  isOwner={!!isOwner}
+                  userID={userInfo?.userID || 0}
+                  onAddCourse={handleAddCourse}
+                  onEditGroup={handleEditGroup}
+                  onDeleteGroup={handleDeleteGroup}
+                  onEditCourse={handleEditCourse}
+                  onDeleteCourse={handleDeleteCourse}
+                  onShowAuthTeachers={handleShowAuthTeachers}
                 />
               </Collapse.Panel>
             );
           })}
         </Collapse>
       </div>
-      <Modal
-        title={modal.type === 'group' ? (modal.mode === 'add' ? '新增课程组' : '编辑课程组') : (modal.mode === 'add' ? '新增课程' : '编辑课程')}
-        open={modal.visible}
-        onOk={handleModalOk}
+      {/* 课程组弹窗 */}
+      <CourseGroupModal
+        visible={modal.visible && modal.type === 'group'}
+        mode={modal.mode as 'add' | 'edit'}
+        loading={loading}
+        group={modal.group}
+        onOk={handleGroupModalOk}
         onCancel={handleModalCancel}
-        width={600}
-        okButtonProps={{ style: { background: '#1e40af', border: 'none' } }}
-        cancelButtonProps={{ style: { borderColor: '#1e40af', color: '#1e40af' } }}
-      >
-        <Form form={form} layout="vertical">
-          {modal.type === 'group' && <>
-            <Form.Item name="groupName" label={<span style={{ color: '#1e40af' }}>课程组名称</span>} rules={[{ required: true, message: '请输入课程组名称' }]}> 
-              <Input />
-            </Form.Item>
-            <Form.Item name="credits" label={<span style={{ color: '#1e40af' }}>学分</span>} rules={[{ required: true, message: '请输入学分' }]}> 
-              <Input type="number" />
-            </Form.Item>
-          </>}
-          {modal.type === 'course' && <>
-            <Form.Item name="location" label={<span style={{ color: '#1e40af' }}>上课地点</span>} rules={[{ required: true, message: '请输入上课地点' }]}> 
-              <Input />
-            </Form.Item>
-            <Form.Item name="capacity" label={<span style={{ color: '#1e40af' }}>容量</span>} rules={[{ required: true, message: '请输入容量' }]}> 
-              <Input type="number" />
-            </Form.Item>
-            {modal.mode === 'add' && (
-              <Form.List name="courseTimes">
-                {(fields, { add, remove }) => (
-                  <div>
-                    <div style={{ marginBottom: 8, color: '#1e40af', fontWeight: 500 }}>课程时间安排（可添加多个时间段）</div>
-                    {fields.map((field) => (
-                      <div key={field.key} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                        <Form.Item {...field} name={[field.name, 'dayOfWeek']} rules={[{ required: true, message: '请选择星期' }]} style={{ marginBottom: 0 }}>
-                          <Select style={{ width: 120 }} placeholder="星期"
-                            options={dayOfWeekList.map(d => ({ label: dayOfWeekLabel(d), value: d }))}
-                          />
-                        </Form.Item>
-                        <Form.Item {...field} name={[field.name, 'timePeriod']} rules={[{ required: true, message: '请选择时间段' }]} style={{ marginBottom: 0 }}>
-                          <Select style={{ width: 140 }} placeholder="时间段"
-                            options={timePeriodList.map(t => ({ label: t, value: t }))}
-                          />
-                        </Form.Item>
-                        <Button danger type="link" onClick={() => remove(field.name)} style={{ padding: 0 }}>删除</Button>
-                      </div>
-                    ))}
-                    <Button type="dashed" onClick={() => add()} style={{ width: 260, marginBottom: 8 }}>添加时间段</Button>
-                    <div style={{ color: '#64748b', fontSize: 12 }}>如课程无需占用时间段可不添加，系统会弹窗确认。</div>
-                  </div>
-                )}
-              </Form.List>
-            )}
-          </>}
-        </Form>
-      </Modal>
+      />
+      {/* 课程弹窗 */}
+      <CourseModal
+        visible={modal.visible && modal.type === 'course'}
+        mode={modal.mode as 'add' | 'edit'}
+        loading={loading}
+        course={modal.course}
+        onOk={handleCourseModalOk}
+        onCancel={handleModalCancel}
+      />
       {/* 授权老师弹窗 */}
       {authModal?.visible && authModal.group && (
-        <Modal
-          title={`授权老师 - ${authModal.group.name}`}
-          open={authModal.visible}
+        <AuthTeacherModal
+          visible={authModal.visible}
+          group={authModal.group}
+          authTeachers={authTeachers}
+          authTeacherInfos={authTeacherInfos}
+          loading={authLoading}
+          onGrant={handleGrantAuth}
+          onRevoke={handleRevokeAuth}
           onCancel={() => setAuthModal(null)}
-          footer={null}
-        >
-          <div>
-            已授权老师：
-            {authTeacherInfos.length > 0
-              ? authTeacherInfos.map(t => `${t.userName}（${t.userID}）`).join('，')
-              : (authTeachers.length > 0 ? authTeachers.join(', ') : '无')}
-          </div>
-          <div style={{ marginTop: 12 }}>
-            <Input type="number" placeholder="输入老师ID授权" id="grantTeacherID" style={{ width: 180, marginRight: 8 }} />
-            <Button type="primary" size="small" loading={authLoading} onClick={() => {
-              const tid = Number((document.getElementById('grantTeacherID') as HTMLInputElement)?.value);
-              if (tid) handleGrantAuth(authModal.group!, tid);
-            }}>授权</Button>
-          </div>
-          <div style={{ marginTop: 12 }}>
-            <Input type="number" placeholder="输入老师ID取消授权" id="revokeTeacherID" style={{ width: 180, marginRight: 8 }} />
-            <Button size="small" loading={authLoading} onClick={() => {
-              const tid = Number((document.getElementById('revokeTeacherID') as HTMLInputElement)?.value);
-              if (tid) handleRevokeAuth(authModal.group!, tid);
-            }}>取消授权</Button>
-          </div>
-        </Modal>
+        />
       )}
     </div>
   );
