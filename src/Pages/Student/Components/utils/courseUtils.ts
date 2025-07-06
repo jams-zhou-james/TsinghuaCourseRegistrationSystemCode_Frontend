@@ -1,0 +1,273 @@
+// courseUtils.ts - 课程数据转换工具函数
+import { CourseInfo } from 'Plugins/CourseManagementService/Objects/CourseInfo';
+import { CourseGroup } from 'Plugins/CourseManagementService/Objects/CourseGroup';
+import { PairOfGroupAndCourse } from 'Plugins/CourseManagementService/Objects/PairOfGroupAndCourse';
+import { QuerySafeUserInfoByUserIDMessage } from 'Plugins/UserAccountService/APIs/QuerySafeUserInfoByUserIDMessage';
+import { SafeUserInfo } from 'Plugins/UserAccountService/Objects/SafeUserInfo';
+import { CourseDisplayData } from '../hooks/useCourseActions';
+
+// 教师姓名缓存
+const teacherNameCache = new Map<number, string>();
+
+// 获取教师姓名（支持缓存）
+const getTeacherName = async (teacherID: number): Promise<string> => {
+  if (teacherNameCache.has(teacherID)) {
+    return teacherNameCache.get(teacherID)!;
+  }
+
+  return new Promise<string>((resolve) => {
+    // 设置5秒超时，防止API调用卡住
+    const timeout = setTimeout(() => {
+      const fallbackName = `教师${teacherID}`;
+      teacherNameCache.set(teacherID, fallbackName);
+      resolve(fallbackName);
+    }, 5000);
+
+    new QuerySafeUserInfoByUserIDMessage(teacherID).send(
+      (response: string) => {
+        clearTimeout(timeout);
+        try {
+          // 先检查response是否为有效JSON
+          let teacherInfo: SafeUserInfo;
+          if (typeof response === 'string') {
+            teacherInfo = JSON.parse(response);
+          } else {
+            teacherInfo = response as any;
+          }
+          
+          const fullName = teacherInfo.userName || `教师${teacherID}`;
+          teacherNameCache.set(teacherID, fullName);
+          resolve(fullName);
+        } catch (e) {
+          console.error(`获取教师${teacherID}信息失败:`, e, 'Response:', response);
+          const fallbackName = `教师${teacherID}`;
+          teacherNameCache.set(teacherID, fallbackName);
+          resolve(fallbackName);
+        }
+      },
+      (error: string) => {
+        clearTimeout(timeout);
+        console.error(`获取教师${teacherID}信息失败:`, error);
+        const fallbackName = `教师${teacherID}`;
+        teacherNameCache.set(teacherID, fallbackName);
+        resolve(fallbackName);
+      }
+    );
+  });
+};
+
+// 时间冲突检查函数
+const checkTimeConflict = (schedule1: string, schedule2: string): boolean => {
+  if (!schedule1 || !schedule2) return false;
+  
+  const parseTimeSlot = (timeStr: string) => {
+    const match = timeStr.match(/星期(\d+)\s+(\d+)-(\d+)节/);
+    if (!match) return null;
+    return {
+      day: parseInt(match[1]),
+      start: parseInt(match[2]),
+      end: parseInt(match[3])
+    };
+  };
+
+  const times1 = schedule1.split('\n').map(parseTimeSlot).filter(t => t !== null);
+  const times2 = schedule2.split('\n').map(parseTimeSlot).filter(t => t !== null);
+
+  for (const t1 of times1) {
+    for (const t2 of times2) {
+      if (t1 && t2 && t1.day === t2.day) {
+        if (!(t1.end < t2.start || t2.end < t1.start)) {
+          return true; // 时间冲突
+        }
+      }
+    }
+  }
+  return false;
+};
+
+// 转换单个课程数据（通过PairOfGroupAndCourse）
+const convertPairToDisplayData = async (
+  pair: PairOfGroupAndCourse,
+  selectedCourseIds: number[] = [],
+  preselectedCourseIds: number[] = []
+): Promise<CourseDisplayData> => {
+  const course = pair.Course;
+  const courseGroup = pair.CourseGroup;
+  
+  const teacherName = await getTeacherName(course.teacherID);
+  
+  // 格式化时间显示（多行显示，严格按照原始逻辑）
+  const formatSchedule = (times: any[]): string => {
+    if (!times || times.length === 0) return '时间待定';
+    
+    const dayNames: { [key: string]: string } = {
+      'MONDAY': '周一', 'TUESDAY': '周二', 'WEDNESDAY': '周三',
+      'THURSDAY': '周四', 'FRIDAY': '周五', 'SATURDAY': '周六', 'SUNDAY': '周日'
+    };
+    
+    const timeNames: { [key: string]: string } = {
+      'FIRST_SECOND': '8:00-9:35',
+      'THIRD_FOURTH': '9:50-11:25',
+      'FIFTH_SIXTH': '13:30-15:05',
+      'SEVENTH_EIGHTH': '15:20-16:55',
+      'NINTH_TENTH': '19:20-20:55'
+    };
+    
+    return times.map(time => {
+      // 处理可能的枚举对象格式
+      const dayOfWeek = typeof time.dayOfWeek === 'object' ? time.dayOfWeek.name : time.dayOfWeek;
+      const timePeriod = typeof time.timePeriod === 'object' ? time.timePeriod.name : time.timePeriod;
+      
+      const dayStr = dayNames[dayOfWeek] || dayOfWeek;
+      const timeStr = timeNames[timePeriod] || timePeriod;
+      
+      return `${dayStr} ${timeStr}`;
+    }).join('\n'); // 用换行符分隔，确保多行显示
+  };
+
+  // 检查时间冲突
+  const checkConflictWithSelected = (courseTimes: any[]): boolean => {
+    // 这里需要获取已选课程的时间信息进行比较
+    // 简化处理，实际应该传入已选课程的时间信息
+    return false;
+  };
+
+  return {
+    courseID: course.courseID,
+    courseName: courseGroup.name, // 课程名称从CourseGroup获取
+    teacher: teacherName,
+    schedule: formatSchedule(course.time),
+    location: course.location || '待定',
+    currentStudents: course.selectedStudentsSize + course.preselectedStudentsSize,
+    capacity: course.courseCapacity,
+    credit: courseGroup.credit, // 学分从CourseGroup获取
+    introduction: '', // CourseInfo中没有introduction字段
+    courseGroupID: course.courseGroupID,
+    isConflicted: checkConflictWithSelected(course.time)
+  };
+};
+
+// 转换单个课程数据（仅CourseInfo，用于已选课程等）
+const convertCourseToDisplayData = async (
+  course: CourseInfo,
+  courseGroup?: CourseGroup,
+  selectedCourseIds: number[] = [],
+  preselectedCourseIds: number[] = []
+): Promise<CourseDisplayData> => {
+  const teacherName = await getTeacherName(course.teacherID);
+  
+  // 格式化时间显示（多行显示，严格按照原始逻辑）
+  const formatSchedule = (times: any[]): string => {
+    if (!times || times.length === 0) return '时间待定';
+    
+    const dayNames: { [key: string]: string } = {
+      'MONDAY': '周一', 'TUESDAY': '周二', 'WEDNESDAY': '周三',
+      'THURSDAY': '周四', 'FRIDAY': '周五', 'SATURDAY': '周六', 'SUNDAY': '周日'
+    };
+    
+    const timeNames: { [key: string]: string } = {
+      'FIRST_SECOND': '8:00-9:35',
+      'THIRD_FOURTH': '9:50-11:25',
+      'FIFTH_SIXTH': '13:30-15:05',
+      'SEVENTH_EIGHTH': '15:20-16:55',
+      'NINTH_TENTH': '19:20-20:55'
+    };
+    
+    return times.map(time => {
+      // 处理可能的枚举对象格式
+      const dayOfWeek = typeof time.dayOfWeek === 'object' ? time.dayOfWeek.name : time.dayOfWeek;
+      const timePeriod = typeof time.timePeriod === 'object' ? time.timePeriod.name : time.timePeriod;
+      
+      const dayStr = dayNames[dayOfWeek] || dayOfWeek;
+      const timeStr = timeNames[timePeriod] || timePeriod;
+      
+      return `${dayStr} ${timeStr}`;
+    }).join('\n'); // 用换行符分隔，确保多行显示
+  };
+
+  return {
+    courseID: course.courseID,
+    courseName: courseGroup?.name || `课程${course.courseID}`, // 如果有courseGroup则使用其名称
+    teacher: teacherName,
+    schedule: formatSchedule(course.time),
+    location: course.location || '待定',
+    currentStudents: course.selectedStudentsSize + course.preselectedStudentsSize,
+    capacity: course.courseCapacity,
+    credit: courseGroup?.credit || 0, // 如果有courseGroup则使用其学分
+    introduction: '',
+    courseGroupID: course.courseGroupID,
+    isConflicted: false
+  };
+};
+
+// 获取星期名称
+const getDayName = (dayOfWeek: any): string => {
+  const dayMap: { [key: string]: string } = {
+    'MONDAY': '周一', 'TUESDAY': '周二', 'WEDNESDAY': '周三',
+    'THURSDAY': '周四', 'FRIDAY': '周五', 'SATURDAY': '周六', 'SUNDAY': '周日'
+  };
+  
+  if (typeof dayOfWeek === 'string') {
+    return dayMap[dayOfWeek] || dayOfWeek;
+  }
+  if (typeof dayOfWeek === 'object' && dayOfWeek.name) {
+    return dayMap[dayOfWeek.name] || dayOfWeek.name;
+  }
+  return '未知';
+};
+
+// 获取时间段字符串
+const getPeriodString = (timePeriod: any): string => {
+  const timeMap: { [key: string]: string } = {
+    'FIRST_SECOND': '8:00-9:35',
+    'THIRD_FOURTH': '9:50-11:25',
+    'FIFTH_SIXTH': '13:30-15:05',
+    'SEVENTH_EIGHTH': '15:20-16:55',
+    'NINTH_TENTH': '19:20-20:55'
+  };
+  
+  if (typeof timePeriod === 'string') {
+    return timeMap[timePeriod] || timePeriod;
+  }
+  if (typeof timePeriod === 'object' && timePeriod.name) {
+    return timeMap[timePeriod.name] || timePeriod.name;
+  }
+  return '未知时间';
+};
+
+// 批量转换课程数据（PairOfGroupAndCourse）
+const transformPairsToDisplayData = async (
+  pairs: PairOfGroupAndCourse[],
+  selectedCourseIds: number[] = [],
+  preselectedCourseIds: number[] = []
+): Promise<CourseDisplayData[]> => {
+  const transformPromises = pairs.map(pair => 
+    convertPairToDisplayData(pair, selectedCourseIds, preselectedCourseIds)
+  );
+  
+  return await Promise.all(transformPromises);
+};
+
+// 批量转换课程数据（仅CourseInfo）
+const transformCoursesToDisplayData = async (
+  courses: CourseInfo[],
+  selectedCourseIds: number[] = [],
+  preselectedCourseIds: number[] = []
+): Promise<CourseDisplayData[]> => {
+  const transformPromises = courses.map(course => 
+    convertCourseToDisplayData(course, undefined, selectedCourseIds, preselectedCourseIds)
+  );
+  
+  return await Promise.all(transformPromises);
+};
+
+export const courseUtils = {
+  getTeacherName,
+  checkTimeConflict,
+  convertCourseToDisplayData,
+  convertPairToDisplayData,
+  transformCoursesToDisplayData,
+  transformPairsToDisplayData,
+  getDayName,
+  getPeriodString
+};
