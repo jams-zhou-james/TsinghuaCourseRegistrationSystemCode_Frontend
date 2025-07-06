@@ -1,19 +1,30 @@
 // CourseSearchForm.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import { Form, Input, Button, Row, Col, Card, Space } from 'antd';
 import { SearchOutlined, BookOutlined, UserOutlined, ClockCircleOutlined } from '@ant-design/icons';
 
 interface CourseSearchFormProps {
-  form: any;
-  onSearch: (values: any) => void;
-  searching: boolean;
+  onSearch: (filter?: { courseName?: string; courseID?: string; teacherID?: string }) => void;
 }
 
 export const CourseSearchForm: React.FC<CourseSearchFormProps> = ({ 
-  form, 
-  onSearch, 
-  searching 
+  onSearch
 }) => {
+  const [form] = Form.useForm();
+  const [searching, setSearching] = useState(false);
+
+  const handleSearch = async (values: any) => {
+    setSearching(true);
+    try {
+      await onSearch({
+        courseName: values.courseName,
+        courseID: values.courseID,
+        teacherID: values.teacherID
+      });
+    } finally {
+      setSearching(false);
+    }
+  };
   return (
     <Card
       title={
@@ -29,7 +40,7 @@ export const CourseSearchForm: React.FC<CourseSearchFormProps> = ({
         backgroundColor: 'rgba(255, 255, 255, 0.95)'
       }}
     >
-      <Form form={form} layout="vertical" onFinish={onSearch}>
+      <Form form={form} layout="vertical" onFinish={handleSearch}>
         <Row gutter={[16, 16]}>
           <Col xs={24} sm={12} md={6}>
             <Form.Item name="courseName" label="课程名称">

@@ -34,7 +34,7 @@ interface CourseCardProps {
   canPreselectCourse: boolean;
   selectedCourses: CourseDisplayData[];
   preselectedCourses: CourseDisplayData[];
-  waitingListCourses: any[];
+  waitingListCourses?: any[];
   onSelectCourse: (courseData: CourseDisplayData) => void;
   onPreselectCourse: (courseData: CourseDisplayData) => void;
   onDropCourse: (courseData: CourseDisplayData) => void;
@@ -64,10 +64,10 @@ export const CourseCard: React.FC<CourseCardProps> = ({
   );
 
   // 检查是否在等待列表
-  const isInWaitingList = waitingListCourses.some(
+  const isInWaitingList = waitingListCourses ? waitingListCourses.some(
     (waitingCourse) => waitingCourse.courseID === courseData.courseID && 
                       waitingCourse.courseGroupID === courseData.courseGroupID
-  );
+  ) : false;
 
   // 课程容量显示
   const capacityText = `${courseData.currentStudents}/${courseData.capacity}`;

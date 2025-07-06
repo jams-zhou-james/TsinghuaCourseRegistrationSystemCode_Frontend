@@ -2,6 +2,8 @@
 import React from 'react';
 import { Row, Col, Empty, Spin } from 'antd';
 import { CourseCard } from './CourseCard';
+import { SemesterPhase } from 'Plugins/SemesterPhaseService/Objects/SemesterPhase';
+import { Phase } from 'Plugins/SemesterPhaseService/Objects/Phase';
 
 // 使用与主页面一致的课程数据接口
 interface CourseDisplayData {
@@ -20,12 +22,9 @@ interface CourseDisplayData {
 
 interface CourseListProps {
   courses: CourseDisplayData[];
-  loading: boolean;
-  canSelectCourse: boolean;
-  canPreselectCourse: boolean;
   selectedCourses: CourseDisplayData[];
   preselectedCourses: CourseDisplayData[];
-  waitingListCourses: any[];
+  semesterPhase?: SemesterPhase | null;
   onSelectCourse: (courseData: CourseDisplayData) => void;
   onPreselectCourse: (courseData: CourseDisplayData) => void;
   onDropCourse: (courseData: CourseDisplayData) => void;
@@ -33,25 +32,18 @@ interface CourseListProps {
 
 export const CourseList: React.FC<CourseListProps> = ({
   courses,
-  loading,
-  canSelectCourse,
-  canPreselectCourse,
   selectedCourses,
   preselectedCourses,
-  waitingListCourses,
+  semesterPhase,
   onSelectCourse,
   onPreselectCourse,
   onDropCourse
 }) => {
-  if (loading) {
-    return (
-      <div style={{ textAlign: 'center', padding: '50px' }}>
-        <Spin size="large" tip="正在加载课程信息..." />
-      </div>
-    );
-  }
-
-  if (courses.length === 0) {
+  // 根据学期阶段确定权限
+  const canSelectCourse = semesterPhase?.currentPhase === Phase.phase2;
+  const canPreselectCourse = semesterPhase?.currentPhase === Phase.phase1;
+  
+  if (!courses || courses.length === 0) {
     return (
       <Empty
         description="暂无符合条件的课程"
@@ -73,7 +65,6 @@ export const CourseList: React.FC<CourseListProps> = ({
             canPreselectCourse={canPreselectCourse}
             selectedCourses={selectedCourses}
             preselectedCourses={preselectedCourses}
-            waitingListCourses={waitingListCourses}
             onSelectCourse={onSelectCourse}
             onPreselectCourse={onPreselectCourse}
             onDropCourse={onDropCourse}

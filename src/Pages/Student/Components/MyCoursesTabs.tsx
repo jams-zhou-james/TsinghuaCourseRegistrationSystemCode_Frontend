@@ -12,6 +12,7 @@ import {
   ClockCircleOutlined as WaitingIcon,
   DeleteOutlined
 } from '@ant-design/icons';
+import { SemesterPhase } from 'Plugins/SemesterPhaseService/Objects/SemesterPhase';
 
 // 使用与主页面一致的课程数据接口
 interface CourseDisplayData {
@@ -31,14 +32,16 @@ interface CourseDisplayData {
 interface MyCoursesTabsProps {
   selectedCourses: CourseDisplayData[];
   preselectedCourses: CourseDisplayData[];
-  waitingListCourses: any[];
+  waitingList?: Array<CourseDisplayData & { rank: number }>;
+  semesterPhase?: SemesterPhase | null;
   onDropCourse: (courseData: CourseDisplayData) => void;
 }
 
 export const MyCoursesTabs: React.FC<MyCoursesTabsProps> = ({
   selectedCourses,
   preselectedCourses,
-  waitingListCourses,
+  waitingList,
+  semesterPhase,
   onDropCourse
 }) => {
   const renderCourseCard = (course: CourseDisplayData, status: 'selected' | 'preselected' | 'waiting') => {
@@ -216,12 +219,12 @@ export const MyCoursesTabs: React.FC<MyCoursesTabsProps> = ({
         <Space>
           <WaitingIcon style={{ color: '#faad14' }} />
           <span>等待列表</span>
-          <Tag color="orange">{waitingListCourses.length}</Tag>
+          <Tag color="orange">{waitingList?.length || 0}</Tag>
         </Space>
       ),
-      children: waitingListCourses.length > 0 ? (
+      children: waitingList && waitingList.length > 0 ? (
         <Row gutter={[16, 16]}>
-          {waitingListCourses.map((course) => (
+          {waitingList.map((course: CourseDisplayData & { rank: number }) => (
             <Col xs={24} sm={12} md={8} lg={6} key={`waiting-${course.courseID}-${course.courseGroupID}`}>
               {renderCourseCard(course, 'waiting')}
             </Col>
