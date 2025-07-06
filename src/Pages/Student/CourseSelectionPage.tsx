@@ -148,13 +148,13 @@ export const CourseSelectionPage: React.FC = () => {
       teacherID: courseInfo.teacherID,
       teacherName: courseGroup.authorizedTeachers?.join(', ') || `教师${courseInfo.teacherID}`,
       schedule: formatCourseTime(courseInfo.time),
-      capacity: courseInfo.courseCapacity,
-      location: courseInfo.location,
-      credit: courseGroup.credit,
-      time: courseInfo.time,
-      preselectedCount: courseInfo.preselectedStudentsSize,
-      selectedCount: courseInfo.selectedStudentsSize,
-      waitingCount: courseInfo.waitingListSize,
+      capacity: courseInfo.courseCapacity || 0,
+      location: courseInfo.location || '待定',
+      credit: courseGroup.credit || 0,
+      time: courseInfo.time || [],
+      preselectedCount: courseInfo.preselectedStudentsSize || 0,
+      selectedCount: courseInfo.selectedStudentsSize || 0,
+      waitingCount: courseInfo.waitingListSize || 0,
       isPreselected: false,
       isSelected: false,
       isInWaitingList: false
@@ -170,13 +170,13 @@ export const CourseSelectionPage: React.FC = () => {
       teacherID: courseInfo.teacherID,
       teacherName: `教师${courseInfo.teacherID}`,
       schedule: formatCourseTime(courseInfo.time),
-      capacity: courseInfo.courseCapacity,
-      location: courseInfo.location,
+      capacity: courseInfo.courseCapacity || 0,
+      location: courseInfo.location || '待定',
       credit: 0,
-      time: courseInfo.time,
-      preselectedCount: courseInfo.preselectedStudentsSize,
-      selectedCount: courseInfo.selectedStudentsSize,
-      waitingCount: courseInfo.waitingListSize,
+      time: courseInfo.time || [],
+      preselectedCount: courseInfo.preselectedStudentsSize || 0,
+      selectedCount: courseInfo.selectedStudentsSize || 0,
+      waitingCount: courseInfo.waitingListSize || 0,
       isPreselected,
       isSelected,
       isInWaitingList
@@ -387,7 +387,7 @@ export const CourseSelectionPage: React.FC = () => {
     if (!semesterPhase) return null;
     
     const isPhase1 = semesterPhase.currentPhase === Phase.phase1;
-    const currentCount = isPhase1 ? course.preselectedCount : course.selectedCount;
+    const currentCount = isPhase1 ? (course.preselectedCount || 0) : (course.selectedCount || 0);
     const availableSlots = course.capacity - currentCount;
     const isFull = availableSlots <= 0;
 
@@ -461,13 +461,13 @@ export const CourseSelectionPage: React.FC = () => {
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <TeamOutlined style={{ color: '#ff69b4', marginRight: 8 }} />
             <Space size={4}>
-              <Badge count={currentCount} style={{ backgroundColor: '#52c41a' }} />
+              <Text strong>{currentCount}</Text>
               <Text>/</Text>
               <Text strong>{course.capacity}</Text>
-              {!isPhase1 && course.waitingCount > 0 && (
+              {!isPhase1 && (course.waitingCount || 0) > 0 && (
                 <>
                   <Text type="secondary">等待:</Text>
-                  <Badge count={course.waitingCount} style={{ backgroundColor: '#faad14' }} />
+                  <Badge count={course.waitingCount || 0} style={{ backgroundColor: '#faad14' }} />
                 </>
               )}
             </Space>
