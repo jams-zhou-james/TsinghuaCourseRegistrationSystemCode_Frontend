@@ -1,0 +1,5 @@
+// index.ts
+export { CourseSearchForm } from './CourseSearchForm';
+export { CourseCard } from './CourseCard';
+export { CourseList } from './CourseList';
+export { MyCoursesTabs } from './MyCoursesTabs';

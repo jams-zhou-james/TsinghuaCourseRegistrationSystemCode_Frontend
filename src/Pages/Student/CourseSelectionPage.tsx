@@ -1,32 +1,15 @@
 // CourseSelectionPage.tsx
 import React, { useEffect, useState } from 'react';
 import { 
-  Input, 
-  Button, 
   message, 
-  Form, 
-  Row, 
-  Col, 
-  Tag, 
-  Card, 
   Typography, 
-  Space, 
-  Divider,
-  Badge,
-  Empty,
   Tabs,
-  Spin
+  Spin,
+  Tag,
+  Space,
+  Form
 } from 'antd';
-import { 
-  SearchOutlined, 
-  BookOutlined, 
-  UserOutlined, 
-  ClockCircleOutlined, 
-  EnvironmentOutlined,
-  TeamOutlined,
-  PlusOutlined,
-  MinusOutlined
-} from '@ant-design/icons';
+import { TeamOutlined } from '@ant-design/icons';
 import WithRoleBasedSidebarLayout from '../../Layouts/WithRoleBasedSidebarLayout';
 import { UserRole } from 'Plugins/UserAccountService/Objects/UserRole';
 import { useUserToken } from 'Globals/GlobalStore';
@@ -43,7 +26,6 @@ import { QueryCoursesByFilterMessage } from 'Plugins/CourseManagementService/API
 import { PairOfGroupAndCourse } from 'Plugins/CourseManagementService/Objects/PairOfGroupAndCourse';
 import { CourseTime } from 'Plugins/CourseManagementService/Objects/CourseTime';
 import { CourseInfo } from 'Plugins/CourseManagementService/Objects/CourseInfo';
-import { CourseGroup } from 'Plugins/CourseManagementService/Objects/CourseGroup';
 
 // 选课相关
 import { SelectCourseMessage } from 'Plugins/CourseSelectionService/APIs/SelectCourseMessage';
@@ -54,32 +36,24 @@ import { QueryStudentPreselectedCoursesMessage } from 'Plugins/CourseSelectionSe
 import { QueryStudentWaitingListStatusMessage } from 'Plugins/CourseSelectionService/APIs/QueryStudentWaitingListStatusMessage';
 import { PairOfCourseAndRank } from 'Plugins/CourseSelectionService/Objects/PairOfCourseAndRank';
 
+// 组件导入
+import { CourseSearchForm, CourseList, MyCoursesTabs } from './Components';
+
 const { Title, Text } = Typography;
 
-// 扩展的Course接口，适配真实API
-interface ExtendedCourse {
+// 课程显示数据接口
+interface CourseDisplayData {
   courseID: number;
-  courseGroupID: number;
   courseName: string;
-  courseGroupName: string;
-  teacherID: number;
-  teacherName: string;
+  teacher: string;
   schedule: string;
-  capacity: number;
   location: string;
+  currentStudents: number;
+  capacity: number;
   credit: number;
-  time: CourseTime[];
-  
-  // 根据阶段显示不同的人数信息
-  preselectedCount: number;  // 阶段1显示：预选人数
-  selectedCount: number;     // 阶段2显示：选上人数
-  waitingCount: number;      // 阶段2显示：等待人数
-  
-  // 学生状态标识
-  isPreselected: boolean;    // 我是否已预选
-  isSelected: boolean;       // 我是否已选上
-  isInWaitingList: boolean;  // 我是否在等待列表中
-  waitingRank?: number;      // 我在等待列表的排名
+  introduction?: string;
+  courseGroupID: number;
+  isConflicted: boolean;
 }
 
 // 辅助函数：将CourseTime数组转换为可读字符串
@@ -104,20 +78,6 @@ const formatCourseTime = (timeArray: CourseTime[]): string => {
   ).join(', ');
 };
 
-// 检查时间冲突
-const hasTimeConflict = (course1: ExtendedCourse, course2: ExtendedCourse): boolean => {
-  if (!course1.time || !course2.time) return false;
-  
-  for (const time1 of course1.time) {
-    for (const time2 of course2.time) {
-      if (time1.dayOfWeek === time2.dayOfWeek && time1.timePeriod === time2.timePeriod) {
-        return true;
-      }
-    }
-  }
-  return false;
-};
-
 export const courseSelectionPagePath = '/student/course-selection';
 
 export const CourseSelectionPage: React.FC = () => {
@@ -127,16 +87,16 @@ export const CourseSelectionPage: React.FC = () => {
   // 状态管理
   const [userInfo, setUserInfo] = useState<SafeUserInfo | null>(null);
   const [semesterPhase, setSemesterPhase] = useState<SemesterPhase | null>(null);
-  const [allCourses, setAllCourses] = useState<ExtendedCourse[]>([]);
-  const [filteredCourses, setFilteredCourses] = useState<ExtendedCourse[]>([]);
-  const [mySelectedCourses, setMySelectedCourses] = useState<ExtendedCourse[]>([]);
-  const [myPreselectedCourses, setMyPreselectedCourses] = useState<ExtendedCourse[]>([]);
+  const [allCourses, setAllCourses] = useState<CourseDisplayData[]>([]);
+  const [filteredCourses, setFilteredCourses] = useState<CourseDisplayData[]>([]);
+  const [mySelectedCourses, setMySelectedCourses] = useState<CourseDisplayData[]>([]);
+  const [myPreselectedCourses, setMyPreselectedCourses] = useState<CourseDisplayData[]>([]);
   const [myWaitingList, setMyWaitingList] = useState<PairOfCourseAndRank[]>([]);
   const [loading, setLoading] = useState(false);
   const [searching, setSearching] = useState(false);
 
   // API数据转换函数
-  const transformToCourse = (pair: PairOfGroupAndCourse): ExtendedCourse => {
+  const transformToCourse = (pair: PairOfGroupAndCourse): CourseDisplayData => {
     const courseGroup = pair.CourseGroup;
     const courseInfo = pair.Course;
     
@@ -144,46 +104,34 @@ export const CourseSelectionPage: React.FC = () => {
       courseID: courseInfo.courseID,
       courseGroupID: courseGroup.courseGroupID,
       courseName: courseGroup.name,
-      courseGroupName: courseGroup.name,
-      teacherID: courseInfo.teacherID,
-      teacherName: courseGroup.authorizedTeachers?.join(', ') || `教师${courseInfo.teacherID}`,
+      teacher: `教师${courseInfo.teacherID}`,
       schedule: formatCourseTime(courseInfo.time),
-      capacity: courseInfo.courseCapacity || 0,
       location: courseInfo.location || '待定',
+      currentStudents: courseInfo.selectedStudentsSize || 0,
+      capacity: courseInfo.courseCapacity || 0,
       credit: courseGroup.credit || 0,
-      time: courseInfo.time || [],
-      preselectedCount: courseInfo.preselectedStudentsSize || 0,
-      selectedCount: courseInfo.selectedStudentsSize || 0,
-      waitingCount: courseInfo.waitingListSize || 0,
-      isPreselected: false,
-      isSelected: false,
-      isInWaitingList: false
+      introduction: undefined,
+      isConflicted: false
     };
   };
 
-  const convertCourseInfoToExtended = (courseInfo: CourseInfo, isSelected: boolean, isPreselected: boolean, isInWaitingList: boolean): ExtendedCourse => {
+  const convertCourseInfoToDisplayData = (courseInfo: CourseInfo): CourseDisplayData => {
     return {
       courseID: courseInfo.courseID,
       courseGroupID: courseInfo.courseGroupID,
       courseName: `课程${courseInfo.courseID}`,
-      courseGroupName: `课程组${courseInfo.courseGroupID}`,
-      teacherID: courseInfo.teacherID,
-      teacherName: `教师${courseInfo.teacherID}`,
+      teacher: `教师${courseInfo.teacherID}`,
       schedule: formatCourseTime(courseInfo.time),
-      capacity: courseInfo.courseCapacity || 0,
       location: courseInfo.location || '待定',
+      currentStudents: courseInfo.selectedStudentsSize || 0,
+      capacity: courseInfo.courseCapacity || 0,
       credit: 0,
-      time: courseInfo.time || [],
-      preselectedCount: courseInfo.preselectedStudentsSize || 0,
-      selectedCount: courseInfo.selectedStudentsSize || 0,
-      waitingCount: courseInfo.waitingListSize || 0,
-      isPreselected,
-      isSelected,
-      isInWaitingList
+      introduction: undefined,
+      isConflicted: false
     };
   };
 
-  // 页面初始化 - 参考Teacher页面的简化模式
+  // 页面初始化
   useEffect(() => {
     if (!userToken) return;
     
@@ -241,7 +189,6 @@ export const CourseSelectionPage: React.FC = () => {
         try {
           const apiData: PairOfGroupAndCourse[] = JSON.parse(response);
           const courses = apiData.map(transformToCourse);
-          updateCourseStatuses(courses);
           setAllCourses(courses);
           setFilteredCourses(courses);
         } catch (e) {
@@ -258,7 +205,7 @@ export const CourseSelectionPage: React.FC = () => {
       (response: string) => {
         try {
           const courses: CourseInfo[] = JSON.parse(response);
-          setMySelectedCourses(courses.map(c => convertCourseInfoToExtended(c, true, false, false)));
+          setMySelectedCourses(courses.map(convertCourseInfoToDisplayData));
         } catch (e) {
           setMySelectedCourses([]);
         }
@@ -271,7 +218,7 @@ export const CourseSelectionPage: React.FC = () => {
       (response: string) => {
         try {
           const courses: CourseInfo[] = JSON.parse(response);
-          setMyPreselectedCourses(courses.map(c => convertCourseInfoToExtended(c, false, true, false)));
+          setMyPreselectedCourses(courses.map(convertCourseInfoToDisplayData));
         } catch (e) {
           setMyPreselectedCourses([]);
         }
@@ -293,51 +240,15 @@ export const CourseSelectionPage: React.FC = () => {
     );
   };
 
-  // 更新课程状态标识
-  const updateCourseStatuses = (courses: ExtendedCourse[]) => {
-    courses.forEach(course => {
-      // 检查是否在已选课程中
-      course.isSelected = mySelectedCourses.some(selected => selected.courseID === course.courseID);
-      
-      // 检查是否在预选课程中
-      course.isPreselected = myPreselectedCourses.some(preselected => preselected.courseID === course.courseID);
-      
-      // 检查是否在等待列表中
-      const waitingItem = myWaitingList.find(waiting => waiting.course.courseID === course.courseID);
-      course.isInWaitingList = !!waitingItem;
-      course.waitingRank = waitingItem?.rank;
-    });
-  };
-
   const handleSearch = (values: any) => {
     setSearching(true);
-    let result = allCourses;
-    
-    Object.keys(values).forEach(key => {
-      if (values[key]) {
-        result = result.filter(course => {
-          const courseValue = (course as any)[key];
-          return courseValue?.toString().includes(values[key]);
-        });
-      }
-    });
-    
-    setFilteredCourses(result);
+    loadAllCourses(values);
     setSearching(false);
   };
 
-  const handleSelect = async (course: ExtendedCourse) => {
+  const handleSelectCourse = async (course: CourseDisplayData) => {
     if (!semesterPhase) {
       message.error('学期阶段信息未加载');
-      return;
-    }
-
-    // 检查时间冲突
-    const conflictCourse = mySelectedCourses.find(selectedCourse => 
-      hasTimeConflict(course, selectedCourse)
-    );
-    if (conflictCourse) {
-      message.error(`与已选课程"${conflictCourse.courseName}"时间冲突`);
       return;
     }
 
@@ -370,7 +281,20 @@ export const CourseSelectionPage: React.FC = () => {
     }
   };
 
-  const handleDropCourse = (course: ExtendedCourse) => {
+  const handlePreselectCourse = async (course: CourseDisplayData) => {
+    new PreselectCourseMessage(userToken, course.courseID).send(
+      (response: string) => {
+        message.success('预选成功');
+        loadMyCourses();
+        loadAllCourses();
+      },
+      (error: string) => {
+        message.error('预选失败: ' + error);
+      }
+    );
+  };
+
+  const handleDropCourse = (course: CourseDisplayData) => {
     new DropCourseMessage(userToken, course.courseID).send(
       (response: string) => {
         message.success('退课成功');
@@ -380,134 +304,6 @@ export const CourseSelectionPage: React.FC = () => {
       (error: string) => {
         message.error('退课失败: ' + error);
       }
-    );
-  };
-
-  const renderCourseCard = (course: ExtendedCourse) => {
-    if (!semesterPhase) return null;
-    
-    const isPhase1 = semesterPhase.currentPhase === Phase.phase1;
-    const currentCount = isPhase1 ? (course.preselectedCount || 0) : (course.selectedCount || 0);
-    const availableSlots = course.capacity - currentCount;
-    const isFull = availableSlots <= 0;
-
-    // 确定按钮状态和文本
-    let buttonText = '';
-    let buttonDisabled = false;
-    let showDropButton = false;
-    
-    if (course.isSelected) {
-      buttonText = '已选上';
-      buttonDisabled = true;
-      showDropButton = true;
-    } else if (course.isPreselected) {
-      buttonText = '已预选';
-      buttonDisabled = true;
-      showDropButton = true;
-    } else if (course.isInWaitingList) {
-      buttonText = `等待中(${course.waitingRank}/${course.waitingCount})`;
-      buttonDisabled = true;
-    } else {
-      buttonText = isFull 
-        ? (isPhase1 ? '预选(排队)' : '选课(排队)') 
-        : (isPhase1 ? '立即预选' : '立即选课');
-    }
-
-    return (
-      <Card
-        key={course.courseID}
-        hoverable
-        style={{
-          borderRadius: 12,
-          border: '1px solid rgba(255, 182, 216, 0.3)',
-          backgroundColor: 'rgba(255, 255, 255, 0.95)',
-          boxShadow: '0 2px 8px rgba(255, 105, 180, 0.1)'
-        }}
-        bodyStyle={{ padding: 20 }}
-      >
-        <div style={{ marginBottom: 16 }}>
-          <Space direction="vertical" size={8} style={{ width: '100%' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <Title level={4} style={{ margin: 0, color: '#d81b60' }}>
-                  {course.courseName}
-                </Title>
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  ID:{course.courseID} · {course.courseGroupName} · {course.credit}学分
-                </Text>
-              </div>
-              <Tag color={isFull ? "red" : "green"} style={{ borderRadius: 8 }}>
-                {isFull ? "已满" : `余${availableSlots}位`}
-              </Tag>
-            </div>
-          </Space>
-        </div>
-
-        <Divider style={{ margin: '12px 0', borderColor: 'rgba(255, 182, 216, 0.3)' }} />
-
-        <Space direction="vertical" size={6} style={{ width: '100%' }}>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <UserOutlined style={{ color: '#ff69b4', marginRight: 8 }} />
-            <Text>{course.teacherName}</Text>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <ClockCircleOutlined style={{ color: '#ff69b4', marginRight: 8 }} />
-            <Text>{course.schedule}</Text>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <EnvironmentOutlined style={{ color: '#ff69b4', marginRight: 8 }} />
-            <Text>{course.location}</Text>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <TeamOutlined style={{ color: '#ff69b4', marginRight: 8 }} />
-            <Space size={4}>
-              <Text strong>{currentCount}</Text>
-              <Text>/</Text>
-              <Text strong>{course.capacity}</Text>
-              {!isPhase1 && (course.waitingCount || 0) > 0 && (
-                <>
-                  <Text type="secondary">等待:</Text>
-                  <Badge count={course.waitingCount || 0} style={{ backgroundColor: '#faad14' }} />
-                </>
-              )}
-            </Space>
-          </div>
-        </Space>
-
-        <div style={{ marginTop: 20, textAlign: 'center' }}>
-          <Space>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              disabled={buttonDisabled}
-              onClick={() => handleSelect(course)}
-              style={{
-                background: buttonDisabled ? undefined : 
-                  (isFull ? 
-                    'linear-gradient(90deg, #faad14 0%, #ffc53d 100%)' : 
-                    'linear-gradient(90deg, #ff69b4 0%, #ff85c0 100%)'),
-                border: 'none',
-                borderRadius: 8,
-                boxShadow: buttonDisabled ? undefined : 
-                  `0 4px 12px ${isFull ? 'rgba(250, 173, 20, 0.3)' : 'rgba(255, 105, 180, 0.3)'}`
-              }}
-            >
-              {buttonText}
-            </Button>
-            
-            {showDropButton && (
-              <Button
-                danger
-                icon={<MinusOutlined />}
-                onClick={() => handleDropCourse(course)}
-                style={{ borderRadius: 8 }}
-              >
-                退课
-              </Button>
-            )}
-          </Space>
-        </div>
-      </Card>
     );
   };
 
@@ -521,6 +317,10 @@ export const CourseSelectionPage: React.FC = () => {
       </WithRoleBasedSidebarLayout>
     );
   }
+
+  // 获取权限状态
+  const canSelectCourse = semesterPhase?.currentPhase === Phase.phase2;
+  const canPreselectCourse = semesterPhase?.currentPhase === Phase.phase1;
 
   return (
     <WithRoleBasedSidebarLayout role={UserRole.student}>
@@ -560,161 +360,50 @@ export const CourseSelectionPage: React.FC = () => {
               items={[
                 {
                   key: 'all',
-                  label: `所有课程 (${filteredCourses.length})`,
+                  label: (
+                    <Space>
+                      <TeamOutlined />
+                      <span>所有课程</span>
+                      <Tag color="blue">{filteredCourses.length}</Tag>
+                    </Space>
+                  ),
                   children: (
                     <>
-                      {/* 搜索表单 */}
-                      <Card
-                        title={
-                          <Space>
-                            <SearchOutlined style={{ color: '#ff69b4' }} />
-                            <span style={{ color: '#d81b60' }}>课程搜索</span>
-                          </Space>
-                        }
-                        style={{
-                          marginBottom: 24,
-                          borderRadius: 12,
-                          border: '1px solid rgba(255, 182, 216, 0.3)',
-                          backgroundColor: 'rgba(255, 255, 255, 0.95)'
-                        }}
-                      >
-                        <Form form={form} layout="vertical" onFinish={handleSearch}>
-                          <Row gutter={[16, 16]}>
-                            <Col xs={24} sm={12} md={6}>
-                              <Form.Item name="courseName" label="课程名称">
-                                <Input 
-                                  placeholder="请输入课程名称" 
-                                  prefix={<BookOutlined style={{ color: '#ffb6d8' }} />}
-                                />
-                              </Form.Item>
-                            </Col>
-                            <Col xs={24} sm={12} md={6}>
-                              <Form.Item name="courseID" label="课程编号">
-                                <Input placeholder="请输入课程编号" />
-                              </Form.Item>
-                            </Col>
-                            <Col xs={24} sm={12} md={6}>
-                              <Form.Item name="teacher" label="授课教师">
-                                <Input 
-                                  placeholder="请输入教师姓名" 
-                                  prefix={<UserOutlined style={{ color: '#ffb6d8' }} />}
-                                />
-                              </Form.Item>
-                            </Col>
-                            <Col xs={24} sm={12} md={6}>
-                              <Form.Item name="schedule" label="上课时间">
-                                <Input 
-                                  placeholder="如: 周一 8:00-10:00" 
-                                  prefix={<ClockCircleOutlined style={{ color: '#ffb6d8' }} />}
-                                />
-                              </Form.Item>
-                            </Col>
-                          </Row>
-                          <Row justify="center" style={{ marginTop: 16 }}>
-                            <Button 
-                              type="primary" 
-                              htmlType="submit" 
-                              loading={searching}
-                              icon={<SearchOutlined />}
-                              style={{
-                                background: 'linear-gradient(90deg, #ff69b4 0%, #ff85c0 100%)',
-                                border: 'none',
-                                borderRadius: 8,
-                                boxShadow: '0 4px 12px rgba(255, 105, 180, 0.3)'
-                              }}
-                            >
-                              搜索课程
-                            </Button>
-                          </Row>
-                        </Form>
-                      </Card>
-
-                      {/* 课程列表 */}
-                      <Card
-                        title={
-                          <Space>
-                            <TeamOutlined style={{ color: '#ff69b4' }} />
-                            <span style={{ color: '#d81b60' }}>可选课程</span>
-                            <Badge count={filteredCourses.length} style={{ backgroundColor: '#ff69b4' }} />
-                          </Space>
-                        }
-                        style={{
-                          borderRadius: 12,
-                          border: '1px solid rgba(255, 182, 216, 0.3)',
-                          backgroundColor: 'rgba(255, 255, 255, 0.95)'
-                        }}
-                      >
-                        {filteredCourses.length === 0 ? (
-                          <Empty 
-                            image={<BookOutlined style={{ fontSize: 48, color: '#ffb6d8' }} />}
-                            description="暂无符合条件的课程"
-                          />
-                        ) : (
-                          <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
-                            gap: 16
-                          }}>
-                            {filteredCourses.map(renderCourseCard)}
-                          </div>
-                        )}
-                      </Card>
+                      <CourseSearchForm
+                        form={form}
+                        onSearch={handleSearch}
+                        searching={searching}
+                      />
+                      <CourseList
+                        courses={filteredCourses}
+                        loading={false}
+                        canSelectCourse={canSelectCourse}
+                        canPreselectCourse={canPreselectCourse}
+                        selectedCourses={mySelectedCourses}
+                        preselectedCourses={myPreselectedCourses}
+                        waitingListCourses={myWaitingList}
+                        onSelectCourse={handleSelectCourse}
+                        onPreselectCourse={handlePreselectCourse}
+                        onDropCourse={handleDropCourse}
+                      />
                     </>
                   )
                 },
                 {
-                  key: 'selected',
-                  label: `已选课程 (${mySelectedCourses.length})`,
+                  key: 'mycourses',
+                  label: (
+                    <Space>
+                      <span>我的课程</span>
+                      <Tag color="green">{mySelectedCourses.length + myPreselectedCourses.length}</Tag>
+                    </Space>
+                  ),
                   children: (
-                    mySelectedCourses.length === 0 ? (
-                      <Empty description="暂无已选课程" />
-                    ) : (
-                      <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
-                        gap: 16
-                      }}>
-                        {mySelectedCourses.map(renderCourseCard)}
-                      </div>
-                    )
-                  )
-                },
-                {
-                  key: 'preselected',
-                  label: `预选课程 (${myPreselectedCourses.length})`,
-                  children: (
-                    myPreselectedCourses.length === 0 ? (
-                      <Empty description="暂无预选课程" />
-                    ) : (
-                      <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
-                        gap: 16
-                      }}>
-                        {myPreselectedCourses.map(renderCourseCard)}
-                      </div>
-                    )
-                  )
-                },
-                {
-                  key: 'waiting',
-                  label: `等待列表 (${myWaitingList.length})`,
-                  children: (
-                    myWaitingList.length === 0 ? (
-                      <Empty description="暂无等待列表课程" />
-                    ) : (
-                      <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
-                        gap: 16
-                      }}>
-                        {myWaitingList.map(item => {
-                          const course = convertCourseInfoToExtended(item.course, false, false, true);
-                          course.waitingRank = item.rank;
-                          return renderCourseCard(course);
-                        })}
-                      </div>
-                    )
+                    <MyCoursesTabs
+                      selectedCourses={mySelectedCourses}
+                      preselectedCourses={myPreselectedCourses}
+                      waitingListCourses={myWaitingList.map(item => convertCourseInfoToDisplayData(item.course))}
+                      onDropCourse={handleDropCourse}
+                    />
                   )
                 }
               ]}
