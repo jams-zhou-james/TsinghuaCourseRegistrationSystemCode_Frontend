@@ -12,6 +12,8 @@ import {
   PlusOutlined,
   MinusOutlined
 } from '@ant-design/icons';
+import { SemesterPhase } from 'Plugins/SemesterPhaseService/Objects/SemesterPhase';
+import { Phase } from 'Plugins/SemesterPhaseService/Objects/Phase';
 
 // 使用与主页面一致的课程数据接口
 interface CourseDisplayData {
@@ -35,6 +37,7 @@ interface CourseCardProps {
   selectedCourses: CourseDisplayData[];
   preselectedCourses: CourseDisplayData[];
   waitingListCourses?: any[];
+  semesterPhase?: SemesterPhase | null;
   onSelectCourse: (courseData: CourseDisplayData) => void;
   onPreselectCourse: (courseData: CourseDisplayData) => void;
   onDropCourse: (courseData: CourseDisplayData) => void;
@@ -47,6 +50,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
   selectedCourses,
   preselectedCourses,
   waitingListCourses,
+  semesterPhase,
   onSelectCourse,
   onPreselectCourse,
   onDropCourse
@@ -90,9 +94,14 @@ export const CourseCard: React.FC<CourseCardProps> = ({
 
   const handleAction = () => {
     if (isSelected || isPreselected) {
+      // 根据当前阶段和课程状态确定操作文字
+      const isPreselectionPhase = semesterPhase?.currentPhase === Phase.phase1;
+      const actionText = isPreselected ? '删除预选' : '退课';
+      const confirmTitle = isPreselected ? '确认删除预选' : '确认退课';
+      
       Modal.confirm({
-        title: '确认退课',
-        content: `确定要退选《${courseData.courseName}》吗？`,
+        title: confirmTitle,
+        content: `确定要${actionText}《${courseData.courseName}》吗？`,
         onOk: () => onDropCourse(courseData),
       });
     } else {
@@ -126,6 +135,9 @@ export const CourseCard: React.FC<CourseCardProps> = ({
 
   const getActionButton = () => {
     if (isSelected || isPreselected) {
+      // 根据课程状态确定按钮文字
+      const buttonText = isPreselected ? '删除预选' : '退课';
+      
       return (
         <Button 
           type="primary" 
@@ -133,7 +145,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
           icon={<MinusOutlined />}
           onClick={handleAction}
         >
-          退课
+          {buttonText}
         </Button>
       );
     }

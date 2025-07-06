@@ -74,9 +74,13 @@ export const MyCoursesTabs: React.FC<MyCoursesTabsProps> = ({
   };
   const renderCourseCard = (course: CourseDisplayData, status: 'selected' | 'preselected' | 'waiting') => {
     const handleDrop = () => {
+      // 根据课程状态确定操作文字
+      const actionText = status === 'preselected' ? '删除预选' : '退课';
+      const confirmTitle = status === 'preselected' ? '确认删除预选' : '确认退课';
+      
       Modal.confirm({
-        title: '确认退课',
-        content: `确定要退选《${course.courseName}》吗？`,
+        title: confirmTitle,
+        content: `确定要${actionText}《${course.courseName}》吗？`,
         onOk: () => onDropCourse(course),
       });
     };
@@ -125,7 +129,7 @@ export const MyCoursesTabs: React.FC<MyCoursesTabsProps> = ({
             icon={<DeleteOutlined />}
             onClick={handleDrop}
           >
-            退课
+            {status === 'preselected' ? '删除预选' : '退课'}
           </Button>
         ] : []}
       >

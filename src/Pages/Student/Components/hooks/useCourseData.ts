@@ -22,6 +22,7 @@ export interface UseCourseDataResult {
   error: string | null;
   fetchCourses: (filter?: { courseName?: string; courseID?: string; teacherID?: string }) => void;
   refreshData: () => void;
+  updateCourseCapacity: (courseID: number, changeAmount: number) => void;
 }
 
 export const useCourseData = (userToken: string, semesterPhase: SemesterPhase | null): UseCourseDataResult => {
@@ -199,6 +200,22 @@ export const useCourseData = (userToken: string, semesterPhase: SemesterPhase | 
     }
   }, [userToken, semesterPhase, fetchSelectedCourses, fetchPreselectedCourses, fetchWaitingList]);
 
+  // 本地更新课程余量，用于选课/退课后立即反馈
+  const updateCourseCapacity = useCallback((courseID: number, changeAmount: number) => {
+    console.log(`本地更新课程 ${courseID} 的余量，变化量：${changeAmount}`);
+    
+    setCourses(prevCourses => 
+      prevCourses.map(course => 
+        course.courseID === courseID 
+          ? { 
+              ...course, 
+              currentStudents: Math.max(0, Math.min(course.capacity, course.currentStudents + changeAmount))
+            }
+          : course
+      )
+    );
+  }, []);
+
   // 初始加载我的课程数据和所有课程
   useEffect(() => {
     if (userToken && semesterPhase) {
@@ -234,6 +251,7 @@ export const useCourseData = (userToken: string, semesterPhase: SemesterPhase | 
     loading,
     error,
     fetchCourses,
-    refreshData
+    refreshData,
+    updateCourseCapacity
   };
 };

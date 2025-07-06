@@ -25,14 +25,15 @@ export const CourseManagementContainer: React.FC<CourseManagementContainerProps>
     loading,
     error,
     fetchCourses,
-    refreshData
+    refreshData,
+    updateCourseCapacity
   } = useCourseData(userToken, semesterPhase);
 
   const {
     handleSelectCourse,
     handlePreselectCourse,
     handleDropCourse
-  } = useCourseActions(userToken, semesterPhase, refreshData);
+  } = useCourseActions(userToken, semesterPhase, refreshData, updateCourseCapacity);
 
   if (error) {
     return (

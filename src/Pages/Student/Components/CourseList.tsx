@@ -65,6 +65,7 @@ export const CourseList: React.FC<CourseListProps> = ({
             canPreselectCourse={canPreselectCourse}
             selectedCourses={selectedCourses}
             preselectedCourses={preselectedCourses}
+            semesterPhase={semesterPhase}
             onSelectCourse={onSelectCourse}
             onPreselectCourse={onPreselectCourse}
             onDropCourse={onDropCourse}
