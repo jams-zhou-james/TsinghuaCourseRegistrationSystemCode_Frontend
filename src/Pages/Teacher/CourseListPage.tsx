@@ -322,9 +322,9 @@ export const TeacherCourseListPage: React.FC = () => {
                     <List.Item
                       style={{ margin: '8px 0', borderRadius: 8, border: '1px solid #e0e7ef', background: '#fff' }}
                       actions={[
-                        <Button size="small" onClick={() => handleEditCourse(group.courseGroupID, course)} style={{ background: '#f1f5f9', color: '#1e40af', border: 'none', borderRadius: 6, fontWeight: 500 }} disabled={!isOwner}>编辑</Button>,
+                        <Button size="small" onClick={() => handleEditCourse(group.courseGroupID, course)} style={{ background: '#f1f5f9', color: '#1e40af', border: 'none', borderRadius: 6, fontWeight: 500 }} disabled={course.teacherID != userInfo.userID}>编辑</Button>,
                         <Popconfirm title="确定删除该课程？" onConfirm={() => handleDeleteCourse(group.courseGroupID, course.courseID)}>
-                          <Button size="small" danger style={{ background: '#fef2f2', color: '#be123c', border: 'none', borderRadius: 6, fontWeight: 500 }} disabled={!isOwner}>删除</Button>
+                          <Button size="small" danger style={{ background: '#fef2f2', color: '#be123c', border: 'none', borderRadius: 6, fontWeight: 500 }} disabled={course.teacherID != userInfo.userID}>删除</Button>
                         </Popconfirm>
                       ]}
                     >
@@ -333,7 +333,10 @@ export const TeacherCourseListPage: React.FC = () => {
                         <div style={{ color: '#64748b', fontSize: 13 }}>课程ID: {course.courseID}</div>
                         <div style={{ color: '#64748b', fontSize: 13 }}>预选人数: {course.preselectedStudentsSize}，已选人数: {course.selectedStudentsSize}，候补人数: {course.waitingListSize}</div>
                       </div>
+                      
+                      {course.teacherID == userInfo.userID && <Tag color="purple" style={{ marginRight: 10 }}>我开的课</Tag>}
                     </List.Item>
+                    
                   )}
                 />
               </Collapse.Panel>
