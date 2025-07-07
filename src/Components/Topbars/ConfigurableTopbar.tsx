@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Popover, Button, Spin, ConfigProvider } from 'antd';
 import { QuerySemesterPhaseStatusMessage } from 'Plugins/SemesterPhaseService/APIs/QuerySemesterPhaseStatusMessage';
@@ -84,10 +83,10 @@ export const ConfigurableTopbar: React.FC<ConfigurableTopbarProps> = ({ userToke
 
   const renderPhaseContent = () => {
     if (phaseLoading) return <Spin size="small" />;
-    if (phaseError) return <div style={{ color: 'red' }}>{phaseError}</div>;
-    if (!phaseInfo) return <div>暂无数据</div>;
+    if (phaseError) return <div style={{ color: 'red', padding: 12 }}>{phaseError}</div>;
+    if (!phaseInfo) return <div style={{ padding: 12 }}>暂无数据</div>;
     return (
-      <div style={{ minWidth: 180 }}>
+      <div className="custom-popover-content">
         <div><b>当前阶段：</b> {phaseInfo.currentPhase}</div>
         <div style={{ marginTop: 8 }}><b>权限：</b></div>
         <ul style={{ paddingLeft: 18, margin: 0 }}>
@@ -103,10 +102,10 @@ export const ConfigurableTopbar: React.FC<ConfigurableTopbarProps> = ({ userToke
 
   const renderUserContent = () => {
     if (userLoading) return <Spin size="small" />;
-    if (userError) return <div style={{ color: 'red' }}>{userError}</div>;
-    if (!userInfo) return <div>暂无数据</div>;
+    if (userError) return <div style={{ color: 'red', padding: 12 }}>{userError}</div>;
+    if (!userInfo) return <div style={{ padding: 12 }}>暂无数据</div>;
     return (
-      <div style={{ minWidth: 180 }}>
+      <div className="custom-popover-content">
         <div><b>姓名：</b>{userInfo.userName}</div>
         <div><b>用户名：</b>{userInfo.accountName}</div>
         <div><b>身份：</b>{userInfo.role}</div>
@@ -116,54 +115,121 @@ export const ConfigurableTopbar: React.FC<ConfigurableTopbarProps> = ({ userToke
   };
 
   return (
-    <ConfigProvider
-      theme={{
-        components: {
-          Button: {
-            colorPrimary: theme.buttonBg,
-            colorText: theme.buttonColor,
-            defaultBg: theme.buttonBg,
-            defaultColor: theme.buttonColor,
-            borderRadius: 8,
+    <>
+      <ConfigProvider
+        theme={{
+          components: {
+            Button: {
+              colorPrimary: theme.buttonBg,
+              colorText: theme.buttonColor,
+              defaultBg: theme.buttonBg,
+              defaultColor: theme.buttonColor,
+              borderRadius: 8,
+            },
+            Popover: {
+              colorBgElevated: theme.popoverBg,
+              colorText: theme.popoverColor,
+              colorPrimary: theme.popoverBg,
+              colorTextHeading: theme.popoverColor,
+              colorTextLabel: theme.popoverColor,
+              colorLink: theme.popoverColor,
+              colorLinkHover: theme.popoverColor,
+              colorLinkActive: theme.popoverColor,
+            },
           },
-          Popover: {
-            colorBgElevated: theme.popoverBg,
-            colorText: theme.popoverColor,
-          },
-        },
-      }}
-    >
-      <div style={{
-        width: '100%',
-        height: 56,
-        background: theme.background,
-        color: theme.color,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'flex-end',
-        padding: '0 32px',
-        boxSizing: 'border-box',
-        boxShadow: '0 2px 8px #0001',
-        zIndex: 10,
-      }}>
-        <Popover
-          content={renderPhaseContent}
-          trigger="hover"
-          onOpenChange={handlePhaseVisibleChange}
-          placement="bottomRight"
-        >
-          <Button style={{ marginRight: 16 }} type="default">当前状态</Button>
-        </Popover>
-        <Popover
-          content={renderUserContent}
-          trigger="hover"
-          onOpenChange={handleUserVisibleChange}
-          placement="bottomRight"
-        >
-          <Button type="default">个人信息</Button>
-        </Popover>
-      </div>
-    </ConfigProvider>
+        }}
+      >
+        <div style={{
+          width: '100%',
+          height: 56,
+          background: theme.background,
+          color: theme.color,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-end',
+          padding: '0 32px',
+          boxSizing: 'border-box',
+          boxShadow: '0 2px 8px #0001',
+          zIndex: 10,
+        }}>
+          <Popover
+            content={renderPhaseContent}
+            trigger="hover"
+            onOpenChange={handlePhaseVisibleChange}
+            placement="bottomRight"
+            overlayStyle={{
+              backgroundColor: theme.popoverBg,
+              color: theme.popoverColor,
+              borderRadius: '8px',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+            }}
+          >
+            <Button
+              className="custom-topbar-btn"
+              style={{
+                marginRight: 16,
+                background: theme.buttonBg,
+                color: theme.buttonColor,
+                border: 'none',
+                borderRadius: 8,
+                transition: 'all 0.2s',
+                fontWeight: 'bold',
+              }}
+              type="default"
+            >
+              当前状态
+            </Button>
+          </Popover>
+          <Popover
+            content={renderUserContent}
+            trigger="hover"
+            onOpenChange={handleUserVisibleChange}
+            placement="bottomRight"
+            overlayStyle={{
+              backgroundColor: theme.popoverBg,
+              color: theme.popoverColor,
+              borderRadius: '8px',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+            }}
+          >
+            <Button
+              className="custom-topbar-btn"
+              style={{
+                background: theme.buttonBg,
+                color: theme.buttonColor,
+                border: 'none',
+                borderRadius: 8,
+                transition: 'all 0.2s',
+                fontWeight: 'bold',
+              }}
+              type="default"
+            >
+              个人信息
+            </Button>
+          </Popover>
+        </div>
+      </ConfigProvider>
+      <style>{`
+        .custom-popover-content {
+          background: ${theme.popoverBg} !important;
+          color: ${theme.popoverColor} !important;
+          border-radius: 8px !important;
+          padding: 12px !important;
+          min-width: 180px;
+        }
+        .custom-popover-content b {
+          color: ${theme.popoverColor} !important;
+        }
+        .custom-topbar-btn {
+          background: ${theme.buttonBg} !important;
+          color: ${theme.buttonColor} !important;
+        }
+        .custom-topbar-btn:hover, .custom-topbar-btn:focus {
+          background: ${theme.popoverBg} !important;
+          color: ${theme.popoverColor} !important;
+        }
+      `}</style>
+    </>
   );
 };
 

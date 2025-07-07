@@ -1,12 +1,11 @@
 import { TopbarThemeConfig } from "../ConfigurableTopbar";
 
 export const AdminTopbarThemeConfig: TopbarThemeConfig = {
-  background: 'rgb(254, 241, 247)',
-  color:    'rgb(251, 183, 215)',
-  buttonBg: 'rgb(173, 45, 105)',
+  background: 'rgb(241, 248, 254)',
+  color:    'rgb(183, 216, 251)',
+  buttonBg: 'rgb(62, 45, 173)',
   buttonColor: 'rgb(255, 255, 255)',
-  popoverBg: 'rgb(255, 255, 255)',
-  popoverColor: 'rgb(173, 45, 105)'
+  popoverBg: 'rgb(209, 212, 249)',
+  popoverColor: 'rgb(60, 45, 173)'
 }
 
-// TO BE ADJUSTED
