@@ -48,10 +48,10 @@ const CourseGroupModal: React.FC<CourseGroupModalProps> = ({
       destroyOnClose
     >
       <Form form={form} layout="vertical">
-        <Form.Item name="groupName" label={<span style={{ color: '#1e40af' }}>课程组名称</span>} rules={[{ required: true, message: '请输入课程组名称' }]}> 
+        <Form.Item name="groupName" label={<span style={{ color: '#1e40af' }}>课程组名称</span>} rules={[{ required: false, message: '请输入课程组名称' }]}> 
           <Input />
         </Form.Item>
-        <Form.Item name="credits" label={<span style={{ color: '#1e40af' }}>学分</span>} rules={[{ required: true, message: '请输入学分' }]}> 
+        <Form.Item name="credits" label={<span style={{ color: '#1e40af' }}>学分</span>} rules={[{ required: false, message: '请输入学分' }]}> 
           <Input type="number" />
         </Form.Item>
       </Form>
