@@ -18,6 +18,7 @@ import { CourseInfo } from 'Plugins/CourseManagementService/Objects/CourseInfo';
 import { CourseTime } from 'Plugins/CourseManagementService/Objects/CourseTime';
 import { DayOfWeek, dayOfWeekList } from 'Plugins/CourseManagementService/Objects/DayOfWeek';
 import { TimePeriod, timePeriodList } from 'Plugins/CourseManagementService/Objects/TimePeriod';
+import WithRoleBasedTopbarLayout from '../../Layouts/WithRoleBasedTopbarLayout';
 
 // 获取当前用户Token
 const userRole: UserRole = UserRole.teacher;
@@ -237,6 +238,7 @@ useEffect(() => {
 
   return (
     <WithRoleBasedSidebarLayout role={userRole}>
+      <WithRoleBasedTopbarLayout role={userRole} userToken={userToken}>
       <BackgroundLayout
         gradient="linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)"
         contentMaxWidth="90%"
@@ -244,6 +246,7 @@ useEffect(() => {
       >
         {renderContent()}
       </BackgroundLayout>
+      </WithRoleBasedTopbarLayout>
     </WithRoleBasedSidebarLayout>
   );
 };
