@@ -36,7 +36,7 @@ const WithRoleBasedTopbarLayout: React.FC<WithRoleBasedTopbarLayoutProps> = ({
       >
         <DynamicTopbar userToken={userToken} role={role} />
       </div>
-      <div style={{ marginTop: topbarHeight }}>
+      <div style={{ marginTop: topbarHeight - 16 }}>
         {children}
       </div>
     </>
