@@ -8,13 +8,13 @@ import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import BackgroundLayout from '../Layouts/BackgroundLayout';
 import { QuerySafeUserInfoByTokenMessage } from 'Plugins/UserAccountService/APIs/QuerySafeUserInfoByTokenMessage';
 import { UserRole } from 'Plugins/UserAccountService/Objects/UserRole';
-import { studentCourseListPagePath } from './Student/CourseListPage';
 import { teacherCourseListPagePath } from './Teacher/CourseListPage';
+import { courseSelectionPagePath } from './Student/CourseSelectionPage';
 import { userManagementPagePath } from './Admin/UserManagementPage';
 
 export const loginPagePath = '/login';
 
-const studentHomePagePath = studentCourseListPagePath
+const studentHomePagePath = courseSelectionPagePath;
 const teacherHomePagePath = teacherCourseListPagePath;
 const adminHomePagePath = userManagementPagePath;
 

@@ -1,6 +1,5 @@
 // Components/Sidebars/Configs/StudentConfig.tsx
 import { HomeOutlined, SolutionOutlined, CalendarOutlined, StarOutlined } from '@ant-design/icons';
-import { studentCourseListPagePath } from 'Pages/Student/CourseListPage';
 import { courseSelectionPagePath } from 'Pages/Student/CourseSelectionPage';
 import { courseEvaluationPagePath } from 'Pages/Student/CourseEvaluationPage';
 import { courseTablePagePath } from 'Pages/CourseTablePage';
@@ -33,24 +32,18 @@ export const studentSidebarConfig: SidebarConfig = {
   menuItems: [
     {
       key: '1',
-      icon: <HomeOutlined />,
-      label: '我的课程',
-      path: studentCourseListPagePath
-    },
-    {
-      key: '2',
       icon: <SolutionOutlined />,
       label: '选课中心',
       path: courseSelectionPagePath
     },
     {
-      key: '3',
+      key: '2',
       icon: <CalendarOutlined />,
       label: '课程表',
       path: courseTablePagePath
     },
     {
-      key: '4',
+      key: '3',
       icon: <StarOutlined />,
       label: '课程评价',
       path: courseEvaluationPagePath
