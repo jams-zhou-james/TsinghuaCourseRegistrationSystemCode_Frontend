@@ -20,7 +20,12 @@ export interface UseCourseDataResult {
   waitingList: Array<CourseDisplayData & { rank: number }>;
   loading: boolean;
   error: string | null;
-  fetchCourses: (filter?: { courseName?: string; courseID?: string; teacherID?: string }) => void;
+  fetchCourses: (filter?: { 
+    courseName?: string; 
+    courseID?: string; 
+    teacherID?: string; 
+    allowedTimePeriods?: CourseTime[] 
+  }) => void;
   refreshData: () => void;
   updateCourseCapacity: (courseID: number, changeAmount: number) => void;
 }
@@ -58,7 +63,12 @@ export const useCourseData = (userToken: string, semesterPhase: SemesterPhase | 
     );
   }, []);
 
-  const fetchCourses = useCallback((filter?: { courseName?: string; courseID?: string; teacherID?: string }) => {
+  const fetchCourses = useCallback((filter?: { 
+    courseName?: string; 
+    courseID?: string; 
+    teacherID?: string; 
+    allowedTimePeriods?: CourseTime[] 
+  }) => {
     console.log('fetchCourses 被调用，过滤参数：', filter);
     setLoading(true);
     setError(null);
@@ -67,7 +77,7 @@ export const useCourseData = (userToken: string, semesterPhase: SemesterPhase | 
     const courseGroupID = filter?.courseID ? parseInt(filter.courseID) : null;
     const courseGroupName = filter?.courseName || null;
     const teacherName = filter?.teacherID || null;
-    const allowedTimePeriods: CourseTime[] = []; // 空数组表示不按时间过滤
+    const allowedTimePeriods: CourseTime[] = filter?.allowedTimePeriods || []; // 使用传入的时间过滤条件
 
     console.log('发送查询请求，参数：', {
       courseGroupID,
