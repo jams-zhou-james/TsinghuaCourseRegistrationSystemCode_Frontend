@@ -46,14 +46,15 @@ export const CourseSelectionPage: React.FC = () => {
     loading: dataLoading,
     error: dataError,
     fetchCourses,
-    refreshData
+    refreshData,
+    updateCourseCapacity
   } = useCourseData(userToken, semesterPhase);
 
   const {
     handleSelectCourse,
     handlePreselectCourse,
     handleDropCourse
-  } = useCourseActions(userToken, semesterPhase, refreshData);
+  } = useCourseActions(userToken, semesterPhase, refreshData, updateCourseCapacity);
 
   // 权限检查
   if (!isAuthenticated) {
