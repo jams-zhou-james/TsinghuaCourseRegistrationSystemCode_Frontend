@@ -1,3 +1,4 @@
+export const teacherCourseListPagePath = '/teacher/course-list';
 import React, { useEffect, useState } from 'react';
 import { UserRole } from 'Plugins/UserAccountService/Objects/UserRole';
 import { Button, Collapse, message, Tag, Spin } from 'antd';
@@ -22,8 +23,6 @@ import WithRoleBasedTopbarLayout from '../../Layouts/WithRoleBasedTopbarLayout';
 
 // 获取当前用户Token
 const userRole: UserRole = UserRole.teacher;
-
-export const teacherCourseListPagePath = '/teacher/course-list';
 
 export const TeacherCourseListPage: React.FC = () => {
   const [expanded, setExpanded] = useState<number[]>([]);
