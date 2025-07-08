@@ -239,7 +239,7 @@ useEffect(() => {
   return (
     <WithRoleBasedSidebarLayout role={userRole}>
       <WithRoleBasedTopbarLayout role={userRole} userToken={userToken}>
-      <BackgroundLayout
+      <BackgroundLayout 
         gradient="linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)"
         contentMaxWidth="90%"
         contentStyle={{ maxWidth: 1200 }}

@@ -18,18 +18,28 @@ const WithRoleBasedTopbarLayout: React.FC<WithRoleBasedTopbarLayoutProps> = ({
   role 
 }) => {
 
+  // 顶栏高度（与ConfigurableTopbar一致）
+  const topbarHeight = 56;
   return (
-    <Layout style={{ minHeight: '100vh' }}>
-      <DynamicTopbar
-        userToken={userToken}
-        role={role}
-      />
-      <Layout>
-        <Content style={{ margin: '0px 0px', padding: 0 }}>
-          {children}
-        </Content>
-      </Layout>
-    </Layout>
+    <>
+      {/* Topbar，zIndex低于Sidebar */}
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: topbarHeight,
+          zIndex: 2000, // 低于Sidebar
+          background: 'white',
+        }}
+      >
+        <DynamicTopbar userToken={userToken} role={role} />
+      </div>
+      <div style={{ marginTop: topbarHeight }}>
+        {children}
+      </div>
+    </>
   );
 };
 

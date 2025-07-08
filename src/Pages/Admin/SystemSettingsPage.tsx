@@ -225,7 +225,7 @@ const SystemSettingsPage: React.FC = () => {
           <Switch
             checked={config[item.key] as boolean}
             onChange={v => updateConfig(item.key, v)}
-            disabled={loading || (config.phase === Phase.phase2 && item.key !== 'allowStudentEvaluate')}
+            disabled={loading || (config.phase === Phase.phase2 && item.key === 'allowTeacherEditCourse')}
           />
         </div>
       ))
