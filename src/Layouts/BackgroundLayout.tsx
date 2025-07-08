@@ -23,13 +23,13 @@ const BackgroundLayout: React.FC<BackgroundLayoutProps> = ({
   return (
     <Layout
       style={{
-        minHeight: '100vh',
+        minHeight: '80vh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         background: gradient,
         fontFamily: "'Poppins','Noto Sans SC',sans-serif",
-        padding: 48,
+        padding: 55,
         ...layoutProps.style,
       }}
       {...layoutProps}

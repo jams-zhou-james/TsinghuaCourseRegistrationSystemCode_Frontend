@@ -21,14 +21,14 @@ const WithRoleBasedSidebarLayout: React.FC<WithRoleBasedSidebarLayoutProps> = ({
   const sidebarWidth = collapsed ? 80 : 200;
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <Layout style={{ minHeight: '96vh' }}>
       {/* Fixed Sidebar */}
       <div
         style={{
           position: 'fixed',
           left: 0,
           top: 0,
-          height: '100vh',
+          height: '100vh', // 与Topbar高度同步，防止页面出现垂直滚动条
           zIndex: 3000, // 提高z-index，确保Sidebar在页面最上方
           width: sidebarWidth,
           transition: 'width 0.2s',
@@ -43,7 +43,7 @@ const WithRoleBasedSidebarLayout: React.FC<WithRoleBasedSidebarLayoutProps> = ({
         />
       </div>
       {/* Main Content with left margin */}
-      <Layout style={{ marginLeft: sidebarWidth, transition: 'margin-left 0.2s' }}>
+      <Layout style={{ marginLeft: sidebarWidth - 15, transition: 'margin-left 0.2s' }}>
         <Content style={{ margin: '0px 0px', padding: 0 }}>
           {children}
         </Content>
