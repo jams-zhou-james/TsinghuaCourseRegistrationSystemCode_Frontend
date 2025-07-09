@@ -10,11 +10,11 @@ import { logoutPagePath } from 'Pages/LogoutPage';
 export const studentSidebarConfig: SidebarConfig = {
   theme: {
     gradient: {
-      direction: 'to bottom right',
+      direction: 'to bottom left',
       colors: {
-        start: 'rgb(255, 222, 237)', // 半透明粉色
-        middle: 'rgb(253, 213, 230)', // 半透明浅粉色
-        end: 'rgb(254, 201, 226)' // 半透明粉色
+        start: 'rgb(254, 245, 249)', // 半透明粉色
+        middle: 'rgb(252, 230, 239)', // 半透明浅粉色
+        end: 'rgb(250, 216, 232)' // 半透明粉色
       }
     },
     siderBg: '#ffb6d8',
