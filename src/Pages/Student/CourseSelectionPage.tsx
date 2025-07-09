@@ -10,6 +10,7 @@ import {
 } from 'antd';
 import { TeamOutlined } from '@ant-design/icons';
 import WithRoleBasedSidebarLayout from '../../Layouts/WithRoleBasedSidebarLayout';
+import WithRoleBasedTopbarLayout from '../../Layouts/WithRoleBasedTopbarLayout';
 import { UserRole } from 'Plugins/UserAccountService/Objects/UserRole';
 import { Phase } from 'Plugins/SemesterPhaseService/Objects/Phase';
 
@@ -57,32 +58,43 @@ export const CourseSelectionPage: React.FC = () => {
     handleDropCourse
   } = useCourseActions(userToken, semesterPhase, refreshData, updateCourseCapacity, setCourseCapacity);
 
+  // 组合布局包装器组件 - 同时包含侧边栏和顶栏
+  const CombinedLayoutWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    return (
+      <WithRoleBasedSidebarLayout role={UserRole.student}>
+        <WithRoleBasedTopbarLayout role={UserRole.student} userToken={userToken || ''}>
+          {children}
+        </WithRoleBasedTopbarLayout>
+      </WithRoleBasedSidebarLayout>
+    );
+  };
+
   // 权限检查
   if (!isAuthenticated) {
     return (
-      <WithRoleBasedSidebarLayout role={UserRole.student}>
+      <CombinedLayoutWrapper>
         <div style={{ textAlign: 'center', marginTop: 100 }}>
           <Text>请先登录</Text>
         </div>
-      </WithRoleBasedSidebarLayout>
+      </CombinedLayoutWrapper>
     );
   }
 
   // 页面加载状态
   if (pageLoading) {
     return (
-      <WithRoleBasedSidebarLayout role={UserRole.student}>
+      <CombinedLayoutWrapper>
         <div style={{ textAlign: 'center', marginTop: 100 }}>
           <Spin size="large" tip="正在加载页面..." />
         </div>
-      </WithRoleBasedSidebarLayout>
+      </CombinedLayoutWrapper>
     );
   }
 
   // 页面错误状态
   if (pageError) {
     return (
-      <WithRoleBasedSidebarLayout role={UserRole.student}>
+      <CombinedLayoutWrapper>
         <Alert
           message="页面加载失败"
           description={pageError}
@@ -90,7 +102,7 @@ export const CourseSelectionPage: React.FC = () => {
           showIcon
           style={{ margin: '20px' }}
         />
-      </WithRoleBasedSidebarLayout>
+      </CombinedLayoutWrapper>
     );
   }
 
@@ -99,7 +111,7 @@ export const CourseSelectionPage: React.FC = () => {
   const canPreselectCourse = semesterPhase?.currentPhase === Phase.phase1;
 
   return (
-    <WithRoleBasedSidebarLayout role={UserRole.student}>
+    <CombinedLayoutWrapper>
       <div style={{ 
         padding: '24px',
         minHeight: '100vh',
@@ -192,7 +204,7 @@ export const CourseSelectionPage: React.FC = () => {
           />
         </div>
       </div>
-    </WithRoleBasedSidebarLayout>
+    </CombinedLayoutWrapper>
   );
 };
 
