@@ -34,10 +34,18 @@ const CourseList: React.FC<CourseListProps> = ({
         ]}
       >
         <div>
-          <div style={{ color: '#1e40af', fontWeight: 600 }}>{course.location} <span style={{ color: '#64748b', fontWeight: 400 }}>(容量: {course.courseCapacity})</span></div>
-          <div style={{ color: '#64748b', fontSize: 13 }}>课程ID: {course.courseID}</div>
-          <div style={{ color: '#64748b', fontSize: 13 }}>预选人数: {course.preselectedStudentsSize}，已选人数: {course.selectedStudentsSize}，候补人数: {course.waitingListSize}</div>
-        </div>
+  <div style={{ color: '#1e40af', fontWeight: 600 }}>{course.location} <span style={{ color: '#64748b', fontWeight: 400 }}>(容量: {course.courseCapacity})</span></div>
+  <div style={{ color: '#64748b', fontSize: 13 }}>课程ID: {course.courseID}</div>
+  <div style={{ color: '#64748b', fontSize: 13 }}>
+    上课时间: {course.time.map((t, index) => (
+      <span key={index}>
+        {t.dayOfWeek} {t.timePeriod}
+        {index < course.time.length - 1 ? ', ' : ''}
+      </span>
+    ))}
+  </div>
+  <div style={{ color: '#64748b', fontSize: 13 }}>预选人数: {course.preselectedStudentsSize}，已选人数: {course.selectedStudentsSize}，候补人数: {course.waitingListSize}</div>
+</div>
         {course.teacherID === userID && <Tag color="purple" style={{ marginRight: 10 }}>我开的课</Tag>}
       </List.Item>
     )}
