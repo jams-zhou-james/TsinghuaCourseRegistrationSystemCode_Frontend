@@ -132,8 +132,17 @@ export const CourseSelectionPage: React.FC = () => {
                   当前阶段: {semesterPhase.currentPhase === Phase.phase1 ? '预选阶段' : '正选阶段'}
                 </Tag>
                 <Text type="secondary" style={{ marginLeft: 16 }}>
-                  {semesterPhase.permissions.allowStudentSelect ? '可以选课' : '不可选课'} | 
-                  {semesterPhase.permissions.allowStudentDrop ? '可以退课' : '不可退课'}
+                  {semesterPhase.currentPhase === Phase.phase1 ? (
+                    <>
+                      {semesterPhase.permissions.allowStudentSelect ? '可以预选课程' : '不可以预选课程'} | 
+                      {semesterPhase.permissions.allowStudentDrop ? '可以删除预选课程' : '不可以删除预选'}
+                    </>
+                  ) : (
+                    <>
+                      {semesterPhase.permissions.allowStudentSelect ? '可以选课' : '不可选课'} | 
+                      {semesterPhase.permissions.allowStudentDrop ? '可以退课' : '不可退课'}
+                    </>
+                  )}
                 </Text>
               </div>
             )}
