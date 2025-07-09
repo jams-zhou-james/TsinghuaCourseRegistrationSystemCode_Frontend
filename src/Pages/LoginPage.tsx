@@ -109,7 +109,7 @@ const handleLogin = async (values: any) => {
 };
 
   return (
-    <BackgroundLayout>
+    <BackgroundLayout contentMaxWidth={420}>
       <div
         style={{
           width: 96,
