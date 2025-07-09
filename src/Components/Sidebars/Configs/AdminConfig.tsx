@@ -5,6 +5,7 @@ import React from 'react';
 import { systemSettingsPagePath } from 'Pages/Admin/SystemSettingsPage';
 import { userManagementPagePath } from 'Pages/Admin/UserManagementPage';
 import { logoutPagePath } from 'Pages/LogoutPage';
+import { systemLogsPagePath } from 'Pages/Admin/SystemLogsPage';
 
 export const adminSidebarConfig: SidebarConfig = {
   theme: {
@@ -45,7 +46,7 @@ export const adminSidebarConfig: SidebarConfig = {
       key: '3',
       icon: <SolutionOutlined />,
       label: '审计日志',
-      path: '/admin/audit-logs'
+      path: systemLogsPagePath
     },
     {
       key: '4',
