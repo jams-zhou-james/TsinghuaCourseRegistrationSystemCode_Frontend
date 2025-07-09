@@ -15,6 +15,7 @@ import { RollBackToPhase1Message } from 'Plugins/SemesterPhaseService/APIs/RollB
 import { Phase } from 'Plugins/SemesterPhaseService/Objects/Phase';
 import { Permissions } from 'Plugins/SemesterPhaseService/Objects/Permissions'
 import { SemesterPhase } from 'Plugins/SemesterPhaseService/Objects/SemesterPhase';
+import WithRoleBasedTopbarLayout from '../../Layouts/WithRoleBasedTopbarLayout';
 
 interface SystemConfig {
   phase: Phase;
@@ -210,6 +211,8 @@ const SystemSettingsPage: React.FC = () => {
 
   return (
     <DefaultLayout role={UserRole.superAdmin}>
+      
+      <WithRoleBasedTopbarLayout userToken={userToken} role={UserRole.superAdmin}>
       <BackgroundLayout>
         <Card
   title="系统设置"
@@ -316,6 +319,7 @@ const SystemSettingsPage: React.FC = () => {
   </div>
 </Card>
       </BackgroundLayout>
+      </WithRoleBasedTopbarLayout>
     </DefaultLayout>
   );
 };

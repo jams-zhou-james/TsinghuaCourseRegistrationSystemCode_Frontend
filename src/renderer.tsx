@@ -9,6 +9,7 @@ import TeacherCourseListPage, { teacherCourseListPagePath } from 'Pages/Teacher/
 import SystemSettingsPage, { systemSettingsPagePath } from 'Pages/Admin/SystemSettingsPage';
 import CourseTablePage, { courseTablePagePath } from 'Pages/CourseTablePage';
 import LogoutPage, { logoutPagePath } from 'Pages/LogoutPage';
+import SystemLogsPage, { systemLogsPagePath } from 'Pages/Admin/SystemLogsPage';
 
 const Layout = () => {
     return (
@@ -23,6 +24,7 @@ const Layout = () => {
                 <Route path={userManagementPagePath} exact component={UserManagementPage} />
                 <Route path={systemSettingsPagePath} exact component={SystemSettingsPage} />
                 <Route path={courseTablePagePath} exact component={CourseTablePage} />
+                <Route path={systemLogsPagePath} exact component={SystemLogsPage} />
                 {/* Uncomment the line below when BookPage is implemented */}"
                 {/* <Route path={bookPagePath} exact component={BookPage} /> */}
                 <Route path={logoutPagePath} exact component={LogoutPage} />
