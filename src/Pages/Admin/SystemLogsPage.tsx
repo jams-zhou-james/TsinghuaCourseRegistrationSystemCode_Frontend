@@ -10,6 +10,7 @@ import { QuerySystemLogsMessage } from 'Plugins/SystemLogService/APIs/QuerySyste
 import { SystemLogEntry } from 'Plugins/SystemLogService/Objects/SystemLogEntry';
 import dayjs from 'dayjs';
 import WithRoleBasedTopbarLayout from '../../Layouts/WithRoleBasedTopbarLayout';
+import TitleLayout from '../../Layouts/TitleLayout';
 
 const { RangePicker } = DatePicker;
 
@@ -101,8 +102,7 @@ const SystemLogsPage: React.FC = () => {
         contentMaxWidth="90%"
         contentStyle={{ maxWidth: 1200 }}
       >
-        <div style={{ width: '100%' }}>
-          <h2 style={{ fontSize: 24, color: '#1e40af', marginBottom: 16 }}>系统日志查询</h2>
+        <TitleLayout title="系统日志">
           <Card
             style={{ 
               margin: '0 auto', 
@@ -150,7 +150,7 @@ const SystemLogsPage: React.FC = () => {
               </Spin>
             </Space>
           </Card>
-        </div>
+        </TitleLayout>
       </BackgroundLayout>
       </WithRoleBasedTopbarLayout>
     </DefaultLayout>
