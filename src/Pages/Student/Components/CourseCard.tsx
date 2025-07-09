@@ -205,7 +205,10 @@ export const CourseCard: React.FC<CourseCardProps> = ({
         borderRadius: 12,
         border: '1px solid rgba(255, 182, 216, 0.3)',
         backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        boxShadow: '0 4px 12px rgba(255, 105, 180, 0.1)'
+        boxShadow: '0 4px 12px rgba(255, 105, 180, 0.1)',
+        width: '100%',
+        minWidth: '200px',
+        maxWidth: '200px'
       }}
       bodyStyle={{ padding: '20px' }}
     >
