@@ -16,6 +16,7 @@ import { Phase } from 'Plugins/SemesterPhaseService/Objects/Phase';
 import { Permissions } from 'Plugins/SemesterPhaseService/Objects/Permissions'
 import { SemesterPhase } from 'Plugins/SemesterPhaseService/Objects/SemesterPhase';
 import WithRoleBasedTopbarLayout from '../../Layouts/WithRoleBasedTopbarLayout';
+import TitleLayout from '../../Layouts/TitleLayout';
 
 interface SystemConfig {
   phase: Phase;
@@ -214,18 +215,7 @@ const SystemSettingsPage: React.FC = () => {
       
       <WithRoleBasedTopbarLayout userToken={userToken} role={UserRole.superAdmin}>
       <BackgroundLayout>
-        <Card
-  title="系统设置"
-  loading={loading}
-  style={{
-    maxWidth: 800,
-    width: '100%',
-    margin: '0 auto',
-    borderRadius: 8,
-    minHeight: 500,
-    boxShadow: '0 2px 12px 0 rgba(0, 0, 0, 0.1)',
-  }}
->
+        <TitleLayout title="系统设置">
   {/* 阶段显示 - 固定高度 */}
   <div style={{ minHeight: 40, marginBottom: 16 }}>
     <Typography.Text strong style={{ display: 'block' }}>
@@ -319,7 +309,7 @@ const SystemSettingsPage: React.FC = () => {
       </div>
     )}
   </div>
-</Card>
+  </TitleLayout>
       </BackgroundLayout>
       </WithRoleBasedTopbarLayout>
     </DefaultLayout>

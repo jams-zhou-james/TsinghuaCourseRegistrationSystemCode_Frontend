@@ -13,7 +13,8 @@ import WithRoleBasedSidebarLayout from '../../Layouts/WithRoleBasedSidebarLayout
 import WithRoleBasedTopbarLayout from '../../Layouts/WithRoleBasedTopbarLayout';
 import { UserRole } from 'Plugins/UserAccountService/Objects/UserRole';
 import { Phase } from 'Plugins/SemesterPhaseService/Objects/Phase';
-
+import TitleLayout from '../../Layouts/TitleLayout'
+import BackgroundLayout from '../../Layouts/BackgroundLayout';
 // 组件和hooks导入
 import { 
   CourseSearchForm, 
@@ -63,7 +64,12 @@ export const CourseSelectionPage: React.FC = () => {
     return (
       <WithRoleBasedSidebarLayout role={UserRole.student}>
         <WithRoleBasedTopbarLayout role={UserRole.student} userToken={userToken || ''}>
-          {children}
+          <BackgroundLayout 
+  gradient = 'linear-gradient(135deg,rgb(255, 235, 255) 0%,rgb(255, 231, 249) 100%)'>
+          <TitleLayout title='选课中心'>  
+            {children}
+          </TitleLayout>
+          </BackgroundLayout>
         </WithRoleBasedTopbarLayout>
       </WithRoleBasedSidebarLayout>
     );
@@ -115,15 +121,17 @@ export const CourseSelectionPage: React.FC = () => {
       <div style={{ 
         padding: '24px',
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, rgb(255, 222, 237) 0%, rgb(254, 201, 226) 100%)'
+        width: '100%',
+        background: 'transparent'
+        // background: 'linear-gradient(135deg, rgb(255, 222, 237) 0%, rgb(254, 201, 226) 100%)'
       }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          {/* 页面标题和阶段信息 */}
-          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-            <Title level={2} style={{ color: '#d81b60', marginBottom: '8px' }}>
+        <div style={{ width: '100%', margin: '0 auto' }}>
+          {/* 页面标题和阶段信息
+          <div style={{ textAlign: 'center', marginBottom: '32px' }}> */}
+            {/* <Title level={2} style={{ color: '#d81b60', marginBottom: '8px' }}>
               课程选择中心 - 欢迎 {userInfo?.userName || '用户'}
-            </Title>
-            {semesterPhase && (
+            </Title> */}
+            {/* {semesterPhase && (
               <div>
                 <Tag 
                   color={semesterPhase.currentPhase === Phase.phase1 ? 'blue' : 'green'} 
@@ -145,8 +153,8 @@ export const CourseSelectionPage: React.FC = () => {
                   )}
                 </Text>
               </div>
-            )}
-          </div>
+            )} */}
+          {/* </div> */}
 
           {/* 数据错误提示 */}
           {dataError && (
