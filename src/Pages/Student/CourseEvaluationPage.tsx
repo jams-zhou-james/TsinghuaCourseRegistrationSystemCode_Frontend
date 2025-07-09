@@ -4,10 +4,10 @@ export const courseEvaluationPagePath = '/student/course-evaluation';
 
 import React, { useEffect, useState } from 'react';
 import { 
-  Card,   Rate,   Input,   Button,   List,   message,   Typography,   Space,   Tag,   Avatar,   Divider,  Alert,  Empty,  Spin,  Modal,  Popconfirm
+  Card,   Rate,   Input,   Button,   List,   message,   Typography,   Space,   Tag,   Avatar,   Divider,  Alert,  Empty,  Spin,  Modal,  Popconfirm,  Tabs,  Form,  Select,  Row,  Col
 } from 'antd';
 import { 
-  StarOutlined,   EditOutlined,   DeleteOutlined,   SaveOutlined,  CloseOutlined,  BookOutlined
+  StarOutlined,   EditOutlined,   DeleteOutlined,   SaveOutlined,  CloseOutlined,  BookOutlined,  SearchOutlined,  EyeOutlined
 } from '@ant-design/icons';
 import DefaultLayout from '../../Layouts/WithRoleBasedSidebarLayout';
 import { UserRole } from 'Plugins/UserAccountService/Objects/UserRole';
@@ -54,6 +54,21 @@ interface EditingEvaluation {
   courseID: number;
   rating: number;
   feedback: string;
+}
+
+// 其他同学的评价信息
+interface PublicEvaluationInfo {
+  evaluatorName: string;
+  rating: number;
+  feedback: string;
+  evaluatedAt?: Date;
+}
+
+// 查询课程的搜索条件
+interface CourseSearchCriteria {
+  courseName?: string;
+  teacherName?: string;
+  courseGroupID?: number;
 }
 
 // API调用函数
@@ -138,6 +153,59 @@ const fetchEligibleCourses = async (): Promise<CourseDisplayInfo[]> => {
     return displayCourses;
   } catch (error) {
     console.error('获取课程信息失败:', error);
+    throw error;
+  }
+};
+
+// 获取所有课程信息（用于查询评价）
+const fetchAllCourses = async (): Promise<CourseDisplayInfo[]> => {
+  try {
+    // 这里简化处理，实际应该有专门的API获取所有课程
+    // 暂时返回学生的课程列表，实际应该调用获取所有课程的API
+    return await fetchEligibleCourses();
+  } catch (error) {
+    console.error('获取所有课程信息失败:', error);
+    throw error;
+  }
+};
+
+// 获取特定课程的所有评价
+const fetchCourseEvaluations = async (courseID: number): Promise<PublicEvaluationInfo[]> => {
+  try {
+    const userToken = getUserToken();
+    const message = new QueryCourseEvaluationsMessage(userToken, courseID);
+    const response = await sendMessage(message, 10000);
+    
+    if (!response.ok) {
+      throw new Error('获取课程评价失败');
+    }
+    
+    const evaluations: CourseEvaluation[] = await response.json();
+    
+    // 获取评价者信息
+    const evaluatorIDs = [...new Set(evaluations.map(e => e.evaluatorID))];
+    const evaluatorsMessage = new QuerySafeUserInfoByUserIDListMessage(evaluatorIDs);
+    const evaluatorsResponse = await sendMessage(evaluatorsMessage, 10000);
+    
+    const evaluators = new Map<number, SafeUserInfo>();
+    if (evaluatorsResponse.ok) {
+      const evaluatorInfos: SafeUserInfo[] = await evaluatorsResponse.json();
+      evaluatorInfos.forEach(evaluator => {
+        evaluators.set(evaluator.userID, evaluator);
+      });
+    }
+    
+    // 组装公开评价信息
+    const publicEvaluations: PublicEvaluationInfo[] = evaluations.map(evaluation => ({
+      evaluatorName: evaluators.get(evaluation.evaluatorID)?.userName || '匿名用户',
+      rating: parseInt(evaluation.rating),
+      feedback: evaluation.feedback || '',
+      evaluatedAt: new Date() // 实际应该从API获取评价时间
+    }));
+    
+    return publicEvaluations;
+  } catch (error) {
+    console.error('获取课程评价失败:', error);
     throw error;
   }
 };
@@ -257,6 +325,14 @@ export const CourseEvaluationPage: React.FC = () => {
   const [editingData, setEditingData] = useState<EditingEvaluation | null>(null);
   const [submitting, setSubmitting] = useState<boolean>(false);
 
+  // 查询评价相关状态
+  const [allCourses, setAllCourses] = useState<CourseDisplayInfo[]>([]);
+  const [filteredCourses, setFilteredCourses] = useState<CourseDisplayInfo[]>([]);
+  const [selectedCourseForView, setSelectedCourseForView] = useState<number | null>(null);
+  const [courseEvaluations, setCourseEvaluations] = useState<PublicEvaluationInfo[]>([]);
+  const [searchLoading, setSearchLoading] = useState<boolean>(false);
+  const [evaluationsLoading, setEvaluationsLoading] = useState<boolean>(false);
+
   // 检查权限和阶段
   useEffect(() => {
     const checkPermission = async () => {
@@ -284,12 +360,15 @@ export const CourseEvaluationPage: React.FC = () => {
     const loadData = async () => {
       setLoading(true);
       try {
-        const [courses, evaluations] = await Promise.all([
+        const [courses, evaluations, allCoursesData] = await Promise.all([
           fetchEligibleCourses(),
-          fetchExistingEvaluations()
+          fetchExistingEvaluations(),
+          fetchAllCourses()
         ]);
         setEligibleCourses(courses);
         setExistingEvaluations(evaluations);
+        setAllCourses(allCoursesData);
+        setFilteredCourses(allCoursesData);
       } catch (error) {
         message.error('加载数据失败');
       } finally {
@@ -299,6 +378,46 @@ export const CourseEvaluationPage: React.FC = () => {
 
     loadData();
   }, [canEvaluate]);
+
+  // 搜索课程
+  const handleCourseSearch = (searchCriteria: CourseSearchCriteria) => {
+    setSearchLoading(true);
+    
+    setTimeout(() => {
+      let filtered = allCourses;
+      
+      if (searchCriteria.courseName) {
+        filtered = filtered.filter(course => 
+          course.courseName.toLowerCase().includes(searchCriteria.courseName!.toLowerCase())
+        );
+      }
+      
+      if (searchCriteria.teacherName) {
+        filtered = filtered.filter(course => 
+          course.teacherName.toLowerCase().includes(searchCriteria.teacherName!.toLowerCase())
+        );
+      }
+      
+      setFilteredCourses(filtered);
+      setSearchLoading(false);
+    }, 500);
+  };
+
+  // 查看课程评价
+  const handleViewCourseEvaluations = async (courseID: number) => {
+    setSelectedCourseForView(courseID);
+    setEvaluationsLoading(true);
+    
+    try {
+      const evaluations = await fetchCourseEvaluations(courseID);
+      setCourseEvaluations(evaluations);
+    } catch (error) {
+      message.error('获取课程评价失败');
+      setCourseEvaluations([]);
+    } finally {
+      setEvaluationsLoading(false);
+    }
+  };
 
   // 获取课程的现有评价
   const getExistingEvaluation = (courseID: number): CourseEvaluationData | undefined => {
@@ -634,6 +753,241 @@ export const CourseEvaluationPage: React.FC = () => {
     );
   }
 
+  // 渲染课程搜索组件
+  const renderCourseSearchPanel = () => (
+    <Card
+      title={
+        <Space>
+          <SearchOutlined style={{ color: '#ff69b4' }} />
+          <span style={{ color: '#d81b60' }}>课程查询</span>
+        </Space>
+      }
+      style={{
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        border: '1px solid rgba(255, 182, 216, 0.3)',
+        borderRadius: '12px',
+        marginBottom: '16px'
+      }}
+      bodyStyle={{ padding: '16px' }}
+    >
+      <Form
+        layout="vertical"
+        onFinish={(values) => handleCourseSearch(values)}
+        style={{ marginBottom: '16px' }}
+      >
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item label="课程名称" name="courseName">
+              <Input placeholder="请输入课程名称" />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item label="教师姓名" name="teacherName">
+              <Input placeholder="请输入教师姓名" />
+            </Form.Item>
+          </Col>
+        </Row>
+        <Form.Item>
+          <Button 
+            type="primary" 
+            htmlType="submit"
+            style={{
+              backgroundColor: '#ff69b4',
+              borderColor: '#ff69b4'
+            }}
+            loading={searchLoading}
+          >
+            搜索课程
+          </Button>
+        </Form.Item>
+      </Form>
+
+      <Divider orientation="left">
+        <Text strong style={{ color: '#d81b60' }}>课程列表</Text>
+      </Divider>
+
+      {searchLoading ? (
+        <div style={{ textAlign: 'center', padding: '20px' }}>
+          <Spin />
+        </div>
+      ) : (
+        <List
+          dataSource={filteredCourses}
+          renderItem={(course) => (
+            <List.Item
+              actions={[
+                <Button
+                  type="link"
+                  icon={<EyeOutlined />}
+                  onClick={() => handleViewCourseEvaluations(course.courseID)}
+                  style={{ color: '#ff69b4' }}
+                >
+                  查看评价
+                </Button>
+              ]}
+            >
+              <List.Item.Meta
+                avatar={
+                  <Avatar 
+                    icon={<BookOutlined />} 
+                    style={{ backgroundColor: '#ff85c0' }}
+                  />
+                }
+                title={
+                  <Text strong style={{ color: '#d81b60' }}>
+                    {course.courseName}
+                  </Text>
+                }
+                description={
+                  <Text type="secondary">
+                    {course.teacherName} · {course.semester}
+                  </Text>
+                }
+              />
+            </List.Item>
+          )}
+          locale={{ emptyText: '暂无课程数据' }}
+          style={{ maxHeight: '400px', overflow: 'auto' }}
+        />
+      )}
+    </Card>
+  );
+
+  // 渲染课程评价展示组件
+  const renderCourseEvaluationsPanel = () => {
+    const selectedCourse = allCourses.find(course => course.courseID === selectedCourseForView);
+    
+    return (
+      <Card
+        title={
+          selectedCourse ? (
+            <Space>
+              <BookOutlined style={{ color: '#ff69b4' }} />
+              <span style={{ color: '#d81b60' }}>
+                {selectedCourse.courseName} - 课程评价
+              </span>
+            </Space>
+          ) : (
+            <Space>
+              <EyeOutlined style={{ color: '#ff69b4' }} />
+              <span style={{ color: '#d81b60' }}>查看课程评价</span>
+            </Space>
+          )
+        }
+        style={{
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          border: '1px solid rgba(255, 182, 216, 0.3)',
+          borderRadius: '12px'
+        }}
+        bodyStyle={{ padding: '16px' }}
+      >
+        {!selectedCourseForView ? (
+          <div style={{ textAlign: 'center', padding: '40px' }}>
+            <Empty
+              description="请从左侧选择一门课程查看评价"
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+            />
+          </div>
+        ) : evaluationsLoading ? (
+          <div style={{ textAlign: 'center', padding: '40px' }}>
+            <Spin size="large" />
+            <div style={{ marginTop: 16 }}>
+              <Text>正在加载评价数据...</Text>
+            </div>
+          </div>
+        ) : courseEvaluations.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px' }}>
+            <Empty
+              description="这门课程还没有任何评价"
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+            />
+          </div>
+        ) : (
+          <div>
+            {selectedCourse && (
+              <div style={{ 
+                marginBottom: 16,
+                padding: '12px',
+                backgroundColor: 'rgba(255, 182, 216, 0.1)',
+                borderRadius: '8px'
+              }}>
+                <Text strong style={{ color: '#d81b60' }}>
+                  {selectedCourse.courseName}
+                </Text>
+                <br />
+                <Text type="secondary">
+                  {selectedCourse.teacherName} · {selectedCourse.semester}
+                </Text>
+                <br />
+                <Text type="secondary" style={{ fontSize: '12px' }}>
+                  共 {courseEvaluations.length} 条评价
+                </Text>
+              </div>
+            )}
+
+            <List
+              dataSource={courseEvaluations}
+              renderItem={(evaluation, index) => (
+                <List.Item
+                  style={{
+                    padding: '16px',
+                    marginBottom: '12px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(255, 182, 216, 0.2)'
+                  }}
+                >
+                  <List.Item.Meta
+                    avatar={
+                      <Avatar style={{ backgroundColor: '#ff85c0' }}>
+                        {evaluation.evaluatorName.charAt(0)}
+                      </Avatar>
+                    }
+                    title={
+                      <Space>
+                        <Text strong>{evaluation.evaluatorName}</Text>
+                        <Rate 
+                          disabled 
+                          value={evaluation.rating} 
+                          style={{ fontSize: '16px', color: '#ffd700' }}
+                        />
+                        <Tag color="pink">{evaluation.rating}分</Tag>
+                      </Space>
+                    }
+                    description={
+                      <div style={{ marginTop: '8px' }}>
+                        {evaluation.feedback ? (
+                          <Paragraph style={{ 
+                            margin: 0,
+                            padding: '8px',
+                            backgroundColor: 'rgba(255, 182, 216, 0.05)',
+                            borderRadius: '4px'
+                          }}>
+                            {evaluation.feedback}
+                          </Paragraph>
+                        ) : (
+                          <Text type="secondary">该同学没有留下文字评价</Text>
+                        )}
+                        {evaluation.evaluatedAt && (
+                          <div style={{ marginTop: '8px' }}>
+                            <Text type="secondary" style={{ fontSize: '12px' }}>
+                              评价时间：{evaluation.evaluatedAt.toLocaleString()}
+                            </Text>
+                          </div>
+                        )}
+                      </div>
+                    }
+                  />
+                </List.Item>
+              )}
+              style={{ maxHeight: '500px', overflow: 'auto' }}
+            />
+          </div>
+        )}
+      </Card>
+    );
+  };
+
   return (
     <DefaultLayout role={userRole}>
       <div style={{ 
@@ -641,9 +995,9 @@ export const CourseEvaluationPage: React.FC = () => {
         minHeight: '100vh',
         background: 'linear-gradient(135deg, rgb(255, 222, 237) 0%, rgb(254, 201, 226) 100%)'
       }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+        <div style={{ maxWidth: 1400, margin: '0 auto' }}>
           <Title level={2} style={{ color: '#d81b60', textAlign: 'center', marginBottom: '24px' }}>
-            课程评价
+            课程评价中心
           </Title>
           
           <Alert
@@ -665,39 +1019,78 @@ export const CourseEvaluationPage: React.FC = () => {
                 <Text>正在加载课程数据...</Text>
               </div>
             </div>
-          ) : eligibleCourses.length === 0 ? (
-            <div style={{ 
-              textAlign: 'center', 
-              padding: '50px',
-              backgroundColor: 'rgba(255, 255, 255, 0.9)',
-              borderRadius: '12px'
-            }}>
-              <Empty
-                description="您还没有可以评价的课程"
-                image={Empty.PRESENTED_IMAGE_SIMPLE}
-              />
-            </div>
           ) : (
-            <div>
-              <div style={{ 
-                marginBottom: 16,
-                padding: '16px',
-                backgroundColor: 'rgba(255, 255, 255, 0.7)',
-                borderRadius: '8px'
-              }}>
-                <Text type="secondary">
-                  您可以评价以下 {eligibleCourses.length} 门课程（包括已退课的课程）
-                </Text>
-              </div>
-              
-              <div style={{ 
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-                gap: '16px'
-              }}>
-                {eligibleCourses.map(renderEvaluationCard)}
-              </div>
-            </div>
+            <Tabs
+              defaultActiveKey="view"
+              type="card"
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                borderRadius: '12px',
+                padding: '8px'
+              }}
+              items={[
+                {
+                  key: 'view',
+                  label: (
+                    <span style={{ color: '#d81b60', fontWeight: 'bold' }}>
+                      <EyeOutlined /> 查看课程评价
+                    </span>
+                  ),
+                  children: (
+                    <Row gutter={16}>
+                      <Col span={10}>
+                        {renderCourseSearchPanel()}
+                      </Col>
+                      <Col span={14}>
+                        {renderCourseEvaluationsPanel()}
+                      </Col>
+                    </Row>
+                  )
+                },
+                {
+                  key: 'personal',
+                  label: (
+                    <span style={{ color: '#d81b60', fontWeight: 'bold' }}>
+                      <StarOutlined /> 我的课程评价
+                    </span>
+                  ),
+                  children: eligibleCourses.length === 0 ? (
+                    <div style={{ 
+                      textAlign: 'center', 
+                      padding: '50px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                      borderRadius: '12px'
+                    }}>
+                      <Empty
+                        description="您还没有可以评价的课程"
+                        image={Empty.PRESENTED_IMAGE_SIMPLE}
+                      />
+                    </div>
+                  ) : (
+                    <div>
+                      <div style={{ 
+                        marginBottom: 16,
+                        padding: '16px',
+                        backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                        borderRadius: '8px'
+                      }}>
+                        <Text type="secondary">
+                          您可以评价以下 {eligibleCourses.length} 门课程（包括已退课的课程）
+                        </Text>
+                      </div>
+                      
+                      <div style={{ 
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+                        gap: '16px'
+                      }}>
+                        {eligibleCourses.map(renderEvaluationCard)}
+                      </div>
+                    </div>
+                  )
+                }
+              ]}
+            />
           )}
         </div>
       </div>
