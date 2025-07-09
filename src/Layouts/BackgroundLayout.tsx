@@ -12,9 +12,9 @@ interface BackgroundLayoutProps extends LayoutProps {
 }
 
 const BackgroundLayout: React.FC<BackgroundLayoutProps> = ({
-  gradient = 'linear-gradient(135deg, #ede9fe 0%, #c7d2fe 100%)',
+  gradient = 'linear-gradient(135deg, #ede9fe 0%,rgb(224, 229, 249) 100%)',
   blurCircles = true,
-  contentMaxWidth = 420,
+  contentMaxWidth = "",
   contentPadding = 24,
   contentStyle = {},
   children,
