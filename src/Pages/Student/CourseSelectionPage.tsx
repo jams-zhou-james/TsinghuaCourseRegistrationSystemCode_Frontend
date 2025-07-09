@@ -182,6 +182,7 @@ export const CourseSelectionPage: React.FC = () => {
                         courses={courses}
                         selectedCourses={selectedCourses}
                         preselectedCourses={preselectedCourses}
+                        waitingList={waitingList}
                         semesterPhase={semesterPhase}
                         onSelectCourse={handleSelectCourse}
                         onPreselectCourse={handlePreselectCourse}
@@ -196,7 +197,9 @@ export const CourseSelectionPage: React.FC = () => {
                 label: (
                   <Space>
                     <span>我的课程</span>
-                    <Tag color="green">{selectedCourses.length + preselectedCourses.length}</Tag>
+                    <Tag color="green">
+                      {selectedCourses.length + preselectedCourses.length + (waitingList?.length || 0)}
+                    </Tag>
                   </Space>
                 ),
                 children: (

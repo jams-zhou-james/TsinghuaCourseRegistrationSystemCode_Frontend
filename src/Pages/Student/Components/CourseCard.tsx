@@ -36,7 +36,7 @@ interface CourseCardProps {
   canPreselectCourse: boolean;
   selectedCourses: CourseDisplayData[];
   preselectedCourses: CourseDisplayData[];
-  waitingListCourses?: any[];
+  waitingListCourses?: Array<CourseDisplayData & { rank: number }>;
   semesterPhase?: SemesterPhase | null;
   onSelectCourse: (courseData: CourseDisplayData) => void;
   onPreselectCourse: (courseData: CourseDisplayData) => void;
@@ -67,24 +67,45 @@ export const CourseCard: React.FC<CourseCardProps> = ({
                           preselectedCourse.courseGroupID === courseData.courseGroupID
   );
 
-  // 检查是否在等待列表
-  const isInWaitingList = waitingListCourses ? waitingListCourses.some(
-    (waitingCourse) => waitingCourse.courseID === courseData.courseID && 
+  // 检查是否在等待列表以及获取排名信息
+  let isInWaitingList = false;
+  let waitingRank: number | undefined = undefined;
+  
+  if (waitingListCourses && waitingListCourses.length > 0) {
+    const waitingCourse = waitingListCourses.find(
+      (waitingCourse) => waitingCourse.courseID === courseData.courseID && 
                       waitingCourse.courseGroupID === courseData.courseGroupID
-  ) : false;
+    );
+    
+    if (waitingCourse) {
+      isInWaitingList = true;
+      waitingRank = waitingCourse.rank;
+    }
+  }
 
   // 课程容量显示
-  const capacityText = `${courseData.currentStudents}/${courseData.capacity}`;
+  const capacityText = isInWaitingList && waitingRank !== undefined 
+    ? `候补第${waitingRank}位` 
+    : `${courseData.currentStudents}/${courseData.capacity}`;
+    
   const isFull = courseData.currentStudents >= courseData.capacity;
 
   // 移除前端时间冲突检查逻辑 - 全部交由后端API处理并反馈结果
 
   const handleAction = () => {
-    if (isSelected || isPreselected) {
+    if (isSelected || isPreselected || isInWaitingList) {
       // 根据当前阶段和课程状态确定操作文字
       const isPreselectionPhase = semesterPhase?.currentPhase === Phase.phase1;
-      const actionText = isPreselected ? '删除预选' : '退课';
-      const confirmTitle = isPreselected ? '确认删除预选' : '确认退课';
+      let actionText = '退课';
+      let confirmTitle = '确认退课';
+      
+      if (isPreselected) {
+        actionText = '删除预选';
+        confirmTitle = '确认删除预选';
+      } else if (isInWaitingList) {
+        actionText = '退出候补';
+        confirmTitle = '确认退出候补';
+      }
       
       Modal.confirm({
         title: confirmTitle,
@@ -119,9 +140,15 @@ export const CourseCard: React.FC<CourseCardProps> = ({
   };
 
   const getActionButton = () => {
-    if (isSelected || isPreselected) {
+    if (isSelected || isPreselected || isInWaitingList) {
       // 根据课程状态确定按钮文字
-      const buttonText = isPreselected ? '删除预选' : '退课';
+      let buttonText = '退课';
+      
+      if (isPreselected) {
+        buttonText = '删除预选';
+      } else if (isInWaitingList) {
+        buttonText = '退出候补';
+      }
       
       return (
         <Button 

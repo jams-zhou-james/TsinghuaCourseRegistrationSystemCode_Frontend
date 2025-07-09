@@ -24,6 +24,7 @@ interface CourseListProps {
   courses: CourseDisplayData[];
   selectedCourses: CourseDisplayData[];
   preselectedCourses: CourseDisplayData[];
+  waitingList?: Array<CourseDisplayData & { rank: number }>;
   semesterPhase?: SemesterPhase | null;
   onSelectCourse: (courseData: CourseDisplayData) => void;
   onPreselectCourse: (courseData: CourseDisplayData) => void;
@@ -34,6 +35,7 @@ export const CourseList: React.FC<CourseListProps> = ({
   courses,
   selectedCourses,
   preselectedCourses,
+  waitingList,
   semesterPhase,
   onSelectCourse,
   onPreselectCourse,
@@ -65,6 +67,7 @@ export const CourseList: React.FC<CourseListProps> = ({
             canPreselectCourse={canPreselectCourse}
             selectedCourses={selectedCourses}
             preselectedCourses={preselectedCourses}
+            waitingListCourses={waitingList}
             semesterPhase={semesterPhase}
             onSelectCourse={onSelectCourse}
             onPreselectCourse={onPreselectCourse}
