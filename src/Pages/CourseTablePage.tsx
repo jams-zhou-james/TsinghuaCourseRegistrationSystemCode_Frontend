@@ -69,8 +69,9 @@ const convertCourseInfoToCourse = async (
   userToken: string, 
   status?: CourseStatus, 
   waitingRank?: number
-): Promise<Course[]> => {
-  const courses: Course[] = [];
+): Promise<{ scheduledCourses: Course[], unscheduledCourses: Course[] }> => {
+  const scheduledCourses: Course[] = [];
+  const unscheduledCourses: Course[] = [];
   
   // 获取课程组信息来获得课程名称
   const courseGroup = await new Promise<CourseGroup | null>((resolve) => {
@@ -91,31 +92,47 @@ const convertCourseInfoToCourse = async (
     );
   });
 
-  // 处理每个上课时间
-  courseInfo.time.forEach((courseTime: CourseTime) => {
-    const dayOfWeek = DAY_OF_WEEK_MAP[courseTime.dayOfWeek];
-    const timeInfo = TIME_PERIOD_MAP[courseTime.timePeriod];
-    
-    if (dayOfWeek && timeInfo) {
-      courses.push({
-        id: `${courseInfo.courseID}-${dayOfWeek}-${courseTime.timePeriod}`,
-        name: courseGroup?.name || `课程-${courseInfo.courseID}`,
-        teacher: `教师-${courseInfo.teacherID}`, // 实际应用中可能需要查询教师姓名
-        location: courseInfo.location,
-        dayOfWeek,
-        startTime: timeInfo.startTime,
-        endTime: timeInfo.endTime,
-        status,
-        waitingRank
-      });
-    }
-  });
+  // 检查是否有时间信息
+  if (!courseInfo.time || courseInfo.time.length === 0) {
+    // 没有时间信息的课程
+    unscheduledCourses.push({
+      id: `${courseInfo.courseID}-unscheduled`,
+      name: courseGroup?.name || `课程-${courseInfo.courseID}`,
+      teacher: `教师-${courseInfo.teacherID}`, // 实际应用中可能需要查询教师姓名
+      location: courseInfo.location || '待定',
+      dayOfWeek: 0, // 0表示无固定时间
+      startTime: '待定',
+      endTime: '待定',
+      status,
+      waitingRank
+    });
+  } else {
+    // 处理每个上课时间
+    courseInfo.time.forEach((courseTime: CourseTime) => {
+      const dayOfWeek = DAY_OF_WEEK_MAP[courseTime.dayOfWeek];
+      const timeInfo = TIME_PERIOD_MAP[courseTime.timePeriod];
+      
+      if (dayOfWeek && timeInfo) {
+        scheduledCourses.push({
+          id: `${courseInfo.courseID}-${dayOfWeek}-${courseTime.timePeriod}`,
+          name: courseGroup?.name || `课程-${courseInfo.courseID}`,
+          teacher: `教师-${courseInfo.teacherID}`, // 实际应用中可能需要查询教师姓名
+          location: courseInfo.location,
+          dayOfWeek,
+          startTime: timeInfo.startTime,
+          endTime: timeInfo.endTime,
+          status,
+          waitingRank
+        });
+      }
+    });
+  }
 
-  return courses;
+  return { scheduledCourses, unscheduledCourses };
 };
 
 // 获取课表数据的主函数
-const fetchCourseTable = async (userToken: string): Promise<Course[]> => {
+const fetchCourseTable = async (userToken: string): Promise<{ scheduledCourses: Course[], unscheduledCourses: Course[] }> => {
   try {
     // 1. 获取用户信息
     const userInfo = await new Promise<SafeUserInfo>((resolve, reject) => {
@@ -132,7 +149,8 @@ const fetchCourseTable = async (userToken: string): Promise<Course[]> => {
       );
     });
 
-    let allCourses: Course[] = [];
+    let allScheduledCourses: Course[] = [];
+    let allUnscheduledCourses: Course[] = [];
 
     if (userInfo.role === UserRole.teacher) {
       // 教师：查询自己开设的课程
@@ -157,8 +175,9 @@ const fetchCourseTable = async (userToken: string): Promise<Course[]> => {
 
       // 转换教师课程
       for (const courseInfo of teacherCourses) {
-        const courses = await convertCourseInfoToCourse(courseInfo, userToken);
-        allCourses.push(...courses);
+        const { scheduledCourses, unscheduledCourses } = await convertCourseInfoToCourse(courseInfo, userToken);
+        allScheduledCourses.push(...scheduledCourses);
+        allUnscheduledCourses.push(...unscheduledCourses);
       }
 
     } else if (userInfo.role === UserRole.student) {
@@ -202,8 +221,9 @@ const fetchCourseTable = async (userToken: string): Promise<Course[]> => {
 
         // 转换预选课程
         for (const courseInfo of preselectedCourses) {
-          const courses = await convertCourseInfoToCourse(courseInfo, userToken, CourseStatus.PRESELECTED);
-          allCourses.push(...courses);
+          const { scheduledCourses, unscheduledCourses } = await convertCourseInfoToCourse(courseInfo, userToken, CourseStatus.PRESELECTED);
+          allScheduledCourses.push(...scheduledCourses);
+          allUnscheduledCourses.push(...unscheduledCourses);
         }
 
       } else if (semesterPhase.currentPhase === Phase.phase2) {
@@ -231,8 +251,9 @@ const fetchCourseTable = async (userToken: string): Promise<Course[]> => {
 
         // 转换已选课程
         for (const courseInfo of selectedCourses) {
-          const courses = await convertCourseInfoToCourse(courseInfo, userToken, CourseStatus.SELECTED);
-          allCourses.push(...courses);
+          const { scheduledCourses, unscheduledCourses } = await convertCourseInfoToCourse(courseInfo, userToken, CourseStatus.SELECTED);
+          allScheduledCourses.push(...scheduledCourses);
+          allUnscheduledCourses.push(...unscheduledCourses);
         }
 
         // 查询候补课程
@@ -261,18 +282,19 @@ const fetchCourseTable = async (userToken: string): Promise<Course[]> => {
 
         // 转换候补课程
         for (const pair of waitingListStatus) {
-          const courses = await convertCourseInfoToCourse(pair.course, userToken, CourseStatus.WAITING, pair.rank);
-          allCourses.push(...courses);
+          const { scheduledCourses, unscheduledCourses } = await convertCourseInfoToCourse(pair.course, userToken, CourseStatus.WAITING, pair.rank);
+          allScheduledCourses.push(...scheduledCourses);
+          allUnscheduledCourses.push(...unscheduledCourses);
         }
       }
     }
 
-    return allCourses;
+    return { scheduledCourses: allScheduledCourses, unscheduledCourses: allUnscheduledCourses };
 
   } catch (error) {
     console.error('获取课表数据失败:', error);
     message.error('获取课表数据失败: ' + (error instanceof Error ? error.message : '未知错误'));
-    return [];
+    return { scheduledCourses: [], unscheduledCourses: [] };
   }
 };
 
@@ -290,6 +312,7 @@ export const courseTablePagePath = '/course-table';
 
 const CourseTablePage: React.FC = () => {
   const [courses, setCourses] = useState<Course[]>([]);
+  const [unscheduledCourses, setUnscheduledCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
@@ -325,8 +348,9 @@ const CourseTablePage: React.FC = () => {
         setUserRole(userInfo.role);
         
         // 获取课表数据
-        const data = await fetchCourseTable(userToken);
-        setCourses(data);
+        const { scheduledCourses, unscheduledCourses } = await fetchCourseTable(userToken);
+        setCourses(scheduledCourses);
+        setUnscheduledCourses(unscheduledCourses);
         setLoading(false);
       } catch (err) {
         console.error('加载课表失败:', err);
@@ -455,6 +479,114 @@ const CourseTablePage: React.FC = () => {
   };
 
   // 表格列配置
+  // 渲染无固定时间的课程列表
+  const renderUnscheduledCourses = () => {
+    if (unscheduledCourses.length === 0) {
+      return null;
+    }
+
+    return (
+      <div style={{ marginTop: '24px' }}>
+        <h3 style={{ 
+          fontSize: '18px', 
+          color: '#1e40af', 
+          fontWeight: 600, 
+          marginBottom: '16px',
+          borderBottom: '2px solid #e5e7eb',
+          paddingBottom: '8px'
+        }}>
+          无固定时间课程
+        </h3>
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', 
+          gap: '16px' 
+        }}>
+          {unscheduledCourses.map((course) => {
+            // 根据课程状态确定卡片样式
+            let cardStyle = {
+              backgroundColor: 'rgb(255, 240, 249)', // 默认样式
+              border: '1px solid #d9d9d9',
+              borderRadius: '8px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            };
+
+            let statusTag = null;
+
+            if (userRole === UserRole.student && course.status) {
+              switch (course.status) {
+                case CourseStatus.SELECTED:
+                  cardStyle.backgroundColor = 'rgb(240, 255, 240)'; // 浅绿色
+                  cardStyle.border = '1px solid #52c41a';
+                  statusTag = <Tag color="success">已选</Tag>;
+                  break;
+                case CourseStatus.WAITING:
+                  cardStyle.backgroundColor = 'rgb(255, 245, 230)'; // 浅橙色
+                  cardStyle.border = '1px solid #fa8c16';
+                  statusTag = (
+                    <Tag color="warning">
+                      候补{course.waitingRank ? ` (第${course.waitingRank}位)` : ''}
+                    </Tag>
+                  );
+                  break;
+                case CourseStatus.PRESELECTED:
+                  cardStyle.backgroundColor = 'rgb(240, 245, 255)'; // 浅蓝色
+                  cardStyle.border = '1px solid #1890ff';
+                  statusTag = <Tag color="processing">预选</Tag>;
+                  break;
+                default:
+                  break;
+              }
+            }
+
+            return (
+              <Card
+                key={course.id}
+                style={cardStyle}
+                bodyStyle={{ padding: '16px' }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                  <div style={{ 
+                    fontWeight: 'bold', 
+                    color: '#0050b3', 
+                    fontSize: '16px',
+                    flex: 1,
+                    marginRight: '8px'
+                  }}>
+                    {course.name}
+                  </div>
+                  {statusTag}
+                </div>
+                <div style={{ 
+                  color: '#003a8c', 
+                  fontSize: '14px',
+                  marginBottom: '4px'
+                }}>
+                  <strong>教师：</strong>{course.teacher}
+                </div>
+                <div style={{ 
+                  color: '#096dd9', 
+                  fontSize: '14px',
+                  marginBottom: '4px'
+                }}>
+                  <strong>地点：</strong>{course.location}
+                </div>
+                <div style={{ 
+                  color: '#666', 
+                  fontSize: '14px',
+                  fontStyle: 'italic'
+                }}>
+                  <strong>时间：</strong>待定
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  // 表格列配置
   const columns = [
     {
       title: '时间',
@@ -560,6 +692,8 @@ const CourseTablePage: React.FC = () => {
           }}
         />
       </div>
+      {/* 显示无固定时间的课程 */}
+      {renderUnscheduledCourses()}
     </div>
   );
 
