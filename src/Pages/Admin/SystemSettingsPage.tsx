@@ -11,6 +11,7 @@ import { useUserToken } from 'Globals/GlobalStore';
 import { QuerySemesterPhaseStatusMessage } from 'Plugins/SemesterPhaseService/APIs/QuerySemesterPhaseStatusMessage';
 import { RunCourseRandomSelectionAndMoveToNextPhaseMessage } from 'Plugins/SemesterPhaseService/APIs/RunCourseRandomSelectionAndMoveToNextPhaseMessage';
 import { UpdateSemesterPhasePermissionsMessage } from 'Plugins/SemesterPhaseService/APIs/UpdateSemesterPhasePermissionsMessage';
+import { RollBackToPhase1Message } from 'Plugins/SemesterPhaseService/APIs/RollBackToPhase1Message';
 import { Phase } from 'Plugins/SemesterPhaseService/Objects/Phase';
 import { Permissions } from 'Plugins/SemesterPhaseService/Objects/Permissions'
 import { SemesterPhase } from 'Plugins/SemesterPhaseService/Objects/SemesterPhase';
@@ -162,6 +163,36 @@ const SystemSettingsPage: React.FC = () => {
     );
   };
 
+  const handleRollBackToPhase1 = () => {
+    setLoading(true);
+    new RollBackToPhase1Message(userToken).send(
+      (info: string) => {
+        try {
+          // 回撤成功，重置所有状态到阶段1
+          setConfig({
+            phase: Phase.phase1,
+            allowTeacherEditCourse: false,
+            allowStudentSelectCourse: false,
+            allowStudentDropCourse: false,
+            allowStudentEvaluate: false,
+            lotteryDone: false,
+          });
+          message.success('已成功回撤到阶段1，所有选课信息已清空');
+        } catch (error) {
+          message.error('回撤操作失败');
+          console.error('Error rolling back to phase 1:', error);
+        } finally {
+          setLoading(false);
+        }
+      },
+      (error: string) => {
+        message.error('回撤到阶段1失败');
+        console.error('Error rolling back to phase 1:', error);
+        setLoading(false);
+      }
+    );
+  };
+
   const canLottery =
     config.phase === Phase.phase1 &&
     !config.allowTeacherEditCourse &&
@@ -236,29 +267,51 @@ const SystemSettingsPage: React.FC = () => {
   <Divider style={{ margin: '16px 0' }} />
 
   {/* 底部操作区 - 固定高度 */}
-  <div style={{ minHeight: 80 }}>
+  <div style={{ minHeight: 120 }}>
     {loading ? (
       <Skeleton.Button active style={{ width: 160, height: 32 }} />
     ) : config.phase === Phase.phase1 ? (
-      <div style={{ /* 原有样式 */ }}>
-        <Button
-          type="primary"
-          danger
-          disabled={!canLottery || loading}
-          onClick={handleLottery}
-          loading={loading}
-          style={{ minWidth: 160 }}
-        >
-          进行抽签并进入阶段2
-        </Button>
-        <Typography.Text type="secondary" style={{ fontSize: 13 }}>
-          仅当所有开关都关闭时可抽签
-        </Typography.Text>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div>
+          <Button
+            type="primary"
+            danger
+            disabled={!canLottery || loading}
+            onClick={handleLottery}
+            loading={loading}
+            style={{ minWidth: 160 }}
+          >
+            进行抽签并进入阶段2
+          </Button>
+          <Typography.Text type="secondary" style={{ fontSize: 13, marginLeft: 12 }}>
+            仅当所有开关都关闭时可抽签
+          </Typography.Text>
+        </div>
       </div>
     ) : (
-      <Typography.Text type="warning" style={{ /* 原有样式 */ }}>
-        阶段2不可逆回阶段1
-      </Typography.Text>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <Typography.Text type="warning" style={{ fontWeight: 500 }}>
+          阶段2不可逆回阶段1
+        </Typography.Text>
+        <div>
+          <Button
+            type="default"
+            danger
+            onClick={handleRollBackToPhase1}
+            loading={loading}
+            style={{ 
+              minWidth: 160,
+              borderColor: '#ff7875',
+              color: '#ff7875'
+            }}
+          >
+            🧪 测试：回撤到阶段1
+          </Button>
+          <Typography.Text type="secondary" style={{ fontSize: 12, marginLeft: 12, color: '#ff7875' }}>
+            警告：将清空所有选课信息！仅供测试使用
+          </Typography.Text>
+        </div>
+      </div>
     )}
   </div>
 </Card>
