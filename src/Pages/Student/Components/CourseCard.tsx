@@ -77,20 +77,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
   const capacityText = `${courseData.currentStudents}/${courseData.capacity}`;
   const isFull = courseData.currentStudents >= courseData.capacity;
 
-  // 时间冲突检查
-  const hasTimeConflict = (newCourse: CourseDisplayData) => {
-    const allCourses = [...selectedCourses, ...preselectedCourses];
-    return allCourses.some(existingCourse => {
-      if (existingCourse.courseID === newCourse.courseID) return false;
-      
-      const existingSchedule = existingCourse.schedule || '';
-      const newSchedule = newCourse.schedule || '';
-      
-      if (!existingSchedule || !newSchedule) return false;
-      
-      return existingSchedule === newSchedule;
-    });
-  };
+  // 移除前端时间冲突检查逻辑 - 全部交由后端API处理并反馈结果
 
   const handleAction = () => {
     if (isSelected || isPreselected) {
@@ -105,12 +92,10 @@ export const CourseCard: React.FC<CourseCardProps> = ({
         onOk: () => onDropCourse(courseData),
       });
     } else {
-      if (hasTimeConflict(courseData)) {
-        message.warning('该课程与已选课程时间冲突！');
-        return;
-      }
-
-      if (canSelectCourse && !isFull) {
+      // 移除前端时间冲突检查，直接尝试选课/预选，让后端API处理所有逻辑和冲突判断
+      
+      if (canSelectCourse) {
+        // 不再检查人数是否已满，让后端API处理容量限制和返回相应错误信息
         onSelectCourse(courseData);
       } else if (canPreselectCourse) {
         onPreselectCourse(courseData);
@@ -150,7 +135,8 @@ export const CourseCard: React.FC<CourseCardProps> = ({
       );
     }
 
-    if (canSelectCourse && !isFull) {
+    if (canSelectCourse) {
+      // 移除人数限制检查，允许点击已满课程，让后端处理容量逻辑
       return (
         <Button 
           type="primary" 
