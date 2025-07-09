@@ -12,116 +12,236 @@ import {
 import DefaultLayout from '../../Layouts/WithRoleBasedSidebarLayout';
 import { UserRole } from 'Plugins/UserAccountService/Objects/UserRole';
 
-// API相关导入（预留接口）
-// import { SubmitCourseEvaluationMessage } from 'Plugins/CourseEvaluationService/APIs/SubmitCourseEvaluationMessage';
-// import { UpdateCourseEvaluationMessage } from 'Plugins/CourseEvaluationService/APIs/UpdateCourseEvaluationMessage';
-// import { DeleteCourseEvaluationMessage } from 'Plugins/CourseEvaluationService/APIs/DeleteCourseEvaluationMessage';
-// import { QueryCourseEvaluationsMessage } from 'Plugins/CourseEvaluationService/APIs/QueryCourseEvaluationsMessage';
-// import { CheckStudentHasSuccessfullyTakenCourseMessage } from 'Plugins/CourseSelectionService/APIs/CheckStudentHasSuccessfullyTakenCourseMessage';
-// import { QuerySemesterPhaseStatusMessage } from 'Plugins/SemesterPhaseService/APIs/QuerySemesterPhaseStatusMessage';
-// import { Rating } from 'Plugins/CourseEvaluationService/Objects/Rating';
-// import { CourseEvaluation } from 'Plugins/CourseEvaluationService/Objects/CourseEvaluation';
-// import { Phase } from 'Plugins/SemesterPhaseService/Objects/Phase';
+// API相关导入
+import { SubmitCourseEvaluationMessage } from 'Plugins/CourseEvaluationService/APIs/SubmitCourseEvaluationMessage';
+import { UpdateCourseEvaluationMessage } from 'Plugins/CourseEvaluationService/APIs/UpdateCourseEvaluationMessage';
+import { DeleteCourseEvaluationMessage } from 'Plugins/CourseEvaluationService/APIs/DeleteCourseEvaluationMessage';
+import { QueryCourseEvaluationsMessage } from 'Plugins/CourseEvaluationService/APIs/QueryCourseEvaluationsMessage';
+import { QueryStudentSelectedCoursesMessage } from 'Plugins/CourseSelectionService/APIs/QueryStudentSelectedCoursesMessage';
+import { QuerySemesterPhaseStatusMessage } from 'Plugins/SemesterPhaseService/APIs/QuerySemesterPhaseStatusMessage';
+import { QuerySafeUserInfoByTokenMessage } from 'Plugins/UserAccountService/APIs/QuerySafeUserInfoByTokenMessage';
+import { QuerySafeUserInfoByUserIDListMessage } from 'Plugins/UserAccountService/APIs/QuerySafeUserInfoByUserIDListMessage';
+import { QueryCourseGroupByIDMessage } from 'Plugins/CourseManagementService/APIs/QueryCourseGroupByIDMessage';
+import { Rating, getRating } from 'Plugins/CourseEvaluationService/Objects/Rating';
+import { CourseEvaluation } from 'Plugins/CourseEvaluationService/Objects/CourseEvaluation';
+import { SemesterPhase } from 'Plugins/SemesterPhaseService/Objects/SemesterPhase';
+import { CourseInfo } from 'Plugins/CourseManagementService/Objects/CourseInfo';
+import { CourseGroup } from 'Plugins/CourseManagementService/Objects/CourseGroup';
+import { SafeUserInfo } from 'Plugins/UserAccountService/Objects/SafeUserInfo';
+import { sendMessage } from 'Plugins/CommonUtils/Send/SendMessage';
+import { getUserToken } from 'Globals/GlobalStore';
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
 
-// 临时数据结构（待接入API时替换）
-interface CourseInfo {
-  courseID: string;
+// 课程显示信息（包含基本信息和显示所需的名称）
+interface CourseDisplayInfo {
+  courseID: number;
   courseName: string;
   teacherName: string;
   semester: string;
-  groupID: string;
+  courseGroupID: number;
 }
 
 interface CourseEvaluationData {
-  courseID: string;
+  courseID: number;
   rating: number;
   feedback: string;
   lastUpdated?: Date;
 }
 
 interface EditingEvaluation {
-  courseID: string;
+  courseID: number;
   rating: number;
   feedback: string;
 }
 
-// Mock数据
-const mockEligibleCourses: CourseInfo[] = [
-  { courseID: 'c1', courseName: '高等数学', teacherName: '张教授', semester: '2024春', groupID: 'g1' },
-  { courseID: 'c2', courseName: '大学物理', teacherName: '李教授', semester: '2024春', groupID: 'g2' },
-  { courseID: 'c3', courseName: '线性代数', teacherName: '王教授', semester: '2023秋', groupID: 'g3' },
-  { courseID: 'c4', courseName: '计算机程序设计', teacherName: '赵教授', semester: '2024春', groupID: 'g4' },
-  { courseID: 'c5', courseName: '数据结构', teacherName: '陈教授', semester: '2023秋', groupID: 'g5' },
-];
+// API调用函数
+const checkPhaseAndPermission = async (): Promise<{ canEvaluate: boolean; message: string }> => {
+  try {
+    const userToken = getUserToken();
+    const message = new QuerySemesterPhaseStatusMessage(userToken);
+    const response = await sendMessage(message, 10000);
+    
+    if (response.ok) {
+      const result: SemesterPhase = await response.json();
+      const canEvaluate = result.permissions.allowStudentEvaluate;
+      const message = `当前处于阶段${result.currentPhase}，${canEvaluate ? '可以' : '不可以'}进行课程评价`;
+      return { canEvaluate, message };
+    } else {
+      throw new Error('API调用失败');
+    }
+  } catch (error) {
+    console.error('检查评价权限失败:', error);
+    throw error;
+  }
+};
 
-const mockExistingEvaluations: CourseEvaluationData[] = [
-  { courseID: 'c1', rating: 4, feedback: '老师讲课很清楚，课程内容丰富。', lastUpdated: new Date('2024-01-15') },
-  { courseID: 'c3', rating: 5, feedback: '非常好的数学课程，推荐！', lastUpdated: new Date('2024-01-10') },
-];
-
-// 模拟API调用函数
-const mockCheckPhaseAndPermission = async (): Promise<{ canEvaluate: boolean; message: string }> => {
-  // 模拟API调用：QuerySemesterPhaseStatusMessage
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({ 
-        canEvaluate: true, 
-        message: '当前处于阶段2，可以进行课程评价' 
+const fetchEligibleCourses = async (): Promise<CourseDisplayInfo[]> => {
+  try {
+    const userToken = getUserToken();
+    
+    // 获取学生已选课程
+    const selectedCoursesMessage = new QueryStudentSelectedCoursesMessage(userToken);
+    const selectedCoursesResponse = await sendMessage(selectedCoursesMessage, 10000);
+    
+    if (!selectedCoursesResponse.ok) {
+      throw new Error('获取已选课程失败');
+    }
+    
+    const courseInfos: CourseInfo[] = await selectedCoursesResponse.json();
+    
+    // 获取课程组信息和教师信息
+    const courseGroupIDs = [...new Set(courseInfos.map(course => course.courseGroupID))];
+    const teacherIDs = [...new Set(courseInfos.map(course => course.teacherID))];
+    
+    // 批量获取课程组信息
+    const courseGroupPromises = courseGroupIDs.map(async (groupID) => {
+      const message = new QueryCourseGroupByIDMessage(userToken, groupID);
+      const response = await sendMessage(message, 10000);
+      if (response.ok) {
+        const courseGroup: CourseGroup = await response.json();
+        return { id: groupID, group: courseGroup };
+      }
+      return null;
+    });
+    
+    const courseGroupResults = await Promise.all(courseGroupPromises);
+    const courseGroups = new Map<number, CourseGroup>();
+    courseGroupResults.forEach(result => {
+      if (result) {
+        courseGroups.set(result.id, result.group);
+      }
+    });
+    
+    // 批量获取教师信息
+    const teachersMessage = new QuerySafeUserInfoByUserIDListMessage(teacherIDs);
+    const teachersResponse = await sendMessage(teachersMessage, 10000);
+    const teachers = new Map<number, SafeUserInfo>();
+    
+    if (teachersResponse.ok) {
+      const teacherInfos: SafeUserInfo[] = await teachersResponse.json();
+      teacherInfos.forEach(teacher => {
+        teachers.set(teacher.userID, teacher);
       });
-    }, 1000);
-  });
+    }
+    
+    // 组装显示用的课程信息
+    const displayCourses: CourseDisplayInfo[] = courseInfos.map(course => ({
+      courseID: course.courseID,
+      courseName: courseGroups.get(course.courseGroupID)?.name || '未知课程',
+      teacherName: teachers.get(course.teacherID)?.userName || '未知教师',
+      semester: new Date().getFullYear() + '年度', // 简化处理，实际可能需要从其他API获取
+      courseGroupID: course.courseGroupID
+    }));
+    
+    return displayCourses;
+  } catch (error) {
+    console.error('获取课程信息失败:', error);
+    throw error;
+  }
 };
 
-const mockFetchEligibleCourses = async (studentID: string): Promise<CourseInfo[]> => {
-  // 模拟API调用：CheckStudentHasSuccessfullyTakenCourseMessage
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(mockEligibleCourses);
-    }, 1500);
-  });
+const fetchExistingEvaluations = async (): Promise<CourseEvaluationData[]> => {
+  try {
+    const userToken = getUserToken();
+    
+    // 首先获取学生的课程列表
+    const courses = await fetchEligibleCourses();
+    
+    // 为每门课程查询评价
+    const evaluationPromises = courses.map(async (course) => {
+      const message = new QueryCourseEvaluationsMessage(userToken, course.courseID);
+      const response = await sendMessage(message, 10000);
+      
+      if (response.ok) {
+        const evaluations: CourseEvaluation[] = await response.json();
+        
+        // 获取当前用户信息
+        const userInfoMessage = new QuerySafeUserInfoByTokenMessage(userToken);
+        const userInfoResponse = await sendMessage(userInfoMessage, 10000);
+        
+        if (userInfoResponse.ok) {
+          const userInfo: SafeUserInfo = await userInfoResponse.json();
+          
+          // 找到当前用户的评价
+          const userEvaluation = evaluations.find(evaluation => evaluation.evaluatorID === userInfo.userID);
+          
+          if (userEvaluation) {
+            return {
+              courseID: course.courseID,
+              rating: parseInt(userEvaluation.rating),
+              feedback: userEvaluation.feedback || '',
+              lastUpdated: new Date() // 这里需要从API获取更新时间
+            };
+          }
+        }
+      }
+      return null;
+    });
+    
+    const results = await Promise.all(evaluationPromises);
+    return results.filter(result => result !== null) as CourseEvaluationData[];
+  } catch (error) {
+    console.error('获取现有评价失败:', error);
+    throw error;
+  }
 };
 
-const mockFetchExistingEvaluations = async (studentID: string): Promise<CourseEvaluationData[]> => {
-  // 模拟API调用：QueryCourseEvaluationsMessage
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(mockExistingEvaluations);
-    }, 1200);
-  });
+const submitEvaluation = async (courseID: number, rating: number, feedback: string): Promise<boolean> => {
+  try {
+    const userToken = getUserToken();
+    const ratingEnum = getRating(rating.toString());
+    const message = new SubmitCourseEvaluationMessage(userToken, courseID, ratingEnum, feedback);
+    const response = await sendMessage(message, 10000);
+    
+    if (response.ok) {
+      const result = await response.text();
+      return result.includes('成功') || result.includes('success');
+    }
+    return false;
+  } catch (error) {
+    console.error('提交评价失败:', error);
+    return false;
+  }
 };
 
-const mockSubmitEvaluation = async (courseID: string, rating: number, feedback: string): Promise<boolean> => {
-  // 模拟API调用：SubmitCourseEvaluationMessage
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(true);
-    }, 800);
-  });
+const updateEvaluation = async (courseID: number, rating: number, feedback: string): Promise<boolean> => {
+  try {
+    const userToken = getUserToken();
+    const ratingEnum = getRating(rating.toString());
+    const message = new UpdateCourseEvaluationMessage(userToken, courseID, ratingEnum, feedback);
+    const response = await sendMessage(message, 10000);
+    
+    if (response.ok) {
+      const result = await response.text();
+      return result.includes('成功') || result.includes('success');
+    }
+    return false;
+  } catch (error) {
+    console.error('更新评价失败:', error);
+    return false;
+  }
 };
 
-const mockUpdateEvaluation = async (courseID: string, rating: number, feedback: string): Promise<boolean> => {
-  // 模拟API调用：UpdateCourseEvaluationMessage
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(true);
-    }, 800);
-  });
+const deleteEvaluation = async (courseID: number): Promise<boolean> => {
+  try {
+    const userToken = getUserToken();
+    const message = new DeleteCourseEvaluationMessage(userToken, courseID);
+    const response = await sendMessage(message, 10000);
+    
+    if (response.ok) {
+      const result = await response.text();
+      return result.includes('成功') || result.includes('success');
+    }
+    return false;
+  } catch (error) {
+    console.error('删除评价失败:', error);
+    return false;
+  }
 };
 
-const mockDeleteEvaluation = async (courseID: string): Promise<boolean> => {
-  // 模拟API调用：DeleteCourseEvaluationMessage
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(true);
-    }, 600);
-  });
-};
-
-// 从全局store获取的数据（模拟）
-const userID: string = 'student123';
+// 从全局store获取的数据
 const userRole: UserRole = UserRole.student;
 
 export const CourseEvaluationPage: React.FC = () => {
@@ -130,10 +250,10 @@ export const CourseEvaluationPage: React.FC = () => {
   const [canEvaluate, setCanEvaluate] = useState<boolean>(false);
   const [permissionMessage, setPermissionMessage] = useState<string>('');
   
-  const [eligibleCourses, setEligibleCourses] = useState<CourseInfo[]>([]);
+  const [eligibleCourses, setEligibleCourses] = useState<CourseDisplayInfo[]>([]);
   const [existingEvaluations, setExistingEvaluations] = useState<CourseEvaluationData[]>([]);
   
-  const [editingCourse, setEditingCourse] = useState<string | null>(null);
+  const [editingCourse, setEditingCourse] = useState<number | null>(null);
   const [editingData, setEditingData] = useState<EditingEvaluation | null>(null);
   const [submitting, setSubmitting] = useState<boolean>(false);
 
@@ -142,7 +262,7 @@ export const CourseEvaluationPage: React.FC = () => {
     const checkPermission = async () => {
       setPermissionLoading(true);
       try {
-        const result = await mockCheckPhaseAndPermission();
+        const result = await checkPhaseAndPermission();
         setCanEvaluate(result.canEvaluate);
         setPermissionMessage(result.message);
       } catch (error) {
@@ -165,8 +285,8 @@ export const CourseEvaluationPage: React.FC = () => {
       setLoading(true);
       try {
         const [courses, evaluations] = await Promise.all([
-          mockFetchEligibleCourses(userID),
-          mockFetchExistingEvaluations(userID)
+          fetchEligibleCourses(),
+          fetchExistingEvaluations()
         ]);
         setEligibleCourses(courses);
         setExistingEvaluations(evaluations);
@@ -181,12 +301,12 @@ export const CourseEvaluationPage: React.FC = () => {
   }, [canEvaluate]);
 
   // 获取课程的现有评价
-  const getExistingEvaluation = (courseID: string): CourseEvaluationData | undefined => {
+  const getExistingEvaluation = (courseID: number): CourseEvaluationData | undefined => {
     return existingEvaluations.find(evaluation => evaluation.courseID === courseID);
   };
 
   // 开始编辑
-  const startEditing = (courseID: string) => {
+  const startEditing = (courseID: number) => {
     const existing = getExistingEvaluation(courseID);
     setEditingCourse(courseID);
     setEditingData({
@@ -216,14 +336,14 @@ export const CourseEvaluationPage: React.FC = () => {
 
       if (existing) {
         // 更新现有评价
-        success = await mockUpdateEvaluation(
+        success = await updateEvaluation(
           editingData.courseID,
           editingData.rating,
           editingData.feedback
         );
       } else {
         // 提交新评价
-        success = await mockSubmitEvaluation(
+        success = await submitEvaluation(
           editingData.courseID,
           editingData.rating,
           editingData.feedback
@@ -257,9 +377,9 @@ export const CourseEvaluationPage: React.FC = () => {
   };
 
   // 删除评价
-  const deleteEvaluation = async (courseID: string) => {
+  const deleteEvaluationHandler = async (courseID: number) => {
     try {
-      const success = await mockDeleteEvaluation(courseID);
+      const success = await deleteEvaluation(courseID);
       if (success) {
         setExistingEvaluations(prev => 
           prev.filter(evaluation => evaluation.courseID !== courseID)
@@ -274,7 +394,7 @@ export const CourseEvaluationPage: React.FC = () => {
   };
 
   // 渲染评价卡片
-  const renderEvaluationCard = (course: CourseInfo) => {
+  const renderEvaluationCard = (course: CourseDisplayInfo) => {
     const existing = getExistingEvaluation(course.courseID);
     const isEditing = editingCourse === course.courseID;
 
@@ -426,7 +546,7 @@ export const CourseEvaluationPage: React.FC = () => {
                   </Button>
                   <Popconfirm
                     title="确定要删除这个评价吗？"
-                    onConfirm={() => deleteEvaluation(course.courseID)}
+                    onConfirm={() => deleteEvaluationHandler(course.courseID)}
                     okText="确定"
                     cancelText="取消"
                     okButtonProps={{
