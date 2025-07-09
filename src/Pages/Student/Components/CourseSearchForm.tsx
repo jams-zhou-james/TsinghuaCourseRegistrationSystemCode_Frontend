@@ -2,7 +2,7 @@
 import React, { useState, useCallback } from 'react';
 import { Form, Input, Button, Row, Col, Card, Space } from 'antd';
 import { SearchOutlined, BookOutlined, UserOutlined, ClockCircleOutlined } from '@ant-design/icons';
-import { TimeTableSelector } from './TimeTableSelector';
+import { TimeTableSelector } from '../../../Components/TimeTableSelector';
 import { CourseTime } from 'Plugins/CourseManagementService/Objects/CourseTime';
 
 interface CourseSearchFormProps {
