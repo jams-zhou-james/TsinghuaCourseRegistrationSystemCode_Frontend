@@ -106,35 +106,6 @@ const getTeacherName = async (teacherID: number): Promise<string> => {
   });
 };
 
-// 时间冲突检查函数
-const checkTimeConflict = (schedule1: string, schedule2: string): boolean => {
-  if (!schedule1 || !schedule2) return false;
-  
-  const parseTimeSlot = (timeStr: string) => {
-    const match = timeStr.match(/星期(\d+)\s+(\d+)-(\d+)节/);
-    if (!match) return null;
-    return {
-      day: parseInt(match[1]),
-      start: parseInt(match[2]),
-      end: parseInt(match[3])
-    };
-  };
-
-  const times1 = schedule1.split('\n').map(parseTimeSlot).filter(t => t !== null);
-  const times2 = schedule2.split('\n').map(parseTimeSlot).filter(t => t !== null);
-
-  for (const t1 of times1) {
-    for (const t2 of times2) {
-      if (t1 && t2 && t1.day === t2.day) {
-        if (!(t1.end < t2.start || t2.end < t1.start)) {
-          return true; // 时间冲突
-        }
-      }
-    }
-  }
-  return false;
-};
-
 // 转换单个课程数据（通过PairOfGroupAndCourse）
 const convertPairToDisplayData = async (
   pair: PairOfGroupAndCourse,
@@ -175,13 +146,6 @@ const convertPairToDisplayData = async (
     }).join('\n'); // 用换行符分隔，确保多行显示
   };
 
-  // 检查时间冲突
-  const checkConflictWithSelected = (courseTimes: any[]): boolean => {
-    // 这里需要获取已选课程的时间信息进行比较
-    // 简化处理，实际应该传入已选课程的时间信息
-    return false;
-  };
-
   return {
     courseID: course.courseID,
     courseName: courseGroup.name, // 课程名称从CourseGroup获取
@@ -193,7 +157,7 @@ const convertPairToDisplayData = async (
     credit: courseGroup.credit, // 学分从CourseGroup获取
     introduction: '', // CourseInfo中没有introduction字段
     courseGroupID: course.courseGroupID,
-    isConflicted: checkConflictWithSelected(course.time)
+    isConflicted: false // 移除前端时间冲突检查，全部交由后端处理
   };
 };
 
@@ -321,7 +285,6 @@ const transformCoursesToDisplayData = async (
 
 export const courseUtils = {
   getTeacherName,
-  checkTimeConflict,
   convertCourseToDisplayData,
   convertPairToDisplayData,
   transformCoursesToDisplayData,

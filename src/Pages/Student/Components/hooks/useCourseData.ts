@@ -7,6 +7,8 @@ import { QueryStudentWaitingListStatusMessage } from 'Plugins/CourseSelectionSer
 import { PairOfGroupAndCourse } from 'Plugins/CourseManagementService/Objects/PairOfGroupAndCourse';
 import { CourseInfo } from 'Plugins/CourseManagementService/Objects/CourseInfo';
 import { CourseTime } from 'Plugins/CourseManagementService/Objects/CourseTime';
+import { TimePeriod } from 'Plugins/CourseManagementService/Objects/TimePeriod';
+import { DayOfWeek } from 'Plugins/CourseManagementService/Objects/DayOfWeek';
 import { PairOfCourseAndRank } from 'Plugins/CourseSelectionService/Objects/PairOfCourseAndRank';
 import { CourseDisplayData } from './useCourseActions';
 import { courseUtils } from '../utils/courseUtils';
@@ -28,6 +30,7 @@ export interface UseCourseDataResult {
   }) => void;
   refreshData: () => void;
   updateCourseCapacity: (courseID: number, changeAmount: number) => void;
+  setCourseCapacity: (courseID: number, currentStudents: number, capacity: number) => void;
 }
 
 export const useCourseData = (userToken: string, semesterPhase: SemesterPhase | null): UseCourseDataResult => {
@@ -219,7 +222,35 @@ export const useCourseData = (userToken: string, semesterPhase: SemesterPhase | 
         course.courseID === courseID 
           ? { 
               ...course, 
-              currentStudents: Math.max(0, Math.min(course.capacity, course.currentStudents + changeAmount))
+              currentStudents: changeAmount === 0 
+                ? course.currentStudents  // 当changeAmount为0时，不改变数值但触发UI刷新
+                : Math.max(0, Math.min(course.capacity, course.currentStudents + changeAmount))
+            }
+          : course
+      )
+    );
+    
+    // 当changeAmount为0时，表示需要刷新数据，重新获取课程信息
+    if (changeAmount === 0) {
+      console.log(`课程 ${courseID} 需要重新获取最新数据`);
+      // 触发课程数据重新加载，确保获取最新的人数信息
+      setTimeout(() => {
+        refreshData();
+      }, 500); // 延迟500ms后刷新，给后端一些时间更新状态
+    }
+  }, [refreshData]);
+
+  // 直接设置课程的最新人数（不是增减，而是直接设置）
+  const setCourseCapacity = useCallback((courseID: number, currentStudents: number, capacity: number) => {
+    console.log(`直接设置课程 ${courseID} 的人数：${currentStudents}/${capacity}`);
+    
+    setCourses(prevCourses => 
+      prevCourses.map(course => 
+        course.courseID === courseID 
+          ? { 
+              ...course, 
+              currentStudents: currentStudents,
+              capacity: capacity
             }
           : course
       )
@@ -247,9 +278,40 @@ export const useCourseData = (userToken: string, semesterPhase: SemesterPhase | 
         fetchWaitingList();
       }
       
-      // 自动加载所有课程（无过滤条件）
-      console.log('自动加载所有课程...');
-      fetchCourses();
+      // 自动加载所有课程（使用全时间段，相当于时间表格全选状态）
+      console.log('自动加载所有课程（全时间段）...');
+      const allTimePeriods: CourseTime[] = [];
+      
+      // 生成所有可能的时间段组合（6个时间段 × 7天）
+      const timePeriodMapping = [
+        TimePeriod.morning,
+        TimePeriod.lateMorning,
+        TimePeriod.earlyAfternoon,
+        TimePeriod.midAfternoon,
+        TimePeriod.lateAfternoon,
+        TimePeriod.evening
+      ];
+      
+      const dayOfWeekMapping = [
+        DayOfWeek.monday,
+        DayOfWeek.tuesday,
+        DayOfWeek.wednesday,
+        DayOfWeek.thursday,
+        DayOfWeek.friday,
+        DayOfWeek.saturday,
+        DayOfWeek.sunday
+      ];
+      
+      // 创建所有时间段的组合
+      for (const timePeriod of timePeriodMapping) {
+        for (const dayOfWeek of dayOfWeekMapping) {
+          allTimePeriods.push(new CourseTime(dayOfWeek, timePeriod));
+        }
+      }
+      
+      fetchCourses({
+        allowedTimePeriods: allTimePeriods
+      });
     }
   }, [userToken, semesterPhase, fetchSelectedCourses, fetchPreselectedCourses, fetchWaitingList, fetchCourses]);
 
@@ -262,6 +324,7 @@ export const useCourseData = (userToken: string, semesterPhase: SemesterPhase | 
     error,
     fetchCourses,
     refreshData,
-    updateCourseCapacity
+    updateCourseCapacity,
+    setCourseCapacity
   };
 };
