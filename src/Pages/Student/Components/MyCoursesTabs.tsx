@@ -72,11 +72,16 @@ export const MyCoursesTabs: React.FC<MyCoursesTabsProps> = ({
     console.log('其他阶段 - 默认显示已选课程Tab');
     return 'selected';
   };
-  const renderCourseCard = (course: CourseDisplayData, status: 'selected' | 'preselected' | 'waiting') => {
+  const renderCourseCard = (course: CourseDisplayData & { rank?: number }, status: 'selected' | 'preselected' | 'waiting') => {
     const handleDrop = () => {
       // 根据课程状态确定操作文字
-      const actionText = status === 'preselected' ? '删除预选' : '退课';
-      const confirmTitle = status === 'preselected' ? '确认删除预选' : '确认退课';
+      let actionText = status === 'preselected' ? '删除预选' : '退课';
+      let confirmTitle = status === 'preselected' ? '确认删除预选' : '确认退课';
+      
+      if (status === 'waiting') {
+        actionText = '退出等待列表';
+        confirmTitle = '确认退出等待列表';
+      }
       
       Modal.confirm({
         title: confirmTitle,
@@ -105,7 +110,7 @@ export const MyCoursesTabs: React.FC<MyCoursesTabsProps> = ({
         case 'preselected':
           return '已预选';
         case 'waiting':
-          return '等待列表';
+          return '在waiting list';
         default:
           return '';
       }
@@ -121,7 +126,7 @@ export const MyCoursesTabs: React.FC<MyCoursesTabsProps> = ({
           backgroundColor: 'rgba(255, 255, 255, 0.95)'
         }}
         bodyStyle={{ padding: '16px' }}
-        actions={status !== 'waiting' ? [
+        actions={[
           <Button 
             key="drop"
             type="text" 
@@ -129,9 +134,9 @@ export const MyCoursesTabs: React.FC<MyCoursesTabsProps> = ({
             icon={<DeleteOutlined />}
             onClick={handleDrop}
           >
-            {status === 'preselected' ? '删除预选' : '退课'}
+            {status === 'preselected' ? '删除预选' : status === 'waiting' ? '退出等待列表' : '退课'}
           </Button>
-        ] : []}
+        ]}
       >
         <div style={{ marginBottom: 12 }}>
           <Row justify="space-between" align="middle">
@@ -144,10 +149,10 @@ export const MyCoursesTabs: React.FC<MyCoursesTabsProps> = ({
               </Space>
             </Col>
             <Col>
-              <Space>
+              <Tag color={status === 'waiting' ? 'orange' : status === 'preselected' ? 'blue' : 'green'}>
                 {getStatusIcon()}
-                <span style={{ fontSize: 12, color: '#666' }}>{getStatusText()}</span>
-              </Space>
+                <span style={{ marginLeft: 4 }}>{getStatusText()}</span>
+              </Tag>
             </Col>
           </Row>
         </div>
@@ -188,7 +193,13 @@ export const MyCoursesTabs: React.FC<MyCoursesTabsProps> = ({
             <Space>
               <TeamOutlined style={{ color: '#ff69b4', fontSize: 12 }} />
               <span style={{ color: '#666', fontSize: 12 }}>人数:</span>
-              <span style={{ fontSize: 12 }}>{course.currentStudents}/{course.capacity}</span>
+              {status === 'waiting' && course.rank !== undefined ? (
+                <span style={{ fontSize: 12, color: '#faad14', fontWeight: 'bold' }}>
+                  候补第{course.rank}位
+                </span>
+              ) : (
+                <span style={{ fontSize: 12 }}>{course.currentStudents}/{course.capacity}</span>
+              )}
             </Space>
           </Col>
         </Row>
