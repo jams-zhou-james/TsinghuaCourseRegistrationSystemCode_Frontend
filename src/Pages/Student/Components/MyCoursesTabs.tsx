@@ -1,21 +1,52 @@
 // MyCoursesTabs.tsx
 import React from 'react';
-import { Tabs, Card, Row, Col, Empty, Space, Tag, Button, Modal, message } from 'antd';
+import { Tabs, Card, Row, Col, Empty, Space, Tag, Button, Modal } from 'antd';
 import { 
-  BookOutlined, 
-  UserOutlined, 
-  ClockCircleOutlined, 
-  EnvironmentOutlined, 
-  TeamOutlined,
-  CheckCircleOutlined,
-  ExclamationCircleOutlined,
-  ClockCircleOutlined as WaitingIcon,
+  BookOutlined, UserOutlined, ClockCircleOutlined, EnvironmentOutlined, TeamOutlined,
+  CheckCircleOutlined, ExclamationCircleOutlined, ClockCircleOutlined as WaitingIcon,
   DeleteOutlined
 } from '@ant-design/icons';
 import { SemesterPhase } from 'Plugins/SemesterPhaseService/Objects/SemesterPhase';
 import { Phase } from 'Plugins/SemesterPhaseService/Objects/Phase';
 
-// 使用与主页面一致的课程数据接口
+// 通用样式
+const styles = {
+  card: {
+    borderRadius: 12,
+    border: '1px solid rgba(255, 182, 216, 0.3)',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)'
+  },
+  pink: { color: '#ff69b4' },
+  darkPink: { color: '#d81b60' },
+  smallText: { fontSize: 12 },
+  labelText: { color: '#666', fontSize: 12 }
+};
+
+// 课程状态配置
+const statusConfig = {
+  selected: { 
+    icon: <CheckCircleOutlined style={{ color: '#52c41a' }} />, 
+    text: '已选择', 
+    color: 'green',
+    actionText: '退课',
+    confirmTitle: '确认退课'
+  },
+  preselected: { 
+    icon: <ExclamationCircleOutlined style={{ color: '#1890ff' }} />, 
+    text: '已预选', 
+    color: 'blue',
+    actionText: '删除预选',
+    confirmTitle: '确认删除预选'
+  },
+  waiting: { 
+    icon: <WaitingIcon style={{ color: '#faad14' }} />, 
+    text: '在waiting list', 
+    color: 'orange',
+    actionText: '退出等待列表',
+    confirmTitle: '确认退出等待列表'
+  }
+};
+
 interface CourseDisplayData {
   courseID: number;
   courseName: string;
@@ -41,48 +72,21 @@ interface MyCoursesTabsProps {
 export const MyCoursesTabs: React.FC<MyCoursesTabsProps> = ({
   selectedCourses,
   preselectedCourses,
-  waitingList,
+  waitingList = [],
   semesterPhase,
   onDropCourse
 }) => {
-  // 根据学期阶段决定默认激活的Tab
+  // 根据学期阶段决定默认激活的Tab和显示的Tab
   const getDefaultActiveKey = (): string => {
     if (!semesterPhase) return 'selected';
-    
-    const isPhase1 = semesterPhase.currentPhase === Phase.phase1;
-    const isPhase2 = semesterPhase.currentPhase === Phase.phase2;
-    
-    console.log('MyCoursesTabs - 决定默认Tab：', {
-      currentPhase: semesterPhase.currentPhase,
-      isPhase1,
-      isPhase2
-    });
-    
-    if (isPhase1) {
-      // 阶段1（预选阶段）：默认显示预选课程
-      console.log('阶段1 - 默认显示预选课程Tab');
-      return 'preselected';
-    } else if (isPhase2) {
-      // 阶段2（正选阶段）：默认显示已选课程
-      console.log('阶段2 - 默认显示已选课程Tab');
-      return 'selected';
-    }
-    
-    // 其他情况：默认显示已选课程
-    console.log('其他阶段 - 默认显示已选课程Tab');
-    return 'selected';
+    return semesterPhase.currentPhase === Phase.phase1 ? 'preselected' : 'selected';
   };
-  const renderCourseCard = (course: CourseDisplayData & { rank?: number }, status: 'selected' | 'preselected' | 'waiting') => {
+  
+  // 根据课程状态渲染课程卡片
+  const renderCourseCard = (course: CourseDisplayData & { rank?: number }, status: keyof typeof statusConfig) => {
+    const { icon, text, color, actionText, confirmTitle } = statusConfig[status];
+    
     const handleDrop = () => {
-      // 根据课程状态确定操作文字
-      let actionText = status === 'preselected' ? '删除预选' : '退课';
-      let confirmTitle = status === 'preselected' ? '确认删除预选' : '确认退课';
-      
-      if (status === 'waiting') {
-        actionText = '退出等待列表';
-        confirmTitle = '确认退出等待列表';
-      }
-      
       Modal.confirm({
         title: confirmTitle,
         content: `确定要${actionText}《${course.courseName}》吗？`,
@@ -90,134 +94,111 @@ export const MyCoursesTabs: React.FC<MyCoursesTabsProps> = ({
       });
     };
 
-    const getStatusIcon = () => {
-      switch (status) {
-        case 'selected':
-          return <CheckCircleOutlined style={{ color: '#52c41a' }} />;
-        case 'preselected':
-          return <ExclamationCircleOutlined style={{ color: '#1890ff' }} />;
-        case 'waiting':
-          return <WaitingIcon style={{ color: '#faad14' }} />;
-        default:
-          return null;
-      }
-    };
-
-    const getStatusText = () => {
-      switch (status) {
-        case 'selected':
-          return '已选择';
-        case 'preselected':
-          return '已预选';
-        case 'waiting':
-          return '在waiting list';
-        default:
-          return '';
-      }
-    };
-
     return (
       <Card
-        key={`${course.courseID}-${course.courseGroupID}`}
         hoverable
-        style={{
-          borderRadius: 12,
-          border: '1px solid rgba(255, 182, 216, 0.3)',
-          backgroundColor: 'rgba(255, 255, 255, 0.95)'
-        }}
+        style={styles.card}
         bodyStyle={{ padding: '16px' }}
         actions={[
-          <Button 
-            key="drop"
-            type="text" 
-            danger 
-            icon={<DeleteOutlined />}
-            onClick={handleDrop}
-          >
-            {status === 'preselected' ? '删除预选' : status === 'waiting' ? '退出等待列表' : '退课'}
+          <Button key="drop" type="text" danger icon={<DeleteOutlined />} onClick={handleDrop}>
+            {actionText}
           </Button>
         ]}
       >
-        <div style={{ marginBottom: 12 }}>
-          <Row justify="space-between" align="middle">
-            <Col>
-              <Space>
-                <BookOutlined style={{ color: '#ff69b4' }} />
-                <span style={{ fontSize: 16, fontWeight: 'bold', color: '#d81b60' }}>
-                  {course.courseName}
-                </span>
-              </Space>
-            </Col>
-            <Col>
-              <Tag color={status === 'waiting' ? 'orange' : status === 'preselected' ? 'blue' : 'green'}>
-                {getStatusIcon()}
-                <span style={{ marginLeft: 4 }}>{getStatusText()}</span>
-              </Tag>
-            </Col>
-          </Row>
-        </div>
-
-        <Row gutter={[8, 8]}>
-          <Col span={24}>
+        <Row justify="space-between" align="middle" style={{ marginBottom: 12 }}>
+          <Col>
             <Space>
-              <span style={{ color: '#666', fontSize: 12 }}>课程编号:</span>
-              <Tag color="blue">{course.courseID}</Tag>
-              <span style={{ color: '#666', fontSize: 12 }}>学分:</span>
-              <Tag color="green">{course.credit}</Tag>
+              <BookOutlined style={styles.pink} />
+              <span style={{ fontSize: 16, fontWeight: 'bold', ...styles.darkPink }}>
+                {course.courseName}
+              </span>
             </Space>
           </Col>
-          <Col span={24}>
-            <Space>
-              <UserOutlined style={{ color: '#ff69b4', fontSize: 12 }} />
-              <span style={{ color: '#666', fontSize: 12 }}>教师:</span>
-              <span style={{ fontSize: 12 }}>{course.teacher || '未指定'}</span>
-            </Space>
-          </Col>
-          <Col span={24}>
-            <Space align="start">
-              <ClockCircleOutlined style={{ color: '#ff69b4', fontSize: 12 }} />
-              <span style={{ color: '#666', fontSize: 12 }}>时间:</span>
-              <div style={{ fontSize: 12, whiteSpace: 'pre-line' }}>
-                {course.schedule || '时间待定'}
-              </div>
-            </Space>
-          </Col>
-          <Col span={24}>
-            <Space>
-              <EnvironmentOutlined style={{ color: '#ff69b4', fontSize: 12 }} />
-              <span style={{ color: '#666', fontSize: 12 }}>地点:</span>
-              <span style={{ fontSize: 12 }}>{course.location || '地点待定'}</span>
-            </Space>
-          </Col>
-          <Col span={24}>
-            <Space>
-              <TeamOutlined style={{ color: '#ff69b4', fontSize: 12 }} />
-              <span style={{ color: '#666', fontSize: 12 }}>人数:</span>
-              {status === 'waiting' && course.rank !== undefined ? (
-                <span style={{ fontSize: 12, color: '#faad14', fontWeight: 'bold' }}>
-                  候补第{course.rank}位
-                </span>
-              ) : (
-                <span style={{ fontSize: 12 }}>{course.currentStudents}/{course.capacity}</span>
-              )}
-            </Space>
+          <Col>
+            <Tag color={color}>
+              {icon}
+              <span style={{ marginLeft: 4 }}>{text}</span>
+            </Tag>
           </Col>
         </Row>
+
+        <CourseDetailRows 
+          course={course} 
+          status={status} 
+        />
       </Card>
     );
   };
-
-  const renderEmptyState = (text: string) => (
-    <Empty
-      description={text}
-      style={{
-        padding: '50px',
-        color: '#999'
-      }}
-    />
+  
+  // 课程详细信息行组件
+  const CourseDetailRows = ({ course, status }: { course: CourseDisplayData & { rank?: number }, status: keyof typeof statusConfig }) => (
+    <Row gutter={[8, 8]}>
+      <Col span={24}>
+        <Space>
+          <span style={styles.labelText}>课程编号:</span>
+          <Tag color="blue">{course.courseID}</Tag>
+          <span style={styles.labelText}>学分:</span>
+          <Tag color="green">{course.credit}</Tag>
+        </Space>
+      </Col>
+      <DetailRow icon={<UserOutlined style={styles.pink} />} label="教师:" value={course.teacher || '未指定'} />
+      <Col span={24}>
+        <Space align="start">
+          <ClockCircleOutlined style={styles.pink} />
+          <span style={styles.labelText}>时间:</span>
+          <div style={{ ...styles.smallText, whiteSpace: 'pre-line' }}>
+            {course.schedule || '时间待定'}
+          </div>
+        </Space>
+      </Col>
+      <DetailRow icon={<EnvironmentOutlined style={styles.pink} />} label="地点:" value={course.location || '地点待定'} />
+      <Col span={24}>
+        <Space>
+          <TeamOutlined style={styles.pink} />
+          <span style={styles.labelText}>人数:</span>
+          {status === 'waiting' && course.rank !== undefined ? (
+            <span style={{ ...styles.smallText, color: '#faad14', fontWeight: 'bold' }}>
+              候补第{course.rank}位
+            </span>
+          ) : (
+            <span style={styles.smallText}>{course.currentStudents}/{course.capacity}</span>
+          )}
+        </Space>
+      </Col>
+    </Row>
+  );
+  
+  // 详情行组件
+  const DetailRow = ({ icon, label, value }: { icon: React.ReactNode, label: string, value: string }) => (
+    <Col span={24}>
+      <Space>
+        {icon}
+        <span style={styles.labelText}>{label}</span>
+        <span style={styles.smallText}>{value}</span>
+      </Space>
+    </Col>
   );
 
-  const tabItems = [
+  // 空状态组件
+  const renderEmptyState = (text: string) => (
+    <Empty description={text} style={{ padding: '50px', color: '#999' }} />
+  );
+
+  // 渲染课程列表
+  const renderCourseList = (courses: (CourseDisplayData & { rank?: number })[], status: keyof typeof statusConfig) => (
+    courses.length > 0 ? (
+      <Row gutter={[16, 16]}>
+        {courses.map((course) => (
+          <Col xs={24} sm={12} md={8} lg={6} key={`${status}-${course.courseID}-${course.courseGroupID}`}>
+            {renderCourseCard(course, status)}
+          </Col>
+        ))}
+      </Row>
+    ) : renderEmptyState(`暂无${statusConfig[status].text.replace('已', '')}课程`)
+  );
+
+  // Tab项定义
+  const allTabItems = [
     {
       key: 'selected',
       label: (
@@ -227,15 +208,7 @@ export const MyCoursesTabs: React.FC<MyCoursesTabsProps> = ({
           <Tag color="green">{selectedCourses.length}</Tag>
         </Space>
       ),
-      children: selectedCourses.length > 0 ? (
-        <Row gutter={[16, 16]}>
-          {selectedCourses.map((course) => (
-            <Col xs={24} sm={12} md={8} lg={6} key={`selected-${course.courseID}-${course.courseGroupID}`}>
-              {renderCourseCard(course, 'selected')}
-            </Col>
-          ))}
-        </Row>
-      ) : renderEmptyState('暂无已选课程'),
+      children: renderCourseList(selectedCourses, 'selected')
     },
     {
       key: 'preselected',
@@ -246,15 +219,7 @@ export const MyCoursesTabs: React.FC<MyCoursesTabsProps> = ({
           <Tag color="blue">{preselectedCourses.length}</Tag>
         </Space>
       ),
-      children: preselectedCourses.length > 0 ? (
-        <Row gutter={[16, 16]}>
-          {preselectedCourses.map((course) => (
-            <Col xs={24} sm={12} md={8} lg={6} key={`preselected-${course.courseID}-${course.courseGroupID}`}>
-              {renderCourseCard(course, 'preselected')}
-            </Col>
-          ))}
-        </Row>
-      ) : renderEmptyState('暂无预选课程'),
+      children: renderCourseList(preselectedCourses, 'preselected')
     },
     {
       key: 'waiting',
@@ -262,62 +227,28 @@ export const MyCoursesTabs: React.FC<MyCoursesTabsProps> = ({
         <Space>
           <WaitingIcon style={{ color: '#faad14' }} />
           <span>等待列表</span>
-          <Tag color="orange">{waitingList?.length || 0}</Tag>
+          <Tag color="orange">{waitingList.length}</Tag>
         </Space>
       ),
-      children: waitingList && waitingList.length > 0 ? (
-        <Row gutter={[16, 16]}>
-          {waitingList.map((course: CourseDisplayData & { rank: number }) => (
-            <Col xs={24} sm={12} md={8} lg={6} key={`waiting-${course.courseID}-${course.courseGroupID}`}>
-              {renderCourseCard(course, 'waiting')}
-            </Col>
-          ))}
-        </Row>
-      ) : renderEmptyState('暂无等待列表课程'),
-    },
+      children: renderCourseList(waitingList, 'waiting')
+    }
   ];
 
   // 根据学期阶段过滤显示的Tab
   const getFilteredTabItems = () => {
-    if (!semesterPhase) return tabItems;
+    if (!semesterPhase) return allTabItems;
     
-    const isPhase1 = semesterPhase.currentPhase === Phase.phase1;
-    const isPhase2 = semesterPhase.currentPhase === Phase.phase2;
-    
-    console.log('MyCoursesTabs - 过滤Tab项：', {
-      currentPhase: semesterPhase.currentPhase,
-      isPhase1,
-      isPhase2
-    });
-    
-    if (isPhase1) {
-      // 阶段1（预选阶段）：只显示预选课程Tab
-      console.log('阶段1 - 只显示预选课程Tab');
-      return tabItems.filter(tab => tab.key === 'preselected');
-    } else if (isPhase2) {
-      // 阶段2（正选阶段）：只显示已选课程和等待列表Tab
-      console.log('阶段2 - 显示已选课程和等待列表Tab');
-      return tabItems.filter(tab => tab.key === 'selected' || tab.key === 'waiting');
+    switch (semesterPhase.currentPhase) {
+      case Phase.phase1: return allTabItems.filter(tab => tab.key === 'preselected');
+      case Phase.phase2: return allTabItems.filter(tab => tab.key === 'selected' || tab.key === 'waiting');
+      default: return allTabItems;
     }
-    
-    // 其他情况：显示所有Tab
-    console.log('其他阶段 - 显示所有Tab');
-    return tabItems;
   };
 
   return (
     <Card
-      title={
-        <Space>
-          <BookOutlined style={{ color: '#ff69b4' }} />
-          <span style={{ color: '#d81b60' }}>我的课程</span>
-        </Space>
-      }
-      style={{
-        borderRadius: 12,
-        border: '1px solid rgba(255, 182, 216, 0.3)',
-        backgroundColor: 'rgba(255, 255, 255, 0.95)'
-      }}
+      title={<Space><BookOutlined style={styles.pink} /><span style={styles.darkPink}>我的课程</span></Space>}
+      style={styles.card}
     >
       <Tabs 
         items={getFilteredTabItems()}
