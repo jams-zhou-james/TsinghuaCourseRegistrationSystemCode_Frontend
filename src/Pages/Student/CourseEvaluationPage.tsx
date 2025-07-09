@@ -22,12 +22,17 @@ import { QuerySemesterPhaseStatusMessage } from 'Plugins/SemesterPhaseService/AP
 import { QuerySafeUserInfoByTokenMessage } from 'Plugins/UserAccountService/APIs/QuerySafeUserInfoByTokenMessage';
 import { QuerySafeUserInfoByUserIDListMessage } from 'Plugins/UserAccountService/APIs/QuerySafeUserInfoByUserIDListMessage';
 import { QueryCourseGroupByIDMessage } from 'Plugins/CourseManagementService/APIs/QueryCourseGroupByIDMessage';
+import { QueryCoursesByFilterMessage } from 'Plugins/CourseManagementService/APIs/QueryCoursesByFilterMessage';
 import { Rating, getRating } from 'Plugins/CourseEvaluationService/Objects/Rating';
 import { CourseEvaluation } from 'Plugins/CourseEvaluationService/Objects/CourseEvaluation';
 import { SemesterPhase } from 'Plugins/SemesterPhaseService/Objects/SemesterPhase';
 import { CourseInfo } from 'Plugins/CourseManagementService/Objects/CourseInfo';
 import { CourseGroup } from 'Plugins/CourseManagementService/Objects/CourseGroup';
 import { SafeUserInfo } from 'Plugins/UserAccountService/Objects/SafeUserInfo';
+import { PairOfGroupAndCourse } from 'Plugins/CourseManagementService/Objects/PairOfGroupAndCourse';
+import { CourseTime } from 'Plugins/CourseManagementService/Objects/CourseTime';
+import { DayOfWeek } from 'Plugins/CourseManagementService/Objects/DayOfWeek';
+import { TimePeriod } from 'Plugins/CourseManagementService/Objects/TimePeriod';
 import { sendMessage } from 'Plugins/CommonUtils/Send/SendMessage';
 import { getUserToken } from 'Globals/GlobalStore';
 
@@ -160,9 +165,86 @@ const fetchEligibleCourses = async (): Promise<CourseDisplayInfo[]> => {
 // 获取所有课程信息（用于查询评价）
 const fetchAllCourses = async (): Promise<CourseDisplayInfo[]> => {
   try {
-    // 这里简化处理，实际应该有专门的API获取所有课程
-    // 暂时返回学生的课程列表，实际应该调用获取所有课程的API
-    return await fetchEligibleCourses();
+    const userToken = getUserToken();
+    
+    // 生成完整的时间表（所有天 × 所有时间段）
+    const allTimeSlots: CourseTime[] = [];
+    const allDays = Object.values(DayOfWeek);
+    const allTimePeriods = Object.values(TimePeriod);
+    
+    for (const day of allDays) {
+      for (const period of allTimePeriods) {
+        allTimeSlots.push(new CourseTime(day, period));
+      }
+    }
+    
+    console.log('生成的完整时间表:', allTimeSlots.length, '个时间段');
+    console.log('时间表示例:', allTimeSlots.slice(0, 3));
+    
+    // 使用QueryCoursesByFilterMessage获取所有课程，传入完整时间表
+    const message = new QueryCoursesByFilterMessage(
+      userToken,
+      null, // courseGroupID
+      null, // courseGroupName  
+      null, // teacherName
+      allTimeSlots // 传入完整时间表，表示所有时间都可用
+    );
+    
+    console.log('发送查询所有课程请求:', message);
+    
+    const response = await sendMessage(message, 10000);
+    
+    if (!response.ok) {
+      console.error('API响应失败:', response.status, response.statusText);
+      throw new Error('获取所有课程失败');
+    }
+    
+    const pairs: PairOfGroupAndCourse[] = await response.json();
+    console.log('API返回的原始课程数据:', pairs);
+    console.log('返回的课程数量:', pairs.length);
+    
+    // 打印前几个课程的详细信息
+    if (pairs.length > 0) {
+      console.log('前3个课程详情:', pairs.slice(0, 3).map(pair => ({
+        courseID: pair.Course.courseID,
+        courseName: pair.CourseGroup.name,
+        teacherID: pair.Course.teacherID,
+        courseGroupID: pair.CourseGroup.courseGroupID
+      })));
+    }
+    
+    // 获取所有教师ID，用于批量查询教师信息
+    const teacherIDs = [...new Set(pairs.map(pair => pair.Course.teacherID))];
+    console.log('需要查询的教师IDs:', teacherIDs);
+    
+    // 批量获取教师信息
+    const teachersMessage = new QuerySafeUserInfoByUserIDListMessage(teacherIDs);
+    const teachersResponse = await sendMessage(teachersMessage, 10000);
+    const teachers = new Map<number, SafeUserInfo>();
+    
+    if (teachersResponse.ok) {
+      const teacherInfos: SafeUserInfo[] = await teachersResponse.json();
+      console.log('获取到的教师信息:', teacherInfos);
+      teacherInfos.forEach(teacher => {
+        teachers.set(teacher.userID, teacher);
+      });
+    } else {
+      console.error('获取教师信息失败:', teachersResponse.status);
+    }
+    
+    // 组装显示用的课程信息
+    const displayCourses: CourseDisplayInfo[] = pairs.map(pair => ({
+      courseID: pair.Course.courseID,
+      courseName: pair.CourseGroup.name,
+      teacherName: teachers.get(pair.Course.teacherID)?.userName || '未知教师',
+      semester: new Date().getFullYear() + '年度', // 简化处理，实际可能需要从其他API获取
+      courseGroupID: pair.CourseGroup.courseGroupID
+    }));
+    
+    console.log('最终组装的课程显示信息:', displayCourses);
+    console.log('最终课程数量:', displayCourses.length);
+    
+    return displayCourses;
   } catch (error) {
     console.error('获取所有课程信息失败:', error);
     throw error;
@@ -333,6 +415,54 @@ export const CourseEvaluationPage: React.FC = () => {
   const [searchLoading, setSearchLoading] = useState<boolean>(false);
   const [evaluationsLoading, setEvaluationsLoading] = useState<boolean>(false);
 
+  // 修复ResizeObserver错误
+  useEffect(() => {
+    const originalError = console.error;
+    const originalWarn = console.warn;
+    
+    console.error = (...args) => {
+      if (typeof args[0] === 'string' && args[0].includes('ResizeObserver')) {
+        return; // 抑制ResizeObserver错误
+      }
+      if (typeof args[0] === 'string' && args[0].includes('loop limit exceeded')) {
+        return; // 抑制ResizeObserver loop limit错误
+      }
+      originalError.call(console, ...args);
+    };
+    
+    console.warn = (...args) => {
+      if (typeof args[0] === 'string' && args[0].includes('ResizeObserver')) {
+        return; // 抑制ResizeObserver警告
+      }
+      originalWarn.call(console, ...args);
+    };
+
+    // 全局错误处理
+    const handleError = (event: ErrorEvent) => {
+      if (event.message.includes('ResizeObserver')) {
+        event.preventDefault();
+        return;
+      }
+    };
+    
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      if (event.reason?.toString().includes('ResizeObserver')) {
+        event.preventDefault();
+        return;
+      }
+    };
+
+    window.addEventListener('error', handleError);
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+
+    return () => {
+      console.error = originalError;
+      console.warn = originalWarn;
+      window.removeEventListener('error', handleError);
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+    };
+  }, []);
+
   // 检查权限和阶段
   useEffect(() => {
     const checkPermission = async () => {
@@ -359,12 +489,18 @@ export const CourseEvaluationPage: React.FC = () => {
 
     const loadData = async () => {
       setLoading(true);
+      console.log('开始加载课程评价页面数据...');
       try {
         const [courses, evaluations, allCoursesData] = await Promise.all([
           fetchEligibleCourses(),
           fetchExistingEvaluations(),
           fetchAllCourses()
         ]);
+        console.log('数据加载完成:', {
+          eligibleCourses: courses.length,
+          existingEvaluations: evaluations.length, 
+          allCourses: allCoursesData.length
+        });
         setEligibleCourses(courses);
         setExistingEvaluations(evaluations);
         setAllCourses(allCoursesData);
@@ -381,26 +517,44 @@ export const CourseEvaluationPage: React.FC = () => {
 
   // 搜索课程
   const handleCourseSearch = (searchCriteria: CourseSearchCriteria) => {
+    console.log('执行课程搜索，搜索条件:', searchCriteria);
+    console.log('当前所有课程数量:', allCourses.length);
+    
     setSearchLoading(true);
     
-    setTimeout(() => {
-      let filtered = allCourses;
-      
-      if (searchCriteria.courseName) {
-        filtered = filtered.filter(course => 
-          course.courseName.toLowerCase().includes(searchCriteria.courseName!.toLowerCase())
-        );
-      }
-      
-      if (searchCriteria.teacherName) {
-        filtered = filtered.filter(course => 
-          course.teacherName.toLowerCase().includes(searchCriteria.teacherName!.toLowerCase())
-        );
-      }
-      
-      setFilteredCourses(filtered);
-      setSearchLoading(false);
-    }, 500);
+    // 使用requestAnimationFrame来避免ResizeObserver错误
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        let filtered = allCourses;
+        
+        if (searchCriteria.courseName) {
+          console.log('按课程名过滤:', searchCriteria.courseName);
+          filtered = filtered.filter(course => 
+            course.courseName.toLowerCase().includes(searchCriteria.courseName!.toLowerCase())
+          );
+          console.log('按课程名过滤后数量:', filtered.length);
+        }
+        
+        if (searchCriteria.teacherName) {
+          console.log('按教师名过滤:', searchCriteria.teacherName);
+          filtered = filtered.filter(course => 
+            course.teacherName.toLowerCase().includes(searchCriteria.teacherName!.toLowerCase())
+          );
+          console.log('按教师名过滤后数量:', filtered.length);
+        }
+        
+        console.log('最终搜索结果:', { 
+          searchCriteria, 
+          totalCourses: allCourses.length, 
+          filteredCount: filtered.length,
+          filtered: filtered.slice(0, 5) // 打印前5个用于调试
+        });
+        
+        setFilteredCourses(filtered);
+        // 延迟设置loading状态，确保DOM更新完成
+        setTimeout(() => setSearchLoading(false), 100);
+      }, 200);
+    });
   };
 
   // 查看课程评价
@@ -759,7 +913,7 @@ export const CourseEvaluationPage: React.FC = () => {
       title={
         <Space>
           <SearchOutlined style={{ color: '#ff69b4' }} />
-          <span style={{ color: '#d81b60' }}>课程查询</span>
+          <span style={{ color: '#d81b60' }}>课程评价查询</span>
         </Space>
       }
       style={{
@@ -788,17 +942,27 @@ export const CourseEvaluationPage: React.FC = () => {
           </Col>
         </Row>
         <Form.Item>
-          <Button 
-            type="primary" 
-            htmlType="submit"
-            style={{
-              backgroundColor: '#ff69b4',
-              borderColor: '#ff69b4'
-            }}
-            loading={searchLoading}
-          >
-            搜索课程
-          </Button>
+          <Space>
+            <Button 
+              type="primary" 
+              htmlType="submit"
+              style={{
+                backgroundColor: '#ff69b4',
+                borderColor: '#ff69b4'
+              }}
+              loading={searchLoading}
+            >
+              搜索课程
+            </Button>
+            <Button 
+              onClick={() => {
+                console.log('重置搜索，显示所有课程');
+                setFilteredCourses(allCourses);
+              }}
+            >
+              显示全部
+            </Button>
+          </Space>
         </Form.Item>
       </Form>
 
