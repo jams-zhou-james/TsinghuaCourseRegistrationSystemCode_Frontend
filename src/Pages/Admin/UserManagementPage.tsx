@@ -17,6 +17,8 @@ import { getUserToken } from 'Globals/GlobalStore';
 import { QueryAllUsersMessage } from 'Plugins/UserAccountService/APIs/QueryAllUsersMessage';
 import { CreateUserAccountMessage } from 'Plugins/UserAccountService/APIs/CreateUserAccountMessage';
 import { UpdateUserAccountMessage } from 'Plugins/UserAccountService/APIs/UpdateUserAccountMessage';
+import WithRoleBasedTopbarLayout from '../../Layouts/WithRoleBasedTopbarLayout';
+import { useUserToken } from 'Plugins/CommonUtils/Store/UserInfoStore';
 
 export const userManagementPagePath = '/admin/user-management';
 
@@ -27,6 +29,7 @@ const UserManagementPage: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [editUser, setEditUser] = useState<UserInfo | null>(null);
   const [form] = Form.useForm();
+  const userToken = useUserToken();
 
   // 获取所有用户
   const fetchUsers = async () => {
@@ -234,9 +237,10 @@ const UserManagementPage: React.FC = () => {
       ),
     },
   ];
-
+  console.log(userToken)
   return (
     <WithRoleBasedSidebarLayout role={UserRole.superAdmin}>
+      <WithRoleBasedTopbarLayout userToken={getUserToken()} role={UserRole.superAdmin}>
       <BackgroundLayout
         gradient="linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)"
         contentMaxWidth="90%"
@@ -323,6 +327,7 @@ const UserManagementPage: React.FC = () => {
           </Modal>
         </div>
       </BackgroundLayout>
+      </WithRoleBasedTopbarLayout>
     </WithRoleBasedSidebarLayout>
   );
 };
