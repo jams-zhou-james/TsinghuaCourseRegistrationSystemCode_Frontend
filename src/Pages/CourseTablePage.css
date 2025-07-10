@@ -16,7 +16,7 @@
 
 /* Ant Design Table 行间色样式 */
 .course-table-row-even .ant-table-cell {
-  background-color: #edf7ff !important; /* 浅蓝色 */
+  background-color: #ffedfd !important; /* 浅蓝色 */
 }
 
 .course-table-row-odd .ant-table-cell {

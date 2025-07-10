@@ -24,6 +24,7 @@ import {
   useCourseData,
   useCourseActions
 } from './Components';
+import './CourseSelectionPage.css'
 
 const { Title, Text } = Typography;
 
@@ -171,14 +172,16 @@ export const CourseSelectionPage: React.FC = () => {
             defaultActiveKey="all"
             centered
             size="large"
+  tabBarStyle={{ color: 'pink' }}
+  className="custom-tabs"
             items={[
               {
                 key: 'all',
                 label: (
                   <Space>
                     <TeamOutlined />
-                    <span>所有课程</span>
-                    <Tag color="blue">{courses.length}</Tag>
+                    <span style={{fontWeight: 'bold'}}>所有课程</span>
+                    <Tag color="pink">{courses.length}</Tag>
                   </Space>
                 ),
                 children: (
@@ -203,8 +206,8 @@ export const CourseSelectionPage: React.FC = () => {
                 key: 'mycourses',
                 label: (
                   <Space>
-                    <span>我的课程</span>
-                    <Tag color="green">
+                    <span style={{fontWeight: 'bold'}}>我的课程</span>
+                    <Tag color="pink">
                       {selectedCourses.length + preselectedCourses.length + (waitingList?.length || 0)}
                     </Tag>
                   </Space>

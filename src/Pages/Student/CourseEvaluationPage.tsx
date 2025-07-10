@@ -36,6 +36,9 @@ import { DayOfWeek } from 'Plugins/CourseManagementService/Objects/DayOfWeek';
 import { TimePeriod } from 'Plugins/CourseManagementService/Objects/TimePeriod';
 import { sendMessage } from 'Plugins/CommonUtils/Send/SendMessage';
 import { getUserToken } from 'Globals/GlobalStore';
+import WithRoleBasedTopbarLayout from '../../Layouts/WithRoleBasedTopbarLayout';
+import { WithRoleBasedBackgroundLayout } from '../../Layouts/BackgroundLayout';
+import { WithRoleBasedTitleLayout } from '../../Layouts/TitleLayout';
 
 const { Title, Text } = Typography;
 
@@ -102,31 +105,27 @@ export const CourseEvaluationPage: React.FC = () => {
   // 渲染组件
   if (permissionLoading) {
     return (
-      <DefaultLayout role={userRole}>
-        <div style={{ 
-          padding: '24px',
-          minHeight: '100vh',
-          background: 'linear-gradient(135deg, rgb(255, 222, 237) 0%, rgb(254, 201, 226) 100%)'
-        }}>
+    <DefaultLayout role={userRole}>
+      <WithRoleBasedTopbarLayout role={userRole} userToken={userToken}>
+        <WithRoleBasedBackgroundLayout role={userRole}>
           <div style={{ textAlign: 'center', padding: '50px' }}>
             <Spin size="large" />
             <div style={{ marginTop: 16 }}>
               <Text>正在检查评价权限...</Text>
             </div>
           </div>
-        </div>
+          </WithRoleBasedBackgroundLayout>
+          </WithRoleBasedTopbarLayout>
       </DefaultLayout>
     );
   }
 
   if (!canEvaluate) {
     return (
-      <DefaultLayout role={userRole}>
-        <div style={{ 
-          padding: '24px',
-          minHeight: '100vh',
-          background: 'linear-gradient(135deg, rgb(255, 222, 237) 0%, rgb(254, 201, 226) 100%)'
-        }}>
+      
+    <DefaultLayout role={userRole}>
+      <WithRoleBasedTopbarLayout role={userRole} userToken={userToken}>
+        <WithRoleBasedBackgroundLayout role={userRole}>
           <div style={{ maxWidth: 1200, margin: '0 auto' }}>
             <Title level={2} style={{ color: '#d81b60', textAlign: 'center', marginBottom: '24px' }}>
               课程评价
@@ -143,22 +142,18 @@ export const CourseEvaluationPage: React.FC = () => {
               }}
             />
           </div>
-        </div>
+          </WithRoleBasedBackgroundLayout>
+          </WithRoleBasedTopbarLayout>
       </DefaultLayout>
     );
   }
 
   return (
     <DefaultLayout role={userRole}>
-      <div style={{ 
-        padding: '24px',
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, rgb(255, 222, 237) 0%, rgb(254, 201, 226) 100%)'
-      }}>
-        <div style={{ maxWidth: 1400, margin: '0 auto' }}>
-          <Title level={2} style={{ color: '#d81b60', textAlign: 'center', marginBottom: '24px' }}>
-            课程评价中心
-          </Title>
+      <WithRoleBasedTopbarLayout role={userRole} userToken={userToken}>
+        <WithRoleBasedBackgroundLayout role={userRole}>
+          <WithRoleBasedTitleLayout role={userRole} title="课程评价中心">
+      
           
           <Alert
             message={permissionMessage}
@@ -205,8 +200,9 @@ export const CourseEvaluationPage: React.FC = () => {
               getExistingEvaluation={getExistingEvaluation}
             />
           )}
-        </div>
-      </div>
+      </WithRoleBasedTitleLayout>
+        </WithRoleBasedBackgroundLayout>
+      </WithRoleBasedTopbarLayout>
     </DefaultLayout>
   );
 };

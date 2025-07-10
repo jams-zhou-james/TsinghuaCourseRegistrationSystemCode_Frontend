@@ -244,7 +244,7 @@ const UserManagementPage: React.FC = () => {
       <WithRoleBasedBackgroundLayout role={UserRole.superAdmin}>
         <div style={{ width: '100%' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-            <h2 style={{ fontSize: 24, color: '#1e40af' }}>用户管理</h2>
+            <h2 style={{ fontSize: 24, color: '#0369a1' }}>用户管理</h2>
             <div>
               <Button type="primary" onClick={openAdd} style={{ marginRight: 16 }}>
                 新增用户

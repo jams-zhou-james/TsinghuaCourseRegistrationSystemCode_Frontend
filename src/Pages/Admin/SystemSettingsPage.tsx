@@ -219,7 +219,7 @@ const SystemSettingsPage: React.FC = () => {
         <WithRoleBasedTitleLayout title="系统设置" role={UserRole.superAdmin}>
   {/* 阶段显示 - 固定高度 */}
   <div style={{ minHeight: 40, marginBottom: 16 }}>
-    <Typography.Text strong style={{ display: 'block' }}>
+    <Typography.Text strong style={{ display: 'block', fontSize: 20 }}>
       当前阶段：{loading ? '加载中...' : config.phase === Phase.phase1 ? '阶段 1' : '阶段 2'}
     </Typography.Text>
   </div>
@@ -243,10 +243,10 @@ const SystemSettingsPage: React.FC = () => {
           alignItems: 'center',
           padding: '12px 16px',
           borderRadius: 8,
-          background: 'rgba(255, 255, 255, 0.6)',
-          boxShadow: '0 1px 1px rgba(0, 0, 0, 0.03)'
+          background: 'rgb(64, 115, 205)',
+          boxShadow: '0 5px 5px rgba(0, 0, 0, 0.03)'
         }}>
-          <Typography.Text>{item.label}</Typography.Text>
+          <Typography.Text style={{color: 'rgb(255, 255, 255)', fontWeight: 'bold'}}>{item.label}</Typography.Text>
           <Switch
             checked={config[item.key] as boolean}
             onChange={v => updateConfig(item.key, v)}

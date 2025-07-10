@@ -21,6 +21,8 @@ import { TimePeriod } from 'Plugins/CourseManagementService/Objects/TimePeriod';
 import { PairOfCourseAndRank } from 'Plugins/CourseSelectionService/Objects/PairOfCourseAndRank';
 import { QueryCourseGroupByIDMessage } from 'Plugins/CourseManagementService/APIs/QueryCourseGroupByIDMessage';
 import { CourseGroup } from 'Plugins/CourseManagementService/Objects/CourseGroup';
+import { WithRoleBasedTitleLayout } from '../Layouts/TitleLayout';
+import WithRoleBasedTopbarLayout from '../Layouts/WithRoleBasedTopbarLayout';
 
 // 定义课程状态枚举
 enum CourseStatus {
@@ -395,15 +397,24 @@ const CourseTablePage: React.FC = () => {
     if (!course) {
       return <div style={{ height: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d9d9d9' }}></div>;
     }
+    // const [isHovered, setIsHovered] = React.useState(false);
 
     // 根据课程状态确定卡片样式
-    let cardStyle = {
+    const cardStyle = {
       margin: 0,
-      backgroundColor: 'rgb(255, 240, 249)', // 默认样式
-      border: '1px solid #d9d9d9',
+      backgroundColor: userRole === UserRole.teacher? 
+       (true? 'rgb(187, 114, 233)':'rgb(214, 172, 241)')
+       :(true?'rgb(233, 126, 190)':'rgb(230, 182, 210)'), // 默认样式
+      border: '0px',
       borderRadius: '6px',
       minHeight: '80px',
-      boxShadow: 'none'
+      boxShadow: '0 5px 5px rgba(0, 0, 0, 0.1)',
+      transition: 'background-color 0.3s ease', // 添加过渡效果
+    };
+
+    const hoverStyle: React.CSSProperties = {
+      ...cardStyle,
+      backgroundColor: 'rgb(255, 228, 230)', // 悬停时的淡粉色
     };
 
     let statusTag = null;
@@ -411,13 +422,13 @@ const CourseTablePage: React.FC = () => {
     if (userRole === UserRole.student && course.status) {
       switch (course.status) {
         case CourseStatus.SELECTED:
-          cardStyle.backgroundColor = 'rgb(240, 255, 240)'; // 浅绿色
-          cardStyle.border = '1px solid #52c41a';
-          statusTag = <Tag color="success" style={{ fontSize: '10px' }}>已选</Tag>;
+          // cardStyle.backgroundColor = 'rgb(196, 61, 113)'; // 浅绿色
+          // cardStyle.border = '0px solid #52c41a';
+          statusTag = <Tag color="rgb(7, 182, 13)" style={{ fontSize: '10px', fontWeight: 'bold', color: 'rgb(255, 255, 255)' }}>已选</Tag>;
           break;
         case CourseStatus.WAITING:
-          cardStyle.backgroundColor = 'rgb(255, 245, 230)'; // 浅橙色
-          cardStyle.border = '1px solid #fa8c16';
+          // cardStyle.backgroundColor = 'rgb(255, 245, 230)'; // 浅橙色
+          // cardStyle.border = '1px solid #fa8c16';
           statusTag = (
             <Tag color="warning" style={{ fontSize: '10px' }}>
               候补{course.waitingRank ? ` (第${course.waitingRank}位)` : ''}
@@ -425,8 +436,8 @@ const CourseTablePage: React.FC = () => {
           );
           break;
         case CourseStatus.PRESELECTED:
-          cardStyle.backgroundColor = 'rgb(240, 245, 255)'; // 浅蓝色
-          cardStyle.border = '1px solid #1890ff';
+          // cardStyle.backgroundColor = 'rgb(240, 245, 255)'; // 浅蓝色
+          // cardStyle.border = '1px solid #1890ff';
           statusTag = <Tag color="processing" style={{ fontSize: '10px' }}>预选</Tag>;
           break;
         default:
@@ -438,6 +449,7 @@ const CourseTablePage: React.FC = () => {
       <Card
         size="small"
         style={cardStyle}
+        hoverable
         bodyStyle={{ padding: '8px' }}
       >
         <div style={{ textAlign: 'center' }}>
@@ -448,7 +460,7 @@ const CourseTablePage: React.FC = () => {
           )}
           <div style={{ 
             fontWeight: 'bold', 
-            color: '#0050b3', 
+            color: '#fff', 
             fontSize: '14px',
             marginBottom: '4px',
             overflow: 'hidden',
@@ -458,14 +470,14 @@ const CourseTablePage: React.FC = () => {
             {course.name}
           </div>
           <div style={{ 
-            color: '#003a8c', 
+            color: '#fff', 
             fontSize: '12px',
             marginBottom: '2px'
           }}>
             {course.teacher}
           </div>
           <div style={{ 
-            color: '#096dd9', 
+            color: '#fff', 
             fontSize: '11px',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
@@ -672,11 +684,9 @@ const CourseTablePage: React.FC = () => {
   ];
 
   const renderContent = () => (
-    <div style={{ width: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-        <h2 style={{ fontSize: 24, color: '#1e40af', fontWeight: 700, margin: 0 }}>课程表</h2>
-      </div>
-      <div style={{ background: '#fff', borderRadius: 0, padding: 0, minHeight: 400 }}>
+    <WithRoleBasedTitleLayout title="课程表" role={userRole}>
+    
+      <div style={{ background: 'transparent', borderRadius: 0, padding: 0, minHeight: 400 }}>
         <Table
           dataSource={tableData}
           columns={columns}
@@ -688,13 +698,14 @@ const CourseTablePage: React.FC = () => {
           }
           style={{
             backgroundColor: '#fff',
-            width: '100%'
+            width: '100%',
+            boxShadow: '10px 10px 10px rgba(0,0,0,0.1)'
           }}
         />
       </div>
       {/* 显示无固定时间的课程 */}
       {renderUnscheduledCourses()}
-    </div>
+    </WithRoleBasedTitleLayout>
   );
 
   return (
@@ -705,6 +716,7 @@ const CourseTablePage: React.FC = () => {
         </div>
       ) : (
         <WithRoleBasedSidebarLayout role={userRole}>
+          <WithRoleBasedTopbarLayout role={userRole} userToken={userToken}>
           <WithRoleBasedBackgroundLayout role={userRole}>
             {loading ? (
               <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
@@ -718,6 +730,7 @@ const CourseTablePage: React.FC = () => {
               renderContent()
             )}
           </WithRoleBasedBackgroundLayout>
+          </WithRoleBasedTopbarLayout>
         </WithRoleBasedSidebarLayout>
       )}
     </>

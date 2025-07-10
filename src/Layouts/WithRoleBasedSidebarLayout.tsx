@@ -21,7 +21,7 @@ const WithRoleBasedSidebarLayout: React.FC<WithRoleBasedSidebarLayoutProps> = ({
   const sidebarWidth = collapsed ? 80 : 200;
 
   return (
-    <Layout style={{ minHeight: '96vh' }}>
+    <Layout style={{ minHeight: '96vh', height: '100%' }}>
       {/* Fixed Sidebar */}
       <div
         style={{

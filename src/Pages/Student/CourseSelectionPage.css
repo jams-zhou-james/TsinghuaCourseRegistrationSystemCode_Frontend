@@ -1,0 +1,11 @@
+.custom-tabs .ant-tabs-tab {
+  color: rgb(196, 2, 109);
+}
+
+.custom-tabs .ant-tabs-tab:hover {
+  color: rgb(229, 63, 179);
+}
+
+.custom-tabs .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: rgb(239, 81, 192);
+}

@@ -55,6 +55,7 @@ const BackgroundLayout: React.FC<BackgroundLayoutProps> = ({
     <Layout
       style={{
         minHeight: '80vh',
+        height: '100%',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
