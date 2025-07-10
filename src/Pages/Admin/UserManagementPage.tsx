@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { UserInfo } from 'Plugins/UserAccountService/Objects/UserInfo';
 import { UserRole, userRoleList } from 'Plugins/UserAccountService/Objects/UserRole';
 import WithRoleBasedSidebarLayout from "../../Layouts/WithRoleBasedSidebarLayout";
-import BackgroundLayout from '../../Layouts/BackgroundLayout';
+import BackgroundLayout, { WithRoleBasedBackgroundLayout } from '../../Layouts/BackgroundLayout';
 import { 
   Button, 
   Table, 
@@ -241,11 +241,7 @@ const UserManagementPage: React.FC = () => {
   return (
     <WithRoleBasedSidebarLayout role={UserRole.superAdmin}>
       <WithRoleBasedTopbarLayout userToken={getUserToken()} role={UserRole.superAdmin}>
-      <BackgroundLayout
-        gradient="linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)"
-        contentMaxWidth="90%"
-        contentStyle={{ maxWidth: 1200 }}
-      >
+      <WithRoleBasedBackgroundLayout role={UserRole.superAdmin}>
         <div style={{ width: '100%' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
             <h2 style={{ fontSize: 24, color: '#1e40af' }}>用户管理</h2>
@@ -326,7 +322,7 @@ const UserManagementPage: React.FC = () => {
             </Form>
           </Modal>
         </div>
-      </BackgroundLayout>
+      </WithRoleBasedBackgroundLayout>
       </WithRoleBasedTopbarLayout>
     </WithRoleBasedSidebarLayout>
   );

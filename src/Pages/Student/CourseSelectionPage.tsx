@@ -13,8 +13,8 @@ import WithRoleBasedSidebarLayout from '../../Layouts/WithRoleBasedSidebarLayout
 import WithRoleBasedTopbarLayout from '../../Layouts/WithRoleBasedTopbarLayout';
 import { UserRole } from 'Plugins/UserAccountService/Objects/UserRole';
 import { Phase } from 'Plugins/SemesterPhaseService/Objects/Phase';
-import TitleLayout from '../../Layouts/TitleLayout'
-import BackgroundLayout from '../../Layouts/BackgroundLayout';
+import TitleLayout, { WithRoleBasedTitleLayout } from '../../Layouts/TitleLayout'
+import BackgroundLayout, { WithRoleBasedBackgroundLayout } from '../../Layouts/BackgroundLayout';
 // 组件和hooks导入
 import { 
   CourseSearchForm, 
@@ -64,12 +64,11 @@ export const CourseSelectionPage: React.FC = () => {
     return (
       <WithRoleBasedSidebarLayout role={UserRole.student}>
         <WithRoleBasedTopbarLayout role={UserRole.student} userToken={userToken || ''}>
-          <BackgroundLayout 
-  gradient = 'linear-gradient(135deg,rgb(255, 235, 255) 0%,rgb(255, 231, 249) 100%)'>
-          <TitleLayout title='选课中心'>  
+          <WithRoleBasedBackgroundLayout role={UserRole.student}>
+                  <WithRoleBasedTitleLayout title="选课中心" role={UserRole.student}>
             {children}
-          </TitleLayout>
-          </BackgroundLayout>
+            </WithRoleBasedTitleLayout>
+            </WithRoleBasedBackgroundLayout>
         </WithRoleBasedTopbarLayout>
       </WithRoleBasedSidebarLayout>
     );

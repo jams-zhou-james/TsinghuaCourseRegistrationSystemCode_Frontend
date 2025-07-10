@@ -10,7 +10,7 @@ import { useCourseGroups } from './Components/hooks/useCourseGroups';
 import { useCourses } from './Components/hooks/useCourses';
 import { useAuthTeachers } from './Components/hooks/useAuthTeachers';
 import WithRoleBasedSidebarLayout from '../../Layouts/WithRoleBasedSidebarLayout';
-import BackgroundLayout from '../../Layouts/BackgroundLayout';
+import BackgroundLayout, { WithRoleBasedBackgroundLayout } from '../../Layouts/BackgroundLayout';
 import { useUserToken } from 'Globals/GlobalStore';
 import { QuerySafeUserInfoByTokenMessage } from 'Plugins/UserAccountService/APIs/QuerySafeUserInfoByTokenMessage';
 import { SafeUserInfo } from 'Plugins/UserAccountService/Objects/SafeUserInfo';
@@ -20,6 +20,7 @@ import { CourseTime } from 'Plugins/CourseManagementService/Objects/CourseTime';
 import { DayOfWeek, dayOfWeekList } from 'Plugins/CourseManagementService/Objects/DayOfWeek';
 import { TimePeriod, timePeriodList } from 'Plugins/CourseManagementService/Objects/TimePeriod';
 import WithRoleBasedTopbarLayout from '../../Layouts/WithRoleBasedTopbarLayout';
+import { WithRoleBasedTitleLayout } from 'Layouts/TitleLayout';
 
 // 获取当前用户Token
 const userRole: UserRole = UserRole.teacher;
@@ -238,13 +239,9 @@ useEffect(() => {
   return (
     <WithRoleBasedSidebarLayout role={userRole}>
       <WithRoleBasedTopbarLayout role={userRole} userToken={userToken}>
-      <BackgroundLayout 
-        gradient="linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)"
-        contentMaxWidth="90%"
-        contentStyle={{ maxWidth: 1200 }}
-      >
+      <WithRoleBasedBackgroundLayout role={UserRole.teacher}>
         {renderContent()}
-      </BackgroundLayout>
+        </WithRoleBasedBackgroundLayout>
       </WithRoleBasedTopbarLayout>
     </WithRoleBasedSidebarLayout>
   );

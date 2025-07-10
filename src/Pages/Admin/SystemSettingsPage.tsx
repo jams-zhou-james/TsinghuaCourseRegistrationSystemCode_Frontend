@@ -5,7 +5,7 @@ export const systemSettingsPagePath = "/admin/system-settings"
 import React, { useState, useEffect } from 'react';
 import { Card, Switch, Button, Typography, Divider, message, Skeleton } from 'antd';
 import DefaultLayout from '../../Layouts/WithRoleBasedSidebarLayout';
-import BackgroundLayout from '../../Layouts/BackgroundLayout';
+import BackgroundLayout, { WithRoleBasedBackgroundLayout } from '../../Layouts/BackgroundLayout';
 import { UserRole } from '../../Plugins/UserAccountService/Objects/UserRole';
 import { useUserToken } from 'Globals/GlobalStore';
 import { QuerySemesterPhaseStatusMessage } from 'Plugins/SemesterPhaseService/APIs/QuerySemesterPhaseStatusMessage';
@@ -16,7 +16,8 @@ import { Phase } from 'Plugins/SemesterPhaseService/Objects/Phase';
 import { Permissions } from 'Plugins/SemesterPhaseService/Objects/Permissions'
 import { SemesterPhase } from 'Plugins/SemesterPhaseService/Objects/SemesterPhase';
 import WithRoleBasedTopbarLayout from '../../Layouts/WithRoleBasedTopbarLayout';
-import TitleLayout from '../../Layouts/TitleLayout';
+import TitleLayout, { WithRoleBasedTitleLayout } from '../../Layouts/TitleLayout';
+import WithRoleBasedSidebarLayout from '../../Layouts/WithRoleBasedSidebarLayout';
 
 interface SystemConfig {
   phase: Phase;
@@ -214,8 +215,8 @@ const SystemSettingsPage: React.FC = () => {
     <DefaultLayout role={UserRole.superAdmin}>
       
       <WithRoleBasedTopbarLayout userToken={userToken} role={UserRole.superAdmin}>
-      <BackgroundLayout>
-        <TitleLayout title="系统设置">
+      <WithRoleBasedBackgroundLayout role={UserRole.superAdmin}>
+        <WithRoleBasedTitleLayout title="系统设置" role={UserRole.superAdmin}>
   {/* 阶段显示 - 固定高度 */}
   <div style={{ minHeight: 40, marginBottom: 16 }}>
     <Typography.Text strong style={{ display: 'block' }}>
@@ -308,9 +309,8 @@ const SystemSettingsPage: React.FC = () => {
         </div>
       </div>
     )}
-  </div>
-  </TitleLayout>
-      </BackgroundLayout>
+  </div></WithRoleBasedTitleLayout>
+          </WithRoleBasedBackgroundLayout>
       </WithRoleBasedTopbarLayout>
     </DefaultLayout>
   );

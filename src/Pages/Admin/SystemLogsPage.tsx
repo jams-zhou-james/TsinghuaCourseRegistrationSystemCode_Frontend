@@ -3,14 +3,15 @@ export const systemLogsPagePath = "/admin/log"
 import React, { useEffect, useState } from 'react';
 import { Card, Table, Button, Typography, DatePicker, Input, message, Spin, Space } from 'antd';
 import DefaultLayout from '../../Layouts/WithRoleBasedSidebarLayout';
-import BackgroundLayout from '../../Layouts/BackgroundLayout';
+import BackgroundLayout, { WithRoleBasedBackgroundLayout } from '../../Layouts/BackgroundLayout';
 import { UserRole } from '../../Plugins/UserAccountService/Objects/UserRole';
 import { useUserToken } from 'Globals/GlobalStore';
 import { QuerySystemLogsMessage } from 'Plugins/SystemLogService/APIs/QuerySystemLogsMessage';
 import { SystemLogEntry } from 'Plugins/SystemLogService/Objects/SystemLogEntry';
 import dayjs from 'dayjs';
 import WithRoleBasedTopbarLayout from '../../Layouts/WithRoleBasedTopbarLayout';
-import TitleLayout from '../../Layouts/TitleLayout';
+import TitleLayout, { WithRoleBasedTitleLayout } from '../../Layouts/TitleLayout';
+import WithRoleBasedSidebarLayout from '../../Layouts/WithRoleBasedSidebarLayout';
 
 const { RangePicker } = DatePicker;
 
@@ -97,12 +98,8 @@ const SystemLogsPage: React.FC = () => {
   return (
     <DefaultLayout role={UserRole.superAdmin}>
       <WithRoleBasedTopbarLayout userToken={userToken} role={UserRole.superAdmin}>
-      <BackgroundLayout
-        gradient="linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)"
-        contentMaxWidth="90%"
-        contentStyle={{ maxWidth: 1200 }}
-      >
-        <TitleLayout title="系统日志">
+      <WithRoleBasedBackgroundLayout role={UserRole.superAdmin}>
+        <WithRoleBasedTitleLayout title="系统日志" role={UserRole.superAdmin}>
           <Card
             style={{ 
               margin: '0 auto', 
@@ -150,8 +147,8 @@ const SystemLogsPage: React.FC = () => {
               </Spin>
             </Space>
           </Card>
-        </TitleLayout>
-      </BackgroundLayout>
+        </WithRoleBasedTitleLayout>
+        </WithRoleBasedBackgroundLayout>
       </WithRoleBasedTopbarLayout>
     </DefaultLayout>
   );

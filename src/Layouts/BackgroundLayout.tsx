@@ -2,6 +2,7 @@
 import React from 'react';
 import { Layout } from 'antd';
 import { LayoutProps } from 'antd/lib/layout';
+import { UserRole } from 'Plugins/UserAccountService/Objects/UserRole';
 
 interface BackgroundLayoutProps extends LayoutProps {
   gradient?: string;
@@ -9,7 +10,36 @@ interface BackgroundLayoutProps extends LayoutProps {
   contentMaxWidth?: number | string;
   contentPadding?: number | string;
   contentStyle?: React.CSSProperties;
-}
+};
+
+const studentBackgroundLayoutProps: BackgroundLayoutProps = {
+  gradient: 'linear-gradient(135deg,rgb(255, 252, 254) 0%,rgb(253, 233, 240) 100%)'
+};
+
+const teacherBackgroundLayoutProps: BackgroundLayoutProps = {
+  gradient: 'linear-gradient(135deg, #ede9fe 0%,rgb(224, 229, 249) 100%)'
+};
+
+const adminBackgroundLayoutProps: BackgroundLayoutProps = {
+  gradient: 'linear-gradient(135deg,rgb(233, 243, 254) 0%,rgb(224, 225, 249) 100%)'
+};
+
+const defaultBackgroundLayoutProps: BackgroundLayoutProps = {
+  gradient: 'linear-gradient(135deg, #ede9fe 0%,rgb(224, 229, 249) 100%)'
+};
+
+const getBackgroundPropsByRole = (role: UserRole): BackgroundLayoutProps => {
+  switch (role) {
+    case UserRole.student:
+      return studentBackgroundLayoutProps;
+    case UserRole.teacher:
+      return teacherBackgroundLayoutProps;
+    case UserRole.superAdmin:
+      return adminBackgroundLayoutProps;
+    default:
+      return defaultBackgroundLayoutProps;
+  }
+};
 
 const BackgroundLayout: React.FC<BackgroundLayoutProps> = ({
   gradient = 'linear-gradient(135deg, #ede9fe 0%,rgb(224, 229, 249) 100%)',
@@ -20,6 +50,7 @@ const BackgroundLayout: React.FC<BackgroundLayoutProps> = ({
   children,
   ...layoutProps
 }) => {
+  console.log('gradient', gradient)
   return (
     <Layout
       style={{
@@ -100,5 +131,36 @@ const BackgroundLayout: React.FC<BackgroundLayoutProps> = ({
   );
 };
 
-export default BackgroundLayout;
+interface WithRoleBasedBackgroundLayoutProps {
+  children: React.ReactNode;
+  role: UserRole;
+  blurCircles?: boolean;
+  contentMaxWidth?: number | string;
+  contentPadding?: number | string;
+  contentStyle?: React.CSSProperties;
+};
 
+export const WithRoleBasedBackgroundLayout: React.FC<WithRoleBasedBackgroundLayoutProps> = ({ 
+  children, 
+  role,
+  blurCircles = true,
+  contentMaxWidth = "",
+  contentPadding = 24,
+  contentStyle = {}
+}) => {
+  const roleBasedProps = getBackgroundPropsByRole(role);
+  console.log('gradient: ', roleBasedProps)
+  return (
+    <BackgroundLayout
+      {...roleBasedProps}
+      blurCircles={blurCircles}
+      contentMaxWidth={contentMaxWidth}
+      contentPadding={contentPadding}
+      contentStyle={contentStyle}
+    >
+      {children}
+    </BackgroundLayout>
+  );
+};
+
+export default BackgroundLayout;

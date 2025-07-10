@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import './CourseTablePage.css';
 import { UserRole } from 'Plugins/UserAccountService/Objects/UserRole';
 import WithRoleBasedSidebarLayout from '../Layouts/WithRoleBasedSidebarLayout';
-import BackgroundLayout from '../Layouts/BackgroundLayout';
+import BackgroundLayout, { WithRoleBasedBackgroundLayout } from '../Layouts/BackgroundLayout';
 import { Table, Card, Tag, Spin, message } from 'antd';
 import { useUserToken } from 'Globals/GlobalStore';
 import { QuerySafeUserInfoByTokenMessage } from 'Plugins/UserAccountService/APIs/QuerySafeUserInfoByTokenMessage';
@@ -705,11 +705,7 @@ const CourseTablePage: React.FC = () => {
         </div>
       ) : (
         <WithRoleBasedSidebarLayout role={userRole}>
-          <BackgroundLayout
-            gradient="linear-gradient(135deg,rgb(220, 241, 255) 0%, #e0f2fe 100%)"
-            contentMaxWidth="90%"
-            contentStyle={{ maxWidth: 1200 }}
-          >
+          <WithRoleBasedBackgroundLayout role={userRole}>
             {loading ? (
               <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
                 <Spin size="large" />
@@ -721,7 +717,7 @@ const CourseTablePage: React.FC = () => {
             ) : (
               renderContent()
             )}
-          </BackgroundLayout>
+          </WithRoleBasedBackgroundLayout>
         </WithRoleBasedSidebarLayout>
       )}
     </>
