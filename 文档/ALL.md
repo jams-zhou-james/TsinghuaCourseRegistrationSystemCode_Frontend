@@ -107,5 +107,5 @@ CRUD 分别表示增查改删。
 
 冯政玮：前端页面设计开发，UI设计（CourseSelection，CourseEvaluation，CourseTable），视频拍摄配音
 周子衡：前端页面设计开发，UI美化（Login，SystemSettings，CourseList），视频拍摄配音（主配）
-曹立：后端接口开发，视频拍摄配音
+曹立：同文生成后端功能文档及代码，修改后端代码问题，测试 API，视频拍摄配音
 魏佳泽：接口链接测试，视频剪辑
