@@ -103,9 +103,9 @@ CRUD 分别表示增查改删。
 7. 老师与学生对课程的操作 $\xrightarrow{增}$ 日志
 
 
-### Contributions
+## 项目分工
 
-冯政玮：前端页面设计开发，UI设计（CourseSelection，CourseEvaluation，CourseTable），视频拍摄配音
-周子衡：前端页面设计开发，UI美化（Login，SystemSettings，CourseList），视频拍摄配音（主配）
+冯政玮：前端页面设计开发（CourseSelection，CourseEvaluation，CourseTable），UI设计，视频拍摄配音
+周子衡：前端页面设计开发（Login，SystemSettings，CourseList），UI美化，视频拍摄配音（主配）
 曹立：同文生成后端功能文档及代码，修改后端代码问题，测试 API，视频拍摄配音
 魏佳泽：接口链接测试，视频剪辑

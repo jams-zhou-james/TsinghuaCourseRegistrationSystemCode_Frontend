@@ -699,7 +699,7 @@ const CourseTablePage: React.FC = () => {
           style={{
             backgroundColor: '#fff',
             width: '100%',
-            boxShadow: '10px 10px 10px rgba(0,0,0,0.1)'
+            boxShadow: '0 10px 10px rgba(0,0,0,0.1)'
           }}
         />
       </div>

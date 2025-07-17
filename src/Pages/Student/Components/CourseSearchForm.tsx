@@ -48,10 +48,11 @@ export const CourseSearchForm: React.FC<CourseSearchFormProps> = ({
         </Space>
       }
       style={{
-        marginBottom: 24,
-        borderRadius: 12,
-        border: '1px solid rgba(255, 182, 216, 0.3)',
-        backgroundColor: 'rgba(255, 255, 255, 0.95)'
+         marginBottom: 24,
+    borderRadius: 12,
+    border: '5px solid transparent',
+    background: 'linear-gradient(white, white) padding-box, linear-gradient(to right, #ff69b4, #d81b60) border-box',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)'
       }}
     >
       <Form form={form} layout="vertical" onFinish={handleSearch}>

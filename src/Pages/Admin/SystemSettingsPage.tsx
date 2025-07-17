@@ -243,7 +243,7 @@ const SystemSettingsPage: React.FC = () => {
           alignItems: 'center',
           padding: '12px 16px',
           borderRadius: 8,
-          background: 'rgb(64, 115, 205)',
+          background: 'rgb(116, 178, 217)',
           boxShadow: '0 5px 5px rgba(0, 0, 0, 0.03)'
         }}>
           <Typography.Text style={{color: 'rgb(255, 255, 255)', fontWeight: 'bold'}}>{item.label}</Typography.Text>
